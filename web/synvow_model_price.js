@@ -109,6 +109,8 @@ async function fetchModelPrices(container, tabsContainer) {
         var categories = ["语言", "视频", "图像"];
         var categorizedData = { "语言": [], "视频": [], "图像": [], "音频": [] };
 
+        list = list.filter(function(item) { return item.status === 1; });
+
         list.forEach(function(item) {
             var tags = item.tags || [];
             tags.forEach(function(tag) {
