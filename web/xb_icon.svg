@@ -1,0 +1,13 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 80 80" width="80" height="80">
+  <defs>
+    <linearGradient id="g" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4a9eff"/>
+      <stop offset="100%" stop-color="#2dd4bf"/>
+    </linearGradient>
+  </defs>
+  <!-- 白色圆形底色 -->
+  <circle cx="40" cy="40" r="38" fill="white"/>
+  <!-- 正六芒星线性图标 -->
+  <polygon points="40,14 60.25,53 19.75,53" fill="none" stroke="url(#g)" stroke-width="4" stroke-linejoin="round"/>
+  <polygon points="40,66 19.75,27 60.25,27" fill="none" stroke="url(#g)" stroke-width="4" stroke-linejoin="round"/>
+</svg>
