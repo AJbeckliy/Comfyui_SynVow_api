@@ -51,8 +51,8 @@ class SynVowGeminiAPI:
             },
         }
 
-    RETURN_TYPES = ("STRING", "STRING")
-    RETURN_NAMES = ("output", "debug_info")
+    RETURN_TYPES = ("STRING", "STRING", "STRING")
+    RETURN_NAMES = ("output", "debug_info", "task_info")
 
     @classmethod
     def IS_CHANGED(cls, **kwargs):
@@ -99,7 +99,7 @@ class SynVowGeminiAPI:
         try:
             api_key = synvow_auth.read_api_key()
         except RuntimeError as e:
-            return (str(e), json.dumps({"error": str(e)}, ensure_ascii=False))
+            return (str(e), json.dumps({"error": str(e)}, ensure_ascii=False), json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
 
         model_name = GEMINI_MODEL_MAP.get((模型, 模式), "gemini-3.1-flash-默认")
 
@@ -145,14 +145,16 @@ class SynVowGeminiAPI:
             res = _requests.post(url, headers=headers, json=request_body, timeout=300, verify=False)
             if res.status_code != 200:
                 msg = f"HTTP {res.status_code}: {res.text[:200]}"
-                return (msg, json.dumps({"error": msg}, ensure_ascii=False))
+                return (msg, json.dumps({"error": msg}, ensure_ascii=False), json.dumps({"status": "error", "message": msg}, ensure_ascii=False))
             response_data = res.json()
         except Exception as e:
-            return (f"Request error: {e}", json.dumps({"error": str(e)}, ensure_ascii=False))
+            return (f"Request error: {e}", json.dumps({"error": str(e)}, ensure_ascii=False), json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
 
         raw_text = synvow_auth.parse_chat_response(response_data) or "Error: empty response"
+        consumption_id = response_data.get("consumption_id", "") if isinstance(response_data, dict) else ""
         debug = json.dumps({"model": model_name, "images": image_count, "raw": raw_text[:500]}, ensure_ascii=False)
-        return (raw_text, debug)
+        task_info = json.dumps({"status": "SUCCESS", "consumption_id": consumption_id, "model": model_name}, ensure_ascii=False)
+        return (raw_text, debug, task_info)
 
 
 class SynVowGeminiPromptGen:
@@ -172,8 +174,8 @@ class SynVowGeminiPromptGen:
             },
         }
 
-    RETURN_TYPES = ("STRING", "STRING")
-    RETURN_NAMES = ("output", "debug_info")
+    RETURN_TYPES = ("STRING", "STRING", "STRING")
+    RETURN_NAMES = ("output", "debug_info", "task_info")
 
     @classmethod
     def IS_CHANGED(cls, **kwargs):
@@ -183,7 +185,7 @@ class SynVowGeminiPromptGen:
         try:
             api_key = synvow_auth.read_api_key()
         except RuntimeError as e:
-            return (str(e), json.dumps({"error": str(e)}, ensure_ascii=False))
+            return (str(e), json.dumps({"error": str(e)}, ensure_ascii=False), json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
 
         model_name = GEMINI_MODEL_MAP.get((模型, 模式), "gemini-3.1-flash-默认")
 
@@ -212,14 +214,16 @@ class SynVowGeminiPromptGen:
             res = _requests.post(url, headers=headers, json=request_body, timeout=300, verify=False)
             if res.status_code != 200:
                 msg = f"HTTP {res.status_code}: {res.text[:200]}"
-                return (msg, json.dumps({"error": msg}, ensure_ascii=False))
+                return (msg, json.dumps({"error": msg}, ensure_ascii=False), json.dumps({"status": "error", "message": msg}, ensure_ascii=False))
             response_data = res.json()
         except Exception as e:
-            return (f"Request error: {e}", json.dumps({"error": str(e)}, ensure_ascii=False))
+            return (f"Request error: {e}", json.dumps({"error": str(e)}, ensure_ascii=False), json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
 
         raw_text = synvow_auth.parse_chat_response(response_data) or "Error: empty response"
+        consumption_id = response_data.get("consumption_id", "") if isinstance(response_data, dict) else ""
         debug = json.dumps({"model": model_name, "raw": raw_text[:500]}, ensure_ascii=False)
-        return (raw_text, debug)
+        task_info = json.dumps({"status": "SUCCESS", "consumption_id": consumption_id, "model": model_name}, ensure_ascii=False)
+        return (raw_text, debug, task_info)
 
 
 NODE_CLASS_MAPPINGS = {

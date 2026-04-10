@@ -314,6 +314,7 @@ NODE_DISPLAY_NAME_MAPPINGS = {}
 
 import glob
 import importlib
+import importlib.util
 
 _py_api_dir = os.path.join(os.path.dirname(__file__), "py", "api")
 for _f in glob.glob(os.path.join(_py_api_dir, "*.py")):
@@ -328,5 +329,25 @@ for _f in glob.glob(os.path.join(_py_api_dir, "*.py")):
             NODE_DISPLAY_NAME_MAPPINGS.update(_mod.NODE_DISPLAY_NAME_MAPPINGS)
     except Exception as e:
         print(f"[SV] Failed to import {_name}: {e}")
+
+_py_tools_dir = os.path.join(os.path.dirname(__file__), "py", "tools")
+print(f"[SV] Scanning tools dir: {_py_tools_dir}, files: {glob.glob(os.path.join(_py_tools_dir, '*.py'))}")
+_tools_before = set(NODE_CLASS_MAPPINGS.keys())
+for _f in glob.glob(os.path.join(_py_tools_dir, "*.py")):
+    _name = os.path.splitext(os.path.basename(_f))[0]
+    if _name == "__init__":
+        continue
+    try:
+        _spec = importlib.util.spec_from_file_location(f"synvow_tools.{_name}", _f)
+        _mod = importlib.util.module_from_spec(_spec)
+        _spec.loader.exec_module(_mod)
+        if hasattr(_mod, "NODE_CLASS_MAPPINGS"):
+            NODE_CLASS_MAPPINGS.update(_mod.NODE_CLASS_MAPPINGS)
+        if hasattr(_mod, "NODE_DISPLAY_NAME_MAPPINGS"):
+            NODE_DISPLAY_NAME_MAPPINGS.update(_mod.NODE_DISPLAY_NAME_MAPPINGS)
+    except Exception as e:
+        print(f"[SV] Failed to import tools.{_name}: {e}")
+
+print(f"[SV] Tools nodes added: {set(NODE_CLASS_MAPPINGS.keys()) - _tools_before}")
 
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]

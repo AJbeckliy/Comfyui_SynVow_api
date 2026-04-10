@@ -299,7 +299,8 @@ def download_image_from_result(result_data, target_w=None, target_h=None):
 def _create_error_result(error_message, original_image=None):
     print(f"Node error: {error_message}")
     image_out = original_image if original_image is not None else torch.zeros((1, 1, 1, 3), dtype=torch.float32)
-    return {"ui": {"string": [error_message]}, "result": (image_out, f"Failed: {error_message}")}
+    task_info = json.dumps({"status": "error", "message": error_message}, ensure_ascii=False)
+    return {"ui": {"string": [error_message]}, "result": (image_out, f"Failed: {error_message}", task_info)}
 
 
 def _resolve_model(mode, has_images=False):
@@ -313,13 +314,15 @@ def _run_generate(api_key, model, prompt, images=None, aspect_ratio="1:1", image
                                       aspect_ratio=aspect_ratio, image_size=image_size, seed=seed)
     w, h = calc_size_from_ratio(aspect_ratio, image_size)
     if submit_result["type"] == "async":
-        result_data = poll_task_result(api_key, submit_result["task_id"],
-                                       session_id=session_id, model=model)
+        task_id = submit_result["task_id"]
+        result_data = poll_task_result(api_key, task_id,
+                                       session_id=session_id, model=model,
+                                       consumption_id=submit_result.get("consumption_id", ""))
         if result_data is None:
             raise Exception("Task polling failed or timed out")
-        return download_image_from_result(result_data, target_w=w, target_h=h)
+        return download_image_from_result(result_data, target_w=w, target_h=h), task_id
     else:
-        return download_image_from_result(submit_result["data"], target_w=w, target_h=h)
+        return download_image_from_result(submit_result["data"], target_w=w, target_h=h), ""
 
 
 # ---------------------------------------------------------------------------
@@ -350,8 +353,8 @@ class SynVowNanoBanana:
             },
         }
 
-    RETURN_TYPES = ("IMAGE", "STRING")
-    RETURN_NAMES = ("image", "status")
+    RETURN_TYPES = ("IMAGE", "STRING", "STRING")
+    RETURN_NAMES = ("image", "status", "task_info")
 
     @classmethod
     def IS_CHANGED(cls, **kwargs):
@@ -382,11 +385,12 @@ class SynVowNanoBanana:
 
         if batch_count == 1:
             try:
-                image_out = _run_generate(api_key, model, prompt,
+                image_out, task_id = _run_generate(api_key, model, prompt,
                                           images=images_in if images_in else None,
                                           aspect_ratio=aspect_ratio, image_size=image_size, seed=seed)
                 status = f"SynVow {tag} | {model} | success"
-                return {"ui": {"string": [status]}, "result": (image_out, status)}
+                task_info = json.dumps({"status": "SUCCESS", "task_id": task_id, "model": model}, ensure_ascii=False)
+                return {"ui": {"string": [status]}, "result": (image_out, status, task_info)}
             except RuntimeError as e:
                 return _create_error_result(str(e), original_image=first_image_tensor)
             except Exception as e:
@@ -395,27 +399,29 @@ class SynVowNanoBanana:
         def _run_single(idx):
             s = seed + idx if seed > 0 else 0
             try:
-                tensor = _run_generate(api_key, model, prompt,
+                tensor, task_id = _run_generate(api_key, model, prompt,
                                        images=images_in if images_in else None,
                                        aspect_ratio=aspect_ratio, image_size=image_size, seed=s)
-                return idx, tensor, None
+                return idx, tensor, task_id, None
             except RuntimeError:
                 raise
             except Exception as e:
-                return idx, None, f"Task {idx+1}: {e}"
+                return idx, None, "", f"Task {idx+1}: {e}"
 
         results = [None] * batch_count
+        task_ids = []
         errors = []
         try:
             with ThreadPoolExecutor(max_workers=batch_count) as pool:
                 futures = {pool.submit(_run_single, i): i for i in range(batch_count)}
                 for f in as_completed(futures):
                     try:
-                        idx, tensor, err = f.result()
+                        idx, tensor, task_id, err = f.result()
                         if err:
                             errors.append(err)
                         else:
                             results[idx] = tensor
+                            task_ids.append(task_id)
                     except RuntimeError:
                         raise
                     except Exception as e:
@@ -430,7 +436,8 @@ class SynVowNanoBanana:
         status = f"SynVow {tag} | {len(all_tensors)}/{batch_count}"
         if errors:
             status += f" | errors: {'; '.join(errors)}"
-        return {"ui": {"string": [status]}, "result": (image_out, status)}
+        task_info = json.dumps({"status": "SUCCESS", "task_ids": task_ids, "model": model}, ensure_ascii=False)
+        return {"ui": {"string": [status]}, "result": (image_out, status, task_info)}
 
 
 # ---------------------------------------------------------------------------
@@ -471,8 +478,8 @@ class SynVowNano2:
             },
         }
 
-    RETURN_TYPES = ("IMAGE", "STRING")
-    RETURN_NAMES = ("image", "status")
+    RETURN_TYPES = ("IMAGE", "STRING", "STRING")
+    RETURN_NAMES = ("image", "status", "task_info")
 
     @classmethod
     def IS_CHANGED(cls, **kwargs):
@@ -503,11 +510,12 @@ class SynVowNano2:
 
         if batch_count == 1:
             try:
-                image_out = _run_generate(api_key, model, prompt,
+                image_out, task_id = _run_generate(api_key, model, prompt,
                                           images=images_in if images_in else None,
                                           aspect_ratio=aspect_ratio, image_size=image_size, seed=seed)
                 status = f"SynVow Nano2 {tag} | {model} | success"
-                return {"ui": {"string": [status]}, "result": (image_out, status)}
+                task_info = json.dumps({"status": "SUCCESS", "task_id": task_id, "model": model}, ensure_ascii=False)
+                return {"ui": {"string": [status]}, "result": (image_out, status, task_info)}
             except RuntimeError as e:
                 return _create_error_result(str(e), original_image=first_image_tensor)
             except Exception as e:
@@ -516,27 +524,29 @@ class SynVowNano2:
         def _run_single(idx):
             s = seed + idx if seed > 0 else 0
             try:
-                tensor = _run_generate(api_key, model, prompt,
+                tensor, task_id = _run_generate(api_key, model, prompt,
                                        images=images_in if images_in else None,
                                        aspect_ratio=aspect_ratio, image_size=image_size, seed=s)
-                return idx, tensor, None
+                return idx, tensor, task_id, None
             except RuntimeError:
                 raise
             except Exception as e:
-                return idx, None, f"Task {idx+1}: {e}"
+                return idx, None, "", f"Task {idx+1}: {e}"
 
         results = [None] * batch_count
+        task_ids = []
         errors = []
         try:
             with ThreadPoolExecutor(max_workers=batch_count) as pool:
                 futures = {pool.submit(_run_single, i): i for i in range(batch_count)}
                 for f in as_completed(futures):
                     try:
-                        idx, tensor, err = f.result()
+                        idx, tensor, task_id, err = f.result()
                         if err:
                             errors.append(err)
                         else:
                             results[idx] = tensor
+                            task_ids.append(task_id)
                     except RuntimeError:
                         raise
                     except Exception as e:
@@ -551,7 +561,8 @@ class SynVowNano2:
         status = f"SynVow Nano2 {tag} | {len(all_tensors)}/{batch_count}"
         if errors:
             status += f" | errors: {'; '.join(errors)}"
-        return {"ui": {"string": [status]}, "result": (image_out, status)}
+        task_info = json.dumps({"status": "SUCCESS", "task_ids": task_ids, "model": model}, ensure_ascii=False)
+        return {"ui": {"string": [status]}, "result": (image_out, status, task_info)}
 
 
 # ---------------------------------------------------------------------------
