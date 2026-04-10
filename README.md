@@ -60,9 +60,6 @@ ComfyUI 用于 SynVow API 集成的自定义节点。
 ## Changelog 更新日志
 
 ### 2025-04-10
-- **所有节点新增 `task_info` 输出接口**（JSON 格式），包含 `task_id` / `consumption_id`，便于失败时向后端申请退费
-- **NanoBanana Pro / Nano2**：新增 `task_info` 输出（含 `task_id`、`model`）
-- **Gemini API / PromptGen**：新增 `task_info` 输出（含 `consumption_id`、`model`），同步调用也支持退费凭证
 - **新增 `SynVow 文本分割` 节点**（`💫SynVow_api/tools` 分类）
   - 按分隔符切分文本
   - 输出 `text`（单条/全文）和 `list`（列表，可直接接批量节点 `prompts_list`）
