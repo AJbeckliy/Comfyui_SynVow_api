@@ -558,6 +558,10 @@ class SynVowNano2:
 # NanoBanana Pro TI批量节点
 # ---------------------------------------------------------------------------
 
+class SynVowNanaBanana_TIBatch:
+    pass
+SynVowNanaBanana_TIBatch = None
+
 class SynVowNanoBanana_TIBatch:
     """NanoBanana Pro 图生图批量节点：多组图像+多条提示词并发处理"""
     FUNCTION = "process_batch"
@@ -568,7 +572,6 @@ class SynVowNanoBanana_TIBatch:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "prompts_list": ("STRING", {"forceInput": True}),
                 "images_list1": ("IMAGE",),
                 "模式": (MODE_OPTIONS, {"default": "默认"}),
                 "aspect_ratio": (["auto"] + list(PRO_ASPECT_RATIOS.keys()), {"default": "1:1"}),
@@ -577,6 +580,7 @@ class SynVowNanoBanana_TIBatch:
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
             "optional": {
+                "prompts_list": ("STRING", {"forceInput": True}),
                 "images_list2": ("IMAGE",), "images_list3": ("IMAGE",),
                 "images_list4": ("IMAGE",), "images_list5": ("IMAGE",),
                 "images_list6": ("IMAGE",), "images_list7": ("IMAGE",),
@@ -641,6 +645,8 @@ class SynVowNanoBanana_TIBatch:
 
         model = _resolve_model(mode, has_images=True)
         session_id = create_session(unique_id, "Pro_TIBatch")
+        if prompts_list is None:
+            prompts_list = [""]
         prompts = prompts_list if isinstance(prompts_list, list) else [prompts_list]
         prompts_count = len(prompts)
 
@@ -730,7 +736,6 @@ class SynVowNano2_TIBatch:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "prompts_list": ("STRING", {"forceInput": True}),
                 "images_list1": ("IMAGE",),
                 "模式": (MODE_OPTIONS, {"default": "默认"}),
                 "aspect_ratio": (["auto"] + list(ASPECT_RATIOS.keys()), {"default": "1:1"}),
@@ -739,6 +744,7 @@ class SynVowNano2_TIBatch:
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
             "optional": {
+                "prompts_list": ("STRING", {"forceInput": True}),
                 "images_list2": ("IMAGE",), "images_list3": ("IMAGE",),
                 "images_list4": ("IMAGE",), "images_list5": ("IMAGE",),
                 "images_list6": ("IMAGE",), "images_list7": ("IMAGE",),
