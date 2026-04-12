@@ -600,8 +600,8 @@ class SynVowNanoBanana_TIBatch:
             "hidden": {"unique_id": "UNIQUE_ID"},
         }
 
-    RETURN_TYPES = ("IMAGE", "STRING")
-    RETURN_NAMES = ("batch_images", "batch_info")
+    RETURN_TYPES = ("IMAGE", "STRING", "STRING")
+    RETURN_NAMES = ("batch_images", "batch_info", "task_info")
 
     @classmethod
     def IS_CHANGED(cls, **kwargs):
@@ -616,22 +616,23 @@ class SynVowNanoBanana_TIBatch:
                                            aspect_ratio=aspect_ratio, image_size=image_size, seed=seed)
                 w, h = calc_size_from_ratio(aspect_ratio, image_size)
                 if result["type"] == "async":
-                    result_data = poll_task_result(api_key, result["task_id"], session_id=session_id, model=model, consumption_id=result.get("consumption_id", ""))
+                    task_id = result["task_id"]
+                    result_data = poll_task_result(api_key, task_id, session_id=session_id, model=model, consumption_id=result.get("consumption_id", ""))
                     if result_data is None:
                         if attempt < max_retries - 1:
                             time.sleep(2)
                             continue
-                        return {"success": False, "error": "polling timeout"}
-                    return {"success": True, "images": download_image_from_result(result_data, w, h)}
+                        return {"success": False, "error": "polling timeout", "task_id": task_id}
+                    return {"success": True, "images": download_image_from_result(result_data, w, h), "task_id": task_id}
                 else:
-                    return {"success": True, "images": download_image_from_result(result["data"], w, h)}
+                    return {"success": True, "images": download_image_from_result(result["data"], w, h), "task_id": ""}
             except RuntimeError:
                 raise
             except Exception as e:
                 if attempt < max_retries - 1:
                     time.sleep(2)
                     continue
-                return {"success": False, "error": str(e)}
+                return {"success": False, "error": str(e), "task_id": ""}
 
     def process_batch(self, prompts_list, images_list1, 模式, aspect_ratio, image_size,
                       prompt_order, seed, images_list2=None, images_list3=None,
@@ -652,7 +653,7 @@ class SynVowNanoBanana_TIBatch:
         except RuntimeError as e:
             w, h = calc_size_from_ratio(aspect_ratio, image_size)
             black = _create_black_image_tensor(w, h)
-            return (black, json.dumps({"error": str(e)}, ensure_ascii=False))
+            return (black, json.dumps({"error": str(e)}, ensure_ascii=False), json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
 
         model = _resolve_model(mode, has_images=True)
         session_id = create_session(unique_id, "Pro_TIBatch")
@@ -716,21 +717,24 @@ class SynVowNanoBanana_TIBatch:
             send_polling_status(unique_id, session_id, "idle")
             cleanup_session(session_id)
             black = _create_black_image_tensor(w, h)
-            return (black, json.dumps({"error": str(e)}, ensure_ascii=False))
+            return (black, json.dumps({"error": str(e)}, ensure_ascii=False), json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
         finally:
             send_polling_status(unique_id, session_id, "idle")
             cleanup_session(session_id)
 
-        all_images, ok = [], 0
+        all_images, ok, task_ids = [], 0, []
         for r in results:
             if r and r["success"]:
                 all_images.append(r["images"])
                 ok += 1
             else:
                 all_images.append(_create_black_image_tensor(w, h))
+            if r and r.get("task_id"):
+                task_ids.append(r["task_id"])
 
         batch_info = json.dumps({"total": batch_size, "successful": ok, "failed": batch_size - ok}, ensure_ascii=False)
-        return (torch.cat(all_images, dim=0), batch_info)
+        task_info = json.dumps({"status": "SUCCESS", "task_ids": task_ids, "model": model}, ensure_ascii=False)
+        return (torch.cat(all_images, dim=0), batch_info, task_info)
 
 
 # ---------------------------------------------------------------------------
@@ -764,8 +768,8 @@ class SynVowNano2_TIBatch:
             "hidden": {"unique_id": "UNIQUE_ID"},
         }
 
-    RETURN_TYPES = ("IMAGE", "STRING")
-    RETURN_NAMES = ("batch_images", "batch_info")
+    RETURN_TYPES = ("IMAGE", "STRING", "STRING")
+    RETURN_NAMES = ("batch_images", "batch_info", "task_info")
 
     @classmethod
     def IS_CHANGED(cls, **kwargs):
@@ -779,22 +783,23 @@ class SynVowNano2_TIBatch:
                                            aspect_ratio=aspect_ratio, image_size=image_size, seed=seed)
                 w, h = calc_size_from_ratio(aspect_ratio, image_size)
                 if result["type"] == "async":
-                    result_data = poll_task_result(api_key, result["task_id"], session_id=session_id, model=model, consumption_id=result.get("consumption_id", ""))
+                    task_id = result["task_id"]
+                    result_data = poll_task_result(api_key, task_id, session_id=session_id, model=model, consumption_id=result.get("consumption_id", ""))
                     if result_data is None:
                         if attempt < max_retries - 1:
                             time.sleep(2)
                             continue
-                        return {"success": False, "error": "polling timeout"}
-                    return {"success": True, "images": download_image_from_result(result_data, w, h)}
+                        return {"success": False, "error": "polling timeout", "task_id": task_id}
+                    return {"success": True, "images": download_image_from_result(result_data, w, h), "task_id": task_id}
                 else:
-                    return {"success": True, "images": download_image_from_result(result["data"], w, h)}
+                    return {"success": True, "images": download_image_from_result(result["data"], w, h), "task_id": ""}
             except RuntimeError:
                 raise
             except Exception as e:
                 if attempt < max_retries - 1:
                     time.sleep(2)
                     continue
-                return {"success": False, "error": str(e)}
+                return {"success": False, "error": str(e), "task_id": ""}
 
     def process_batch(self, prompts_list, images_list1, 模式, aspect_ratio, image_size,
                       prompt_order, seed, images_list2=None, images_list3=None,
@@ -814,7 +819,7 @@ class SynVowNano2_TIBatch:
         except RuntimeError as e:
             w, h = calc_size_from_ratio(aspect_ratio, image_size)
             black = _create_black_image_tensor(w, h)
-            return (black, json.dumps({"error": str(e)}, ensure_ascii=False))
+            return (black, json.dumps({"error": str(e)}, ensure_ascii=False), json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
 
         model = _resolve_nano2_model(mode, has_images=True)
         session_id = create_session(unique_id, "Nano2_TIBatch")
@@ -875,21 +880,24 @@ class SynVowNano2_TIBatch:
             send_polling_status(unique_id, session_id, "idle")
             cleanup_session(session_id)
             black = _create_black_image_tensor(w, h)
-            return (black, json.dumps({"error": str(e)}, ensure_ascii=False))
+            return (black, json.dumps({"error": str(e)}, ensure_ascii=False), json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
         finally:
             send_polling_status(unique_id, session_id, "idle")
             cleanup_session(session_id)
 
-        all_images, ok = [], 0
+        all_images, ok, task_ids = [], 0, []
         for r in results:
             if r and r["success"]:
                 all_images.append(r["images"])
                 ok += 1
             else:
                 all_images.append(_create_black_image_tensor(w, h))
+            if r and r.get("task_id"):
+                task_ids.append(r["task_id"])
 
         batch_info = json.dumps({"total": batch_size, "successful": ok, "failed": batch_size - ok}, ensure_ascii=False)
-        return (torch.cat(all_images, dim=0), batch_info)
+        task_info = json.dumps({"status": "SUCCESS", "task_ids": task_ids, "model": model}, ensure_ascii=False)
+        return (torch.cat(all_images, dim=0), batch_info, task_info)
 
 
 # ---------------------------------------------------------------------------
