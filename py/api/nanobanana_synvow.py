@@ -113,17 +113,19 @@ def _extract_task_id(response_json):
 
 
 def submit_image_task(api_key, model, prompt, images=None, aspect_ratio=None, image_size=None, seed=0):
+    import random as _random
     url = f"{DIRECT_API_BASE}/api/models/image/edit"
     params = {"async": "true"}
     headers = synvow_auth.make_api_headers(api_key)
 
-    data = {"model": model, "prompt": prompt, "response_format": "url", "async": "true"}
+    if seed == 0:
+        seed = _random.randint(1, 2147483647)
+
+    data = {"model": model, "prompt": prompt, "response_format": "url", "async": "true", "seed": seed}
     if aspect_ratio:
         data["aspect_ratio"] = aspect_ratio
     if image_size:
         data["image_size"] = image_size
-    if seed > 0:
-        data["seed"] = seed
 
     tag = "I2I" if images else "T2I"
 
