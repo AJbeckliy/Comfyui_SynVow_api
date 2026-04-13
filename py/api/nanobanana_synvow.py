@@ -734,6 +734,7 @@ class SynVowNanoBanana_TIBatch:
             if r and r.get("task_id"):
                 task_ids.append(r["task_id"])
 
+        print(f"[NanoBanana Pro 批量] 完成：{ok}/{batch_size} 成功，{batch_size - ok} 失败", flush=True)
         batch_info = json.dumps({"total": batch_size, "successful": ok, "failed": batch_size - ok}, ensure_ascii=False)
         task_info = json.dumps({"status": "SUCCESS", "task_ids": task_ids, "model": model}, ensure_ascii=False)
         return (torch.cat(all_images, dim=0), batch_info, task_info)
@@ -897,6 +898,7 @@ class SynVowNano2_TIBatch:
             if r and r.get("task_id"):
                 task_ids.append(r["task_id"])
 
+        print(f"[Nano2 批量] 完成：{ok}/{batch_size} 成功，{batch_size - ok} 失败", flush=True)
         batch_info = json.dumps({"total": batch_size, "successful": ok, "failed": batch_size - ok}, ensure_ascii=False)
         task_info = json.dumps({"status": "SUCCESS", "task_ids": task_ids, "model": model}, ensure_ascii=False)
         return (torch.cat(all_images, dim=0), batch_info, task_info)
