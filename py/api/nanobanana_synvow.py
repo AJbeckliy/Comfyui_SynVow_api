@@ -610,31 +610,31 @@ class SynVowNanoBanana_TIBatch:
         return float("NaN")
 
     def _process_single(self, pil_images, prompt, api_key, model, aspect_ratio, image_size, seed, session_id=None):
-        import json as _json
-        max_retries = 3
-        for attempt in range(max_retries):
+        max_submit_retries = 3
+        result = None
+        for attempt in range(max_submit_retries):
             try:
                 result = submit_image_task(api_key, model, prompt, images=pil_images,
                                            aspect_ratio=aspect_ratio, image_size=image_size, seed=seed)
-                w, h = calc_size_from_ratio(aspect_ratio, image_size)
-                if result["type"] == "async":
-                    task_id = result["task_id"]
-                    result_data = poll_task_result(api_key, task_id, session_id=session_id, model=model, consumption_id=result.get("consumption_id", ""))
-                    if result_data is None:
-                        if attempt < max_retries - 1:
-                            time.sleep(2)
-                            continue
-                        return {"success": False, "error": "polling timeout", "task_id": task_id}
-                    return {"success": True, "images": download_image_from_result(result_data, w, h), "task_id": task_id}
-                else:
-                    return {"success": True, "images": download_image_from_result(result["data"], w, h), "task_id": ""}
+                break
             except RuntimeError:
                 raise
             except Exception as e:
-                if attempt < max_retries - 1:
+                if attempt < max_submit_retries - 1:
                     time.sleep(2)
                     continue
                 return {"success": False, "error": str(e), "task_id": ""}
+        if result is None:
+            return {"success": False, "error": "submit failed", "task_id": ""}
+        w, h = calc_size_from_ratio(aspect_ratio, image_size)
+        if result["type"] == "async":
+            task_id = result["task_id"]
+            result_data = poll_task_result(api_key, task_id, session_id=session_id, model=model, consumption_id=result.get("consumption_id", ""))
+            if result_data is None:
+                return {"success": False, "error": "polling timeout", "task_id": task_id}
+            return {"success": True, "images": download_image_from_result(result_data, w, h), "task_id": task_id}
+        else:
+            return {"success": True, "images": download_image_from_result(result["data"], w, h), "task_id": ""}
 
     def process_batch(self, prompts_list, images_list1, 模式, aspect_ratio, image_size,
                       prompt_order, seed, images_list2=None, images_list3=None,
@@ -779,30 +779,31 @@ class SynVowNano2_TIBatch:
         return float("NaN")
 
     def _process_single(self, pil_images, prompt, api_key, model, aspect_ratio, image_size, seed, session_id=None):
-        max_retries = 3
-        for attempt in range(max_retries):
+        max_submit_retries = 3
+        result = None
+        for attempt in range(max_submit_retries):
             try:
                 result = submit_image_task(api_key, model, prompt, images=pil_images,
                                            aspect_ratio=aspect_ratio, image_size=image_size, seed=seed)
-                w, h = calc_size_from_ratio(aspect_ratio, image_size)
-                if result["type"] == "async":
-                    task_id = result["task_id"]
-                    result_data = poll_task_result(api_key, task_id, session_id=session_id, model=model, consumption_id=result.get("consumption_id", ""))
-                    if result_data is None:
-                        if attempt < max_retries - 1:
-                            time.sleep(2)
-                            continue
-                        return {"success": False, "error": "polling timeout", "task_id": task_id}
-                    return {"success": True, "images": download_image_from_result(result_data, w, h), "task_id": task_id}
-                else:
-                    return {"success": True, "images": download_image_from_result(result["data"], w, h), "task_id": ""}
+                break
             except RuntimeError:
                 raise
             except Exception as e:
-                if attempt < max_retries - 1:
+                if attempt < max_submit_retries - 1:
                     time.sleep(2)
                     continue
                 return {"success": False, "error": str(e), "task_id": ""}
+        if result is None:
+            return {"success": False, "error": "submit failed", "task_id": ""}
+        w, h = calc_size_from_ratio(aspect_ratio, image_size)
+        if result["type"] == "async":
+            task_id = result["task_id"]
+            result_data = poll_task_result(api_key, task_id, session_id=session_id, model=model, consumption_id=result.get("consumption_id", ""))
+            if result_data is None:
+                return {"success": False, "error": "polling timeout", "task_id": task_id}
+            return {"success": True, "images": download_image_from_result(result_data, w, h), "task_id": task_id}
+        else:
+            return {"success": True, "images": download_image_from_result(result["data"], w, h), "task_id": ""}
 
     def process_batch(self, prompts_list, images_list1, 模式, aspect_ratio, image_size,
                       prompt_order, seed, images_list2=None, images_list3=None,
