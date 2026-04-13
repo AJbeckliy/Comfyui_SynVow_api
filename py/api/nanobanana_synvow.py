@@ -188,8 +188,9 @@ def poll_task_result(api_key, task_id, session_id=None, model=None, consumption_
 
 
 async def _async_poll_task(api_key, task_id, session_id=None, model=None, consumption_id=""):
-    timeout = 180
-    interval = 2
+    timeout = 600
+    interval_running = 2
+    interval_queued = 5
     poll_url = f"{DIRECT_API_BASE}/api/models/tasks"
     headers = synvow_auth.make_api_headers(api_key)
     poll_body = {"task_id": task_id}
@@ -230,7 +231,7 @@ async def _async_poll_task(api_key, task_id, session_id=None, model=None, consum
                         await asyncio.sleep(1)
 
             if response_json is None:
-                await asyncio.sleep(interval)
+                await asyncio.sleep(interval_running)
                 continue
 
             data = response_json.get("data", response_json)
@@ -243,10 +244,14 @@ async def _async_poll_task(api_key, task_id, session_id=None, model=None, consum
                 reason = data.get("fail_reason", "Unknown")
                 print(f"❌ [{short_id}] {poll_count}次 {elapsed:.1f}s FAILURE ({reason})", flush=True)
                 return None
+            elif status in ("NOT_START", "QUEUED", "PENDING"):
+                print(f"⏳ [{short_id}] {poll_count}次 {elapsed:.1f}s {status} (排队中)", flush=True)
+                await asyncio.sleep(interval_queued)
+                continue
             else:
                 print(f"⏳ [{short_id}] {poll_count}次 {elapsed:.1f}s {status}", flush=True)
 
-            await asyncio.sleep(interval)
+            await asyncio.sleep(interval_running)
 
 
 def _download_single_image(url, max_retries=3):
