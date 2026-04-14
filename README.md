@@ -57,9 +57,9 @@ ComfyUI 用于 SynVow API 集成的自定义节点。
 
 ---
 
-## Changelog 更新日志
+## 更新日志
 
-### 2025-04-10
+### 2026-04-10
 - **新增 `SynVow 文本分割` 节点**（`💫SynVow_api/tools` 分类）
   - 按分隔符切分文本
   - 输出 `text`（单条/全文）和 `list`（列表，可直接接批量节点 `prompts_list`）
