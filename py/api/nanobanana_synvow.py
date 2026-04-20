@@ -4,6 +4,7 @@ NanoBanana SynVow API nodes - 图像生成 / 批量生成
 """
 
 import io
+import json
 import time
 import uuid
 import asyncio
@@ -145,13 +146,7 @@ def submit_image_task(api_key, model, prompt, images=None, aspect_ratio=None, im
         if len(data_uris) > 1:
             data["images"] = data_uris[1:]
 
-    for attempt in range(3):
-        res = requests.post(url, headers=headers, params=params, json=data, timeout=300, verify=False)
-        if res.status_code in (502, 503, 504):
-            print(f"[Warn] {tag} 服务器暂时不可用 ({res.status_code})，第{attempt+1}次重试...", flush=True)
-            time.sleep(3 * (attempt + 1))
-            continue
-        break
+    res = requests.post(url, headers=headers, params=params, json=data, timeout=300, verify=False)
 
     _check_auth_error(res)
     if not res.text.strip():
@@ -215,24 +210,16 @@ async def _async_poll_task(api_key, task_id, session_id=None, model=None, consum
                 print(f"[{short_id}] Timeout ({timeout}s)", flush=True)
                 return None
 
-            response_json = None
-            for attempt in range(3):
-                try:
-                    async with session.post(poll_url, headers=headers, json=poll_body,
-                                            ssl=False, timeout=aiohttp.ClientTimeout(total=30)) as resp:
-                        if resp.status == 401:
-                            raise RuntimeError("Auth expired, please login again")
-                        response_json = await resp.json()
-                        break
-                except RuntimeError:
-                    raise
-                except Exception:
-                    if attempt < 2:
-                        await asyncio.sleep(1)
-
-            if response_json is None:
-                await asyncio.sleep(interval_running)
-                continue
+            try:
+                async with session.post(poll_url, headers=headers, json=poll_body,
+                                        ssl=False, timeout=aiohttp.ClientTimeout(total=30)) as resp:
+                    if resp.status == 401:
+                        raise RuntimeError("Auth expired, please login again")
+                    response_json = await resp.json()
+            except RuntimeError:
+                raise
+            except Exception as e:
+                raise Exception(f"轮询请求失败: {e}")
 
             data = response_json.get("data", response_json)
             status = data.get("status", "")
