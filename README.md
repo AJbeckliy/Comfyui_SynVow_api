@@ -25,6 +25,7 @@ ComfyUI 用于 SynVow API 集成的自定义节点。
 | SynVow Nano2 图像生成 | nano2 | Nano2 image generation (T2I / I2I) / 文生图·图生图 |
 | SynVow Nano2 批量出图 | nano2 | Batch version / 批量版本 |
 | SynVow 文本分割 | — | Split text by delimiter, output text + list / 按分隔符切分文本，输出单条与列表 |
+| SynVow GPT-Image-2 | gpt-image-2-文生图-默认 / gpt-image-2-图生图-默认 | GPT-Image-2 text-to-image & image-to-image / 文生图·图生图 |
 
 ---
 
@@ -58,6 +59,14 @@ ComfyUI 用于 SynVow API 集成的自定义节点。
 ---
 
 ## 更新日志
+
+### 2026-04-21
+- **新增 `SynVow GPT-Image-2` 节点**
+  - 支持 GPT-Image-2 文生图（`gpt-image-2-文生图-默认`）和图生图（`gpt-image-2-图生图-默认`）
+  - 图生图最多支持 4 张输入图（base64 编码传输）
+  - 支持尺寸选择：`1024x1024`、`1536x1024`、`1024x1536`
+  - 采用异步提交 + 轮询机制，携带 `consumption_id` 支持失败自动退费
+  - 输出图像张量、图片 URL、响应信息及对话历史
 
 ### 2026-04-10
 - **新增 `SynVow 文本分割` 节点**（`💫SynVow_api/tools` 分类）
