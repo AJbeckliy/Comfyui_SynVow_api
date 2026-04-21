@@ -3,6 +3,7 @@ SynVow GPT-Image-2 节点 — 通过 SynVow /api/models/image/edit 接口生成/
 """
 
 import base64 as _b64
+import concurrent.futures
 import io
 import time
 
@@ -36,6 +37,7 @@ class SynVowGptImage2:
             "optional": {
                 "model": (["gpt-image-2-文生图-默认", "gpt-image-2-图生图-默认"], {"default": "gpt-image-2-文生图-默认"}),
                 "size": (["1024x1024", "1536x1024", "1024x1536"], {"default": "1024x1024"}),
+                "count": ("INT", {"default": 1, "min": 1, "max": 4}),
                 "clear_chats": ("BOOLEAN", {"default": True}),
                 "image1": ("IMAGE",),
                 "image2": ("IMAGE",),
@@ -62,8 +64,59 @@ class SynVowGptImage2:
     def _blank_image(self):
         return torch.zeros((1, 1024, 1024, 3), dtype=torch.float32)
 
+    def _submit_and_poll(self, payload, headers, api_url, poll_url, model):
+        """提交单个任务并轮询结果，返回 resp_json 或 None"""
+        try:
+            res = requests.post(api_url, headers=headers, json=payload,
+                                params={"async": "true"}, timeout=60, verify=False)
+            res.raise_for_status()
+            submit_json = res.json()
+        except Exception as e:
+            print(f"[SynVow GPT-Image-2] 提交失败: {e}")
+            return None
+
+        _d = submit_json if isinstance(submit_json, dict) else {}
+        task_id = (
+            _d.get("task_id")
+            or (_d.get("data") or {}).get("task_id")
+            or ((_d.get("data") or {}).get("sourceData") or {}).get("task_id")
+        )
+        consumption_id = str(_d.get("consumption_id", "") or "")
+
+        if not task_id:
+            return submit_json
+
+        print(f"[SynVow GPT-Image-2] task_id={task_id[:8]}... 轮询中")
+        poll_body = {"task_id": task_id, "model": model}
+        if consumption_id:
+            poll_body["consumption_id"] = consumption_id
+
+        timeout_total = 600
+        interval = 5
+        elapsed = 0
+        while elapsed < timeout_total:
+            time.sleep(interval)
+            elapsed += interval
+            try:
+                poll_res = requests.post(poll_url, headers=headers, json=poll_body, timeout=30, verify=False)
+                poll_res.raise_for_status()
+                poll_json = poll_res.json()
+                data_field = poll_json.get("data", poll_json) if isinstance(poll_json, dict) else poll_json
+                status = data_field.get("status", "") if isinstance(data_field, dict) else ""
+                if status in ("SUCCESS", "success", "completed", "done", "finished"):
+                    print(f"[SynVow GPT-Image-2] ✅ {task_id[:8]}... 完成 ({elapsed}s)")
+                    return poll_json
+                elif status in ("FAILURE", "failed", "error"):
+                    msg = data_field.get("fail_reason", "任务失败")
+                    print(f"[SynVow GPT-Image-2] ❌ {task_id[:8]}... {msg}")
+                    return None
+            except Exception as e:
+                print(f"[SynVow GPT-Image-2] 轮询异常: {e}")
+        print(f"[SynVow GPT-Image-2] 轮询超时 {task_id[:8]}...")
+        return None
+
     def generate(self, prompt, model="gpt-image-2-文生图-默认", size="1024x1024",
-                 clear_chats=True,
+                 count=1, clear_chats=True,
                  image1=None, image2=None, image3=None, image4=None):
 
         try:
@@ -84,86 +137,27 @@ class SynVowGptImage2:
         headers = synvow_auth.make_api_headers(api_key)
 
         is_img2img = "图生图" in model
-        print(f"[SynVow GPT-Image-2] mode={'img2img' if is_img2img else 'text2img'}, model={model}")
+        print(f"[SynVow GPT-Image-2] mode={'img2img' if is_img2img else 'text2img'}, count={count}, model={model}")
 
         api_url = f"{LOCAL_BASE}/api/models/image/edit"
-        resp_json = None
+        poll_url = f"{DIRECT_API_BASE}/api/models/tasks"
 
-        try:
-            payload = {"model": model, "prompt": prompt, "size": size}
+        payload_base = {"model": model, "prompt": prompt, "size": size}
+        if is_img2img:
+            image_list = []
+            for img_tensor in [image1, image2, image3, image4]:
+                if img_tensor is not None:
+                    arr = (img_tensor[0].cpu().numpy() * 255).clip(0, 255).astype(np.uint8)
+                    buf = io.BytesIO()
+                    Image.fromarray(arr).convert("RGB").save(buf, format="PNG")
+                    image_list.append("data:image/png;base64," + _b64.b64encode(buf.getvalue()).decode())
+            if not image_list:
+                return (self._blank_image(), "图生图模式需要至少一张输入图", "", self._format_history())
+            payload_base["image"] = image_list[0]
+            if len(image_list) > 1:
+                payload_base["images"] = image_list[1:]
+            print(f"[SynVow GPT-Image-2] img2img {len(image_list)} input images")
 
-            if is_img2img:
-                image_list = []
-                for img_tensor in [image1, image2, image3, image4]:
-                    if img_tensor is not None:
-                        arr = (img_tensor[0].cpu().numpy() * 255).clip(0, 255).astype(np.uint8)
-                        buf = io.BytesIO()
-                        Image.fromarray(arr).convert("RGB").save(buf, format="PNG")
-                        image_list.append("data:image/png;base64," + _b64.b64encode(buf.getvalue()).decode())
-                payload["image"] = image_list[0]
-                if len(image_list) > 1:
-                    payload["images"] = image_list[1:]
-                print(f"[SynVow GPT-Image-2] img2img {len(image_list)} images")
-
-            res = requests.post(api_url, headers=headers, json=payload,
-                                params={"async": "true"}, timeout=60, verify=False)
-            res.raise_for_status()
-            submit_json = res.json()
-        except Exception as e:
-            msg = f"提交失败: {e}"
-            print(f"[SynVow GPT-Image-2] {msg}")
-            return (self._blank_image(), msg, "", self._format_history())
-
-        _d = submit_json if isinstance(submit_json, dict) else {}
-        task_id = (
-            _d.get("task_id")
-            or (_d.get("data") or {}).get("task_id")
-            or ((_d.get("data") or {}).get("sourceData") or {}).get("task_id")
-        )
-        consumption_id = str(_d.get("consumption_id", "") or "")
-
-        if not task_id:
-            resp_json = submit_json
-        else:
-            print(f"[SynVow GPT-Image-2] task_id={task_id[:8]}... 轮询中")
-            poll_url = f"{DIRECT_API_BASE}/api/models/tasks"
-            poll_body = {"task_id": task_id, "model": model}
-            if consumption_id:
-                poll_body["consumption_id"] = consumption_id
-            timeout_total = 600
-            interval = 5
-            elapsed = 0
-            while elapsed < timeout_total:
-                time.sleep(interval)
-                elapsed += interval
-                try:
-                    poll_res = requests.post(poll_url, headers=headers, json=poll_body, timeout=30, verify=False)
-                    poll_res.raise_for_status()
-                    poll_json = poll_res.json()
-                    data_field = poll_json.get("data", poll_json) if isinstance(poll_json, dict) else poll_json
-                    status = data_field.get("status", "") if isinstance(data_field, dict) else ""
-                    if status in ("SUCCESS", "success", "completed", "done", "finished"):
-                        print(f"[SynVow GPT-Image-2] ✅ 完成 ({elapsed}s)")
-                        resp_json = poll_json
-                        break
-                    elif status in ("FAILURE", "failed", "error"):
-                        msg = data_field.get("fail_reason", "任务失败")
-                        print(f"[SynVow GPT-Image-2] ❌ {msg}")
-                        return (self._blank_image(), msg, "", self._format_history())
-                except Exception as e:
-                    print(f"[SynVow GPT-Image-2] 轮询异常: {e}")
-            if resp_json is None:
-                msg = f"轮询超时 ({timeout_total}s)"
-                print(f"[SynVow GPT-Image-2] {msg}")
-                return (self._blank_image(), msg, "", self._format_history())
-
-        resp_code = resp_json.get("code", 200) if isinstance(resp_json, dict) else 200
-        if isinstance(resp_code, int) and resp_code >= 400:
-            msg = resp_json.get("message", str(resp_json))
-            print(f"[SynVow GPT-Image-2] API error: {msg}")
-            return (self._blank_image(), msg, "", self._format_history())
-
-        # 结构: resp_json.data.data.data[].url
         def _extract_urls(d):
             if isinstance(d, list):
                 return [item["url"] for item in d if isinstance(item, dict) and item.get("url")]
@@ -177,7 +171,16 @@ class SynVowGptImage2:
                             return result
             return []
 
-        image_urls = _extract_urls(resp_json)
+        def _run_one(_):
+            return self._submit_and_poll(dict(payload_base), headers, api_url, poll_url, model)
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=count) as executor:
+            results = list(executor.map(_run_one, range(count)))
+
+        image_urls = []
+        for r in results:
+            if r is not None:
+                image_urls.extend(_extract_urls(r))
 
         image_urls_str = "\n".join(image_urls)
         if image_urls:
