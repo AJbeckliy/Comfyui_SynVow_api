@@ -223,6 +223,8 @@ async def _async_poll_task(api_key, task_id, session_id=None, model=None, consum
 
             data = response_json.get("data", response_json)
             status = data.get("status", "")
+            if not status:
+                print(f"[poll] full response_json: {str(response_json)[:500]}", flush=True)
 
             if status == "SUCCESS":
                 print(f"✅ [{short_id}] {poll_count}次 {elapsed:.1f}s SUCCESS", flush=True)
@@ -236,7 +238,7 @@ async def _async_poll_task(api_key, task_id, session_id=None, model=None, consum
                 await asyncio.sleep(interval_queued)
                 continue
             else:
-                print(f"⏳ [{short_id}] {poll_count}次 {elapsed:.1f}s {status}", flush=True)
+                print(f"⏳ [{short_id}] {poll_count}次 {elapsed:.1f}s status={repr(status)} data_keys={list(data.keys()) if isinstance(data, dict) else type(data)}", flush=True)
 
             await asyncio.sleep(interval_running)
 
