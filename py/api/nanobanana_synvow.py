@@ -773,22 +773,13 @@ class SynVowNano2_TIBatch:
         return float("NaN")
 
     def _process_single(self, pil_images, prompt, api_key, model, aspect_ratio, image_size, seed, session_id=None):
-        max_submit_retries = 3
-        result = None
-        for attempt in range(max_submit_retries):
-            try:
-                result = submit_image_task(api_key, model, prompt, images=pil_images,
-                                           aspect_ratio=aspect_ratio, image_size=image_size, seed=seed)
-                break
-            except RuntimeError:
-                raise
-            except Exception as e:
-                if attempt < max_submit_retries - 1:
-                    time.sleep(2)
-                    continue
-                return {"success": False, "error": str(e), "task_id": ""}
-        if result is None:
-            return {"success": False, "error": "submit failed", "task_id": ""}
+        try:
+            result = submit_image_task(api_key, model, prompt, images=pil_images,
+                                       aspect_ratio=aspect_ratio, image_size=image_size, seed=seed)
+        except RuntimeError:
+            raise
+        except Exception as e:
+            return {"success": False, "error": str(e), "task_id": ""}
         w, h = calc_size_from_ratio(aspect_ratio, image_size)
         if result["type"] == "async":
             task_id = result["task_id"]
