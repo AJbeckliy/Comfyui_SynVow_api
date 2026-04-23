@@ -100,7 +100,7 @@ class SynVowGeminiAPI:
                 request_body["seed"] = seed
             headers = synvow_auth.make_api_headers(api_key)
             url = f"{DIRECT_API_BASE}/api/models/chat/completions"
-            res = _requests.post(url, headers=headers, json=request_body, timeout=300, verify=False)
+            res = _requests.post(url, headers=headers, json=request_body, timeout=600, verify=False)
             if res.status_code != 200:
                 return f"HTTP {res.status_code}: {res.text[:200]}", "{}", "{}"
             response_data = res.json()
@@ -221,7 +221,7 @@ class SynVowGeminiPromptGen:
 
         try:
             import requests as _requests
-            res = _requests.post(url, headers=headers, json=request_body, timeout=300, verify=False)
+            res = _requests.post(url, headers=headers, json=request_body, timeout=600, verify=False)
             if res.status_code != 200:
                 msg = f"HTTP {res.status_code}: {res.text[:200]}"
                 return (msg, json.dumps({"error": msg}, ensure_ascii=False), json.dumps({"status": "error", "message": msg}, ensure_ascii=False))

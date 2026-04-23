@@ -21,17 +21,64 @@ from . import synvow_auth
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
-_SIZE_OPTIONS = [
-    "auto",
-    "1024x1024",
-    "1536x1024",
-    "1024x1536",
-    "2048x2048",
-    "2048x1152",
-    "1152x2048",
-    "3840x2160",
-    "2160x3840",
-]
+_RATIO_TO_SIZE_1K = {
+    "auto":  "auto",
+    "1:1":   "1024x1024",
+    "16:9":  "1536x1024",
+    "9:16":  "1024x1536",
+    "4:3":   "1360x1024",
+    "3:4":   "1024x1360",
+    "5:4":   "1280x1024",
+    "4:5":   "1024x1280",
+    "3:2":   "1152x768",
+    "2:3":   "768x1152",
+    "3:1":   "1536x512",
+    "1:3":   "512x1536",
+    "2:1":   "1280x640",
+    "1:2":   "640x1280",
+    "21:9":  "1792x768",
+    "9:21":  "768x1792",
+}
+
+_RATIO_TO_SIZE_2K = {
+    "auto":  "auto",
+    "1:1":   "2048x2048",
+    "16:9":  "2048x1152",
+    "9:16":  "1152x2048",
+    "4:3":   "2048x1536",
+    "3:4":   "1536x2048",
+    "5:4":   "2048x1632",
+    "4:5":   "1632x2048",
+    "3:2":   "2048x1360",
+    "2:3":   "1360x2048",
+    "3:1":   "2048x688",
+    "1:3":   "688x2048",
+    "2:1":   "2048x1024",
+    "1:2":   "1024x2048",
+    "21:9":  "2560x1104",
+    "9:21":  "1104x2560",
+}
+
+_RATIO_TO_SIZE_4K = {
+    "auto":  "auto",
+    "1:1":   "2880x2880",
+    "16:9":  "3840x2160",
+    "9:16":  "2160x3840",
+    "4:3":   "3312x2480",
+    "3:4":   "2480x3312",
+    "5:4":   "3200x2560",
+    "4:5":   "2560x3200",
+    "3:2":   "3840x2352",
+    "2:3":   "2352x3520",
+    "3:1":   "3840x1280",
+    "1:3":   "1280x3840",
+    "2:1":   "3840x1920",
+    "1:2":   "1920x3840",
+    "21:9":  "3840x1648",
+    "9:21":  "1648x3840",
+}
+
+_RATIO_MAPS = {"1K": _RATIO_TO_SIZE_1K, "2K": _RATIO_TO_SIZE_2K, "4K": _RATIO_TO_SIZE_4K}
 
 
 class SynVowGptImage2:
@@ -52,7 +99,8 @@ class SynVowGptImage2:
                 "direction": (["文生图", "图生图"], {"default": "文生图"}),
                 "mode": (["默认", "优质"], {"default": "默认"}),
                 "quality": (["auto", "low", "medium", "high"], {"default": "auto"}),
-                "size": (_SIZE_OPTIONS, {"default": "1024x1024"}),
+                "resolution": (["1K", "2K", "4K"], {"default": "1K"}),
+                "aspect_ratio": (list(_RATIO_TO_SIZE_1K.keys()), {"default": "1:1"}),
                 "count": ("INT", {"default": 1, "min": 1, "max": 4}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
@@ -169,7 +217,7 @@ class SynVowGptImage2:
                 payload["images"] = b64_list[1:]
         return payload
 
-    def generate(self, direction, mode, quality, size, count, seed,
+    def generate(self, direction, mode, quality, resolution, aspect_ratio, count, seed,
                  prompt=None, prompts_list=None, images_list=None,
                  image1=None, image2=None, image3=None, image4=None,
                  image5=None, image6=None, image7=None, image8=None):
@@ -177,7 +225,8 @@ class SynVowGptImage2:
         direction = direction[0] if isinstance(direction, list) else direction
         mode = mode[0] if isinstance(mode, list) else mode
         quality = quality[0] if isinstance(quality, list) else quality
-        size = size[0] if isinstance(size, list) else size
+        resolution = resolution[0] if isinstance(resolution, list) else resolution
+        aspect_ratio = aspect_ratio[0] if isinstance(aspect_ratio, list) else aspect_ratio
         count = count[0] if isinstance(count, list) else count
         seed = seed[0] if isinstance(seed, list) else seed
         image1 = image1[0] if isinstance(image1, list) else image1
@@ -204,7 +253,9 @@ class SynVowGptImage2:
         headers = synvow_auth.make_api_headers(api_key)
         model = f"gpt-image-2-{direction}-{mode}"
         is_img2img = direction == "图生图"
-        size = size if size and size != "auto" else "auto"
+        effective_resolution = resolution if mode != "默认" else "1K"
+        ratio_map = _RATIO_MAPS.get(effective_resolution, _RATIO_TO_SIZE_1K)
+        size = ratio_map.get(aspect_ratio, "auto")
         api_url = f"{LOCAL_BASE}/api/models/image/edit"
         poll_url = f"{DIRECT_API_BASE}/api/models/tasks"
 

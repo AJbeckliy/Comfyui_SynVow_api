@@ -48,6 +48,10 @@ def read_api_key():
     if not api_key:
         raise RuntimeError("请先 SynVow 登录，然后再登录")
 
+    expires_at = data.get("expires_at")
+    if expires_at and time.time() > expires_at:
+        raise RuntimeError("SynVow 登录已过期，请重新登录")
+
     return api_key
 
 

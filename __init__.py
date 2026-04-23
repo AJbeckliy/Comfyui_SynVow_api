@@ -255,12 +255,14 @@ async def _sv_save_token(request):
 
         path = _get_auth_file_path()
         os.makedirs(os.path.dirname(path), exist_ok=True)
+        import time as _time
         with open(path, "w", encoding="utf-8") as f:
             json.dump({
                 "token": token,
                 "refresh_token": body.get("refresh_token", ""),
                 "api_key": api_key,
-                "updated_at": datetime.now(timezone.utc).isoformat()
+                "updated_at": datetime.now(timezone.utc).isoformat(),
+                "expires_at": _time.time() + 7 * 24 * 3600
             }, f, ensure_ascii=False, indent=2)
 
         print(f"[SV] Token & API Key saved → {path}")
