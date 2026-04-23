@@ -10,6 +10,7 @@ import { showRechargeRecordsDialog } from "./synvow_recharge_records.js";
 import { showConsumptionRecordsDialog } from "./synvow_consumption_records.js";
 import { showProfileDialog } from "./synvow_profile.js";
 import { showModelPriceDialog } from "./synvow_model_price.js";
+import { showChangelogDialog } from "./synvow_changelog.js";
 
 function loadPos() {
     try { return JSON.parse(localStorage.getItem("sv_float_pos") || "null"); } catch { return null; }
@@ -144,6 +145,7 @@ app.registerExtension({
             $el("div.sv-dropdown-item", { textContent: "充值记录",  onclick: () => { hideMenus(); showRechargeRecordsDialog(); } }),
             $el("div.sv-dropdown-item", { textContent: "消费记录",  onclick: () => { hideMenus(); showConsumptionRecordsDialog(); } }),
             $el("div.sv-dropdown-item", { textContent: "模型价格",  onclick: () => { hideMenus(); showModelPriceDialog(); } }),
+            $el("div.sv-dropdown-item", { textContent: "更新日志",  onclick: () => { hideMenus(); showChangelogDialog(); } }),
             $el("div.sv-divider"),
         ]);
         settingsMenu.style.right = "0";
