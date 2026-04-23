@@ -49,7 +49,7 @@ def _submit_task(api_key, model, prompt, image_urls=None,
                 raise Exception(f"提交失败 ({res.status_code}): {res.text[:200]}")
             resp_data = res.json()
             task_id = parse_task_id(resp_data)
-            consumption_id = resp_data.get("consumption_id") or ""
+            consumption_id = resp_data.get("consumption_id")
             return task_id, consumption_id
         except Exception as e:
             print(f"[Veo3.1] 提交重试 {attempt+1}/{max_retries}: {e}")

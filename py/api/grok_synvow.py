@@ -22,7 +22,7 @@ def _submit_task(api_key, prompt, ratio, resolution, duration, image_urls=None):
                or data.get("id") or (data.get("data") or {}).get("id"))
     if not task_id:
         raise Exception(f"no task_id: {data}")
-    consumption_id = data.get("consumption_id") or ""
+    consumption_id = data.get("consumption_id")
     return task_id, consumption_id
 
 
@@ -68,10 +68,10 @@ def _poll_grok(api_key, task_id, timeout=600, interval=5, consumption_id=""):
         time.sleep(interval)
 
 
-def _poll_grok_only(api_key, task_id, save_path, filename="", stagger_delay=0):
+def _poll_grok_only(api_key, task_id, save_path, filename="", stagger_delay=0, consumption_id=""):
     if stagger_delay > 0:
         time.sleep(stagger_delay)
-    result = _poll_grok(api_key, task_id)
+    result = _poll_grok(api_key, task_id, consumption_id=consumption_id)
     video_url = ((result.get("data") or {}).get("output")
                  or result.get("output") or result.get("video_url") or "")
     if not video_url:
@@ -228,8 +228,8 @@ class SynVowGrokVideoBatch:
         task_ids = []
         for i, prompt in enumerate(prompts):
             try:
-                task_id, _ = _submit_task(api_key, prompt, ratio, resolution, duration, image_urls)
-                task_ids.append((i, task_id, filenames[i]))
+                task_id, consumption_id = _submit_task(api_key, prompt, ratio, resolution, duration, image_urls)
+                task_ids.append((i, task_id, consumption_id, filenames[i]))
                 if i < len(prompts) - 1:
                     time.sleep(3)
             except Exception as e:
@@ -237,8 +237,8 @@ class SynVowGrokVideoBatch:
                 results[i] = {"success": False, "video_path": "", "video_url": "", "error": str(e)}
         with ThreadPoolExecutor(max_workers=min(max_concurrent, max(len(task_ids), 1))) as pool:
             futures = {}
-            for seq, (i, task_id, fname) in enumerate(task_ids):
-                futures[pool.submit(_poll_grok_only, api_key, task_id, save_path, fname, seq * 10)] = i
+            for seq, (i, task_id, consumption_id, fname) in enumerate(task_ids):
+                futures[pool.submit(_poll_grok_only, api_key, task_id, save_path, fname, seq * 10, consumption_id)] = i
             for f in as_completed(futures):
                 idx = futures[f]
                 try:

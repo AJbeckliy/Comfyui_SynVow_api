@@ -62,8 +62,10 @@ class SynVowGeminiAPI:
     RETURN_NAMES = ("output", "debug_info", "task_info")
 
     @classmethod
-    def IS_CHANGED(cls, **kwargs):
-        return float("NaN")
+    def IS_CHANGED(cls, 模型, 模式, system_prompt, user_prompt, seed, **kwargs):
+        import hashlib
+        key = f"{模型}|{模式}|{system_prompt}|{user_prompt}|{seed}"
+        return hashlib.md5(key.encode()).hexdigest()
 
     def _tensor_to_base64(self, tensor):
         i = 255.0 * tensor[0].cpu().numpy()
@@ -74,12 +76,15 @@ class SynVowGeminiAPI:
         img.save(buf, format="JPEG", quality=85)
         return base64.b64encode(buf.getvalue()).decode("utf-8")
 
-    def _request_single(self, img_tensor, model_name, system_prompt, user_prompt, seed, api_key):
+    def _request_single(self, img_tensors, model_name, system_prompt, user_prompt, seed, api_key):
+        """img_tensors: 单个 tensor 或 tensor 列表，多张图合并进一条消息"""
         try:
-            b64 = self._tensor_to_base64(img_tensor)
-            user_content = [
-                {"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}},
-            ]
+            if not isinstance(img_tensors, (list, tuple)):
+                img_tensors = [img_tensors]
+            user_content = []
+            for t in img_tensors:
+                b64 = self._tensor_to_base64(t)
+                user_content.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64}"}})
             if user_prompt:
                 user_content.append({"type": "text", "text": user_prompt})
             request_body = {
@@ -100,7 +105,7 @@ class SynVowGeminiAPI:
                 return f"HTTP {res.status_code}: {res.text[:200]}", "{}", "{}"
             response_data = res.json()
             raw_text = synvow_auth.parse_chat_response(response_data) or "Error: empty response"
-            consumption_id = response_data.get("consumption_id", "") if isinstance(response_data, dict) else ""
+            consumption_id = response_data.get("consumption_id") if isinstance(response_data, dict) else None
             debug = json.dumps({"model": model_name, "raw": raw_text[:500]}, ensure_ascii=False)
             task_info = json.dumps({"status": "SUCCESS", "consumption_id": consumption_id, "model": model_name}, ensure_ascii=False)
             return raw_text, debug, task_info
@@ -121,29 +126,31 @@ class SynVowGeminiAPI:
 
         model_name = GEMINI_MODEL_MAP.get((模型, 模式), "gemini-3.1-flash-默认")
 
+        # images_list: 每张图独立一个并发任务
+        # image_1~10: 合并为单次请求（多图一起发给 Gemini）
         if images_list is not None:
-            import torch
             if isinstance(images_list, (list, tuple)):
-                img_list = list(images_list)
+                task_inputs = list(images_list)
             else:
-                img_list = [images_list[i:i+1] for i in range(images_list.shape[0])]
+                task_inputs = [images_list[i:i+1] for i in range(images_list.shape[0])]
         else:
-            img_list = [img for img in [image_1, image_2, image_3, image_4, image_5,
-                                        image_6, image_7, image_8, image_9, image_10]
-                        if img is not None]
+            single_imgs = [img for img in [image_1, image_2, image_3, image_4, image_5,
+                                           image_6, image_7, image_8, image_9, image_10]
+                           if img is not None]
+            task_inputs = [single_imgs] if single_imgs else []
 
-        if not img_list:
+        if not task_inputs:
             return (["无图片输入"], ["{}"], ["{}"])
 
-        print(f"[SynVow Gemini] 并发处理 {len(img_list)} 张图片")
-        outputs = [None] * len(img_list)
-        debugs = [None] * len(img_list)
-        tasks = [None] * len(img_list)
+        print(f"[SynVow Gemini] 并发处理 {len(task_inputs)} 个任务")
+        outputs = [None] * len(task_inputs)
+        debugs = [None] * len(task_inputs)
+        tasks = [None] * len(task_inputs)
 
-        with concurrent.futures.ThreadPoolExecutor(max_workers=len(img_list)) as executor:
+        with concurrent.futures.ThreadPoolExecutor(max_workers=len(task_inputs)) as executor:
             future_map = {
-                executor.submit(self._request_single, img, model_name, system_prompt, user_prompt, seed, api_key): i
-                for i, img in enumerate(img_list)
+                executor.submit(self._request_single, imgs, model_name, system_prompt, user_prompt, seed, api_key): i
+                for i, imgs in enumerate(task_inputs)
             }
             for future in concurrent.futures.as_completed(future_map):
                 idx = future_map[future]
@@ -179,8 +186,10 @@ class SynVowGeminiPromptGen:
     RETURN_NAMES = ("output", "debug_info", "task_info")
 
     @classmethod
-    def IS_CHANGED(cls, **kwargs):
-        return float("NaN")
+    def IS_CHANGED(cls, 模型, 模式, system_prompt, user_prompt, seed=0, **kwargs):
+        import hashlib
+        key = f"{模型}|{模式}|{system_prompt}|{user_prompt}|{seed}"
+        return hashlib.md5(key.encode()).hexdigest()
 
     def generate(self, 模型, 模式, system_prompt, user_prompt, seed=0, **kwargs):
         try:
@@ -221,7 +230,7 @@ class SynVowGeminiPromptGen:
             return (f"Request error: {e}", json.dumps({"error": str(e)}, ensure_ascii=False), json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
 
         raw_text = synvow_auth.parse_chat_response(response_data) or "Error: empty response"
-        consumption_id = response_data.get("consumption_id", "") if isinstance(response_data, dict) else ""
+        consumption_id = response_data.get("consumption_id") if isinstance(response_data, dict) else None
         debug = json.dumps({"model": model_name, "raw": raw_text[:500]}, ensure_ascii=False)
         task_info = json.dumps({"status": "SUCCESS", "consumption_id": consumption_id, "model": model_name}, ensure_ascii=False)
         return (raw_text, debug, task_info)

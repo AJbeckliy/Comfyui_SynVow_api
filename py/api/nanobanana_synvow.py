@@ -162,7 +162,7 @@ def submit_image_task(api_key, model, prompt, images=None, aspect_ratio=None, im
         raise Exception(f"Request failed ({resp_code}): {msg[:200]}")
 
     task_id = _extract_task_id(response_json)
-    consumption_id = response_json.get("consumption_id") or "" if isinstance(response_json, dict) else ""
+    consumption_id = response_json.get("consumption_id") if isinstance(response_json, dict) else None
     if task_id:
         return {"type": "async", "task_id": task_id, "consumption_id": consumption_id}
     else:
@@ -183,7 +183,7 @@ def poll_task_result(api_key, task_id, session_id=None, model=None, consumption_
 
 
 async def _async_poll_task(api_key, task_id, session_id=None, model=None, consumption_id=""):
-    timeout = 600
+    timeout = 900
     interval_running = 2
     interval_queued = 5
     poll_url = f"{DIRECT_API_BASE}/api/models/tasks"
@@ -191,7 +191,7 @@ async def _async_poll_task(api_key, task_id, session_id=None, model=None, consum
     poll_body = {"task_id": task_id}
     if model:
         poll_body["model"] = model
-    if consumption_id:
+    if consumption_id is not None:
         poll_body["consumption_id"] = consumption_id
 
     poll_count = 0
