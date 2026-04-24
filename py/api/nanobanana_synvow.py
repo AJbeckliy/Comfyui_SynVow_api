@@ -169,7 +169,7 @@ def submit_image_task(api_key, model, prompt, images=None, aspect_ratio=None, im
         return {"type": "sync", "data": response_json}
 
 
-def poll_task_result(api_key, task_id, session_id=None, model=None, consumption_id=""):
+def poll_task_result(api_key, task_id, session_id=None, model=None, consumption_id=None):
     try:
         loop = asyncio.get_running_loop()
     except RuntimeError:
@@ -182,7 +182,7 @@ def poll_task_result(api_key, task_id, session_id=None, model=None, consumption_
         return asyncio.run(_async_poll_task(api_key, task_id, session_id, model, consumption_id))
 
 
-async def _async_poll_task(api_key, task_id, session_id=None, model=None, consumption_id=""):
+async def _async_poll_task(api_key, task_id, session_id=None, model=None, consumption_id=None):
     timeout = 900
     interval_running = 2
     interval_queued = 5
@@ -313,7 +313,7 @@ def _run_generate(api_key, model, prompt, images=None, aspect_ratio="1:1", image
         task_id = submit_result["task_id"]
         result_data = poll_task_result(api_key, task_id,
                                        session_id=session_id, model=model,
-                                       consumption_id=submit_result.get("consumption_id", ""))
+                                       consumption_id=submit_result.get("consumption_id"))
         if result_data is None:
             raise Exception("Task polling failed or timed out")
         return download_image_from_result(result_data, target_w=w, target_h=h), task_id
@@ -623,7 +623,7 @@ class SynVowNanoBanana_TIBatch:
         w, h = calc_size_from_ratio(aspect_ratio, image_size)
         if result["type"] == "async":
             task_id = result["task_id"]
-            result_data = poll_task_result(api_key, task_id, session_id=session_id, model=model, consumption_id=result.get("consumption_id", ""))
+            result_data = poll_task_result(api_key, task_id, session_id=session_id, model=model, consumption_id=result.get("consumption_id"))
             if result_data is None:
                 return {"success": False, "error": "polling timeout", "task_id": task_id}
             return {"success": True, "images": download_image_from_result(result_data, w, h), "task_id": task_id}
@@ -783,7 +783,7 @@ class SynVowNano2_TIBatch:
         w, h = calc_size_from_ratio(aspect_ratio, image_size)
         if result["type"] == "async":
             task_id = result["task_id"]
-            result_data = poll_task_result(api_key, task_id, session_id=session_id, model=model, consumption_id=result.get("consumption_id", ""))
+            result_data = poll_task_result(api_key, task_id, session_id=session_id, model=model, consumption_id=result.get("consumption_id"))
             if result_data is None:
                 return {"success": False, "error": "polling timeout", "task_id": task_id}
             return {"success": True, "images": download_image_from_result(result_data, w, h), "task_id": task_id}
