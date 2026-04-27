@@ -253,8 +253,7 @@ class SynVowGptImage2:
         headers = synvow_auth.make_api_headers(api_key)
         model = f"gpt-image-2-{direction}-{mode}"
         is_img2img = direction == "图生图"
-        effective_resolution = resolution if mode != "默认" else "1K"
-        ratio_map = _RATIO_MAPS.get(effective_resolution, _RATIO_TO_SIZE_1K)
+        ratio_map = _RATIO_MAPS.get(resolution, _RATIO_TO_SIZE_1K)
         size = ratio_map.get(aspect_ratio, "auto")
         api_url = f"{LOCAL_BASE}/api/models/image/edit"
         poll_url = f"{DIRECT_API_BASE}/api/models/tasks"
