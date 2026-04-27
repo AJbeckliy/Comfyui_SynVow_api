@@ -200,10 +200,15 @@ class SynVowGptImage2:
                 print(f"[SynVow GPT-Image-2] ⚠️ {task_id[:8]}... 轮询异常 ({elapsed}s): {e}")
                 raise Exception(f"轮询请求失败: {e}")
 
-    def _tensor_to_b64(self, img_tensor):
+    def _tensor_to_b64(self, img_tensor, max_side=1024):
         arr = (img_tensor[0].cpu().numpy() * 255).clip(0, 255).astype(np.uint8)
+        pil = Image.fromarray(arr).convert("RGB")
+        w, h = pil.size
+        if max(w, h) > max_side:
+            scale = max_side / max(w, h)
+            pil = pil.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
         buf = io.BytesIO()
-        Image.fromarray(arr).convert("RGB").save(buf, format="PNG")
+        pil.save(buf, format="PNG")
         return "data:image/png;base64," + _b64.b64encode(buf.getvalue()).decode()
 
     def _build_payload(self, model, prompt, size, quality, seed, is_img2img, img_tensors):
