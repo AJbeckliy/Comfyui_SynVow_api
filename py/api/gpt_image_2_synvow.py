@@ -68,7 +68,7 @@ _RATIO_TO_SIZE_4K = {
     "3:4":   "2480x3312",
     "5:4":   "3200x2560",
     "4:5":   "2560x3200",
-    "3:2":   "3840x2352",
+    "3:2":   "3520x2352",
     "2:3":   "2352x3520",
     "3:1":   "3840x1280",
     "1:3":   "1280x3840",
@@ -207,7 +207,9 @@ class SynVowGptImage2:
         return "data:image/png;base64," + _b64.b64encode(buf.getvalue()).decode()
 
     def _build_payload(self, model, prompt, size, quality, seed, is_img2img, img_tensors):
-        payload = {"model": model, "prompt": prompt, "size": size}
+        payload = {"model": model, "prompt": prompt}
+        if size and size != "auto":
+            payload["size"] = size
         if quality and quality != "auto":
             payload["quality"] = quality
         if is_img2img and img_tensors:
