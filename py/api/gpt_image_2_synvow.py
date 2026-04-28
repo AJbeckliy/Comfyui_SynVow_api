@@ -371,15 +371,20 @@ class SynVowGptImage2:
                 if img_url is None:
                     tensors.append(self._blank_image())
                     continue
-                try:
-                    r = requests.get(img_url, timeout=120, verify=False)
-                    r.raise_for_status()
-                    img = Image.open(io.BytesIO(r.content)).convert("RGB")
-                    arr = np.array(img).astype(np.float32) / 255.0
-                    tensors.append(torch.from_numpy(arr).unsqueeze(0))
-                except Exception as e:
-                    print(f"[SynVow GPT-Image-2] 下载图片失败 {img_url}: {e}")
-                    tensors.append(self._blank_image())
+                for _attempt in range(3):
+                    try:
+                        r = requests.get(img_url, timeout=120, verify=False)
+                        r.raise_for_status()
+                        img = Image.open(io.BytesIO(r.content)).convert("RGB")
+                        arr = np.array(img).astype(np.float32) / 255.0
+                        tensors.append(torch.from_numpy(arr).unsqueeze(0))
+                        break
+                    except Exception as e:
+                        print(f"[SynVow GPT-Image-2] 下载图片失败 (attempt {_attempt+1}/3) {img_url}: {e}")
+                        if _attempt < 2:
+                            time.sleep(3)
+                        else:
+                            tensors.append(self._blank_image())
             if tensors:
                 # 统一 resize 到第一张图的尺寸再 cat
                 h, w = tensors[0].shape[1], tensors[0].shape[2]
