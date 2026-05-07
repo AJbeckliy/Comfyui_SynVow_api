@@ -60,6 +60,18 @@ ComfyUI 用于 SynVow API 集成的自定义节点。
 
 ## 更新日志
 
+### 2026-05-07
+- **新增 `SynVow 视频预览` 节点**（`💫SynVow_api/tools` 分类）
+  - 接收 `video_path` 输入接口，支持在节点内直接预览生成的视频
+  - 自动将视频复制到 ComfyUI output 目录后渲染
+- **新增 `GPT-Image-2 Prompt Optimizer` 节点**（`💫SynVow_api/tools` 分类）
+  - 通过 LLM 对图像生成提示词进行优化，支持多种任务类型和优化强度
+- **新增取消轮询按钮**
+  - 所有 SynVow 视频/图像生成节点新增 **取消轮询** 按钮，点击后发送中断信号终止当前轮询
+- **视频生成节点重构**
+  - `grok_synvow.py`、`veo3_synvow.py`、`sora2_synvow.py` 移除内嵌视频预览逻辑，统一交由 `SynVow 视频预览` 节点处理
+- **修复** `GPT-Image-2 Prompt Optimizer` 节点在模型未返回有效内容时崩溃的问题
+
 ### 2026-04-21
 - **新增 `SynVow GPT-Image-2` 节点**
   - 支持 GPT-Image-2 文生图（`gpt-image-2-文生图-默认`）和图生图（`gpt-image-2-图生图-默认`）
