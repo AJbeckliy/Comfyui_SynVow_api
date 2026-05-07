@@ -26,13 +26,15 @@ def _submit_task(api_key, prompt, ratio, resolution, duration, image_urls=None):
     return task_id, consumption_id
 
 
-def _poll_grok(api_key, task_id, timeout=600, interval=5, consumption_id=""):
+def _poll_grok(api_key, task_id, timeout=1800, interval=5, consumption_id=""):
+    import comfy.model_management as mm
     url = f"{DIRECT_API_BASE}/api/models/tasks"
     headers = synvow_auth.make_api_headers(api_key)
     start = time.time()
     count = 0
     while True:
         count += 1
+        mm.throw_exception_if_processing_interrupted()
         if time.time() - start > timeout:
             raise Exception(f"Grok timeout ({timeout}s)")
         try:
@@ -66,6 +68,7 @@ def _poll_grok(api_key, task_id, timeout=600, interval=5, consumption_id=""):
                 raise
             print(f"[Grok] poll error: {e}")
         time.sleep(interval)
+        mm.throw_exception_if_processing_interrupted()
 
 
 def _poll_grok_only(api_key, task_id, save_path, filename="", stagger_delay=0, consumption_id=""):
@@ -142,16 +145,7 @@ class SynVowGrokVideo:
             path = download_video(video_url, task_id, save_path, prefix="grok", filename=filename) or ""
             info = json.dumps({"status": "SUCCESS", "task_id": task_id,
                                "video_url": video_url, "video_path": path}, ensure_ascii=False)
-            import os, shutil, folder_paths as _fp
-            gifs = []
-            if path and os.path.isfile(path):
-                out_dir = _fp.get_output_directory()
-                fname = os.path.basename(path)
-                preview_path = os.path.join(out_dir, fname)
-                if os.path.normpath(path) != os.path.normpath(preview_path):
-                    shutil.copy2(path, preview_path)
-                gifs.append({"filename": fname, "subfolder": "", "type": "output", "format": "video/mp4"})
-            return {"ui": {"gifs": gifs}, "result": (path, video_url, info)}
+            return (path, video_url, info)
         except Exception as e:
             print(f"[Grok] Error: {e}")
             return ("", "", json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
@@ -253,17 +247,7 @@ class SynVowGrokVideoBatch:
             urls.append(r["video_url"])
             if r.get("success"): ok += 1
         info = json.dumps({"total": len(prompts), "successful": ok, "failed": len(prompts) - ok}, ensure_ascii=False)
-        import os, shutil, folder_paths as _fp
-        gifs = []
-        out_dir = _fp.get_output_directory()
-        for p in paths:
-            if p and os.path.isfile(p):
-                fname = os.path.basename(p)
-                preview_path = os.path.join(out_dir, fname)
-                if os.path.normpath(p) != os.path.normpath(preview_path):
-                    shutil.copy2(p, preview_path)
-                gifs.append({"filename": fname, "subfolder": "", "type": "output", "format": "video/mp4"})
-        return {"ui": {"gifs": gifs}, "result": (paths, urls, info)}
+        return (paths, urls, info)
 
 
 NODE_CLASS_MAPPINGS = {

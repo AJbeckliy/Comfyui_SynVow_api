@@ -183,7 +183,8 @@ def poll_task_result(api_key, task_id, session_id=None, model=None, consumption_
 
 
 async def _async_poll_task(api_key, task_id, session_id=None, model=None, consumption_id=None):
-    timeout = 900
+    import comfy.model_management as mm
+    timeout = 1800
     interval_running = 2
     interval_queued = 5
     poll_url = f"{DIRECT_API_BASE}/api/models/tasks"
@@ -200,6 +201,7 @@ async def _async_poll_task(api_key, task_id, session_id=None, model=None, consum
 
     async with aiohttp.ClientSession() as session:
         while True:
+            mm.throw_exception_if_processing_interrupted()
             if session_id and session_id in pending_batch_sessions:
                 if pending_batch_sessions[session_id].get("cancelled", False):
                     print(f"[{short_id}] Cancelled", flush=True)
@@ -236,11 +238,13 @@ async def _async_poll_task(api_key, task_id, session_id=None, model=None, consum
             elif status in ("NOT_START", "QUEUED", "PENDING"):
                 print(f"⏳ [{short_id}] {poll_count}次 {elapsed:.1f}s {status} (排队中)", flush=True)
                 await asyncio.sleep(interval_queued)
+                mm.throw_exception_if_processing_interrupted()
                 continue
             else:
                 print(f"⏳ [{short_id}] {poll_count}次 {elapsed:.1f}s status={repr(status)} data_keys={list(data.keys()) if isinstance(data, dict) else type(data)}", flush=True)
 
             await asyncio.sleep(interval_running)
+            mm.throw_exception_if_processing_interrupted()
 
 
 def _download_single_image(url, max_retries=3):

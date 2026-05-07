@@ -9,11 +9,7 @@ function fitHeight(node) {
 app.registerExtension({
     name: "SynVow.VideoPreview",
     async beforeRegisterNodeDef(nodeType, nodeData, app) {
-        if (nodeData.name === "SynVowGrokVideo"
-            || nodeData.name === "SynVowGrokVideoBatch"
-            || nodeData.name === "SynVowSora2Video" || nodeData.name === "SynVowSora2Video_Pro"
-            || nodeData.name === "SynVowSora2Video_TBatch" || nodeData.name === "SynVowSora2Video_ProBatch"
-            || nodeData.name === "SynVowVeo31Video" || nodeData.name === "SynVowVeo31VideoBatch") {
+        if (nodeData.name === "SynVowApiVideoPreview") {
             const onNodeCreated = nodeType.prototype.onNodeCreated;
             nodeType.prototype.onNodeCreated = function () {
                 onNodeCreated?.apply(this, arguments);
@@ -54,7 +50,6 @@ app.registerExtension({
             const onExecuted = nodeType.prototype.onExecuted;
             nodeType.prototype.onExecuted = function (message) {
                 onExecuted?.apply(this, arguments);
-                
                 const previewWidget = this.widgets?.find(w => w.name === "videopreview");
                 if (!previewWidget) return;
                 

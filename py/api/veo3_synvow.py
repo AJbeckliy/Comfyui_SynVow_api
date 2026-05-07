@@ -59,13 +59,15 @@ def _submit_task(api_key, model, prompt, image_urls=None,
                 raise
 
 
-def _poll_veo31(api_key, model, task_id, timeout=600, interval=5, consumption_id=""):
+def _poll_veo31(api_key, model, task_id, timeout=1800, interval=5, consumption_id=""):
+    import comfy.model_management as mm
     headers = synvow_auth.make_api_headers(api_key)
     url = f"{DIRECT_API_BASE}/api/models/tasks"
     start = time.time()
     count = 0
     while True:
         count += 1
+        mm.throw_exception_if_processing_interrupted()
         if time.time() - start > timeout:
             raise Exception(f"Veo3.1 超时 ({timeout}秒)")
         try:
@@ -94,6 +96,7 @@ def _poll_veo31(api_key, model, task_id, timeout=600, interval=5, consumption_id
                 raise
             print(f"[Veo3.1] 轮询异常: {e}")
         time.sleep(interval)
+        mm.throw_exception_if_processing_interrupted()
 
 
 def _collect_images(api_key, image_1, image_2):
@@ -106,16 +109,7 @@ def _collect_images(api_key, image_1, image_2):
 
 
 def _make_preview(path, video_url, task_info):
-    import folder_paths as _fp
-    gifs = []
-    if path and os.path.isfile(path):
-        out_dir = _fp.get_output_directory()
-        fname = os.path.basename(path)
-        preview_path = os.path.join(out_dir, fname)
-        if os.path.normpath(path) != os.path.normpath(preview_path):
-            shutil.copy2(path, preview_path)
-        gifs.append({"filename": fname, "subfolder": "", "type": "output", "format": "video/mp4"})
-    return {"ui": {"gifs": gifs}, "result": (path, video_url, task_info)}
+    return (path, video_url, task_info)
 
 
 def _poll_only(api_key, model, task_id, save_path, filename="", stagger_delay=0):
@@ -302,18 +296,7 @@ class SynVowVeo31VideoBatch:
                 ok += 1
         info = json.dumps({"total": len(prompts), "successful": ok, "failed": len(prompts) - ok}, ensure_ascii=False)
 
-        # 批量预览
-        import folder_paths as _fp
-        gifs = []
-        out_dir = _fp.get_output_directory()
-        for p in paths:
-            if p and os.path.isfile(p):
-                fname = os.path.basename(p)
-                preview_path = os.path.join(out_dir, fname)
-                if os.path.normpath(p) != os.path.normpath(preview_path):
-                    shutil.copy2(p, preview_path)
-                gifs.append({"filename": fname, "subfolder": "", "type": "output", "format": "video/mp4"})
-        return {"ui": {"gifs": gifs}, "result": (paths, urls, info)}
+        return (paths, urls, info)
 
 
 # ---------------------------------------------------------------------------

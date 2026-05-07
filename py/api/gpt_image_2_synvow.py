@@ -139,14 +139,8 @@ class SynVowGptImage2:
 
     def _submit(self, payload, headers, api_url):
         """提交任务，返回 (task_id, consumption_id)，失败抛异常"""
-        def _trunc(v):
-            if isinstance(v, str) and len(v) > 40:
-                return v[:40] + "..."
-            if isinstance(v, list):
-                return [_trunc(i) for i in v]
-            return v
-        _log_payload = {k: _trunc(v) for k, v in payload.items()}
-        print(f"[SynVow GPT-Image-2] 提交参数: {_log_payload}")
+        img_count = len(payload.get("images", [])) + (1 if "image" in payload else 0)
+        print(f"[SynVow GPT-Image-2] 提交参数: model={payload.get('model')} size={payload.get('size')} quality={payload.get('quality')} images={img_count}")
         res = requests.post(api_url, headers=headers, json=payload,
                             params={"async": "true"}, timeout=60, verify=False)
         res.raise_for_status()
@@ -173,11 +167,14 @@ class SynVowGptImage2:
         if consumption_id is not None:
             poll_body["consumption_id"] = consumption_id
 
-        timeout_total = 900
+        import comfy.model_management as mm
+        timeout_total = 1800
         interval = 5
         start_time = time.time()
         while True:
+            mm.throw_exception_if_processing_interrupted()
             time.sleep(interval)
+            mm.throw_exception_if_processing_interrupted()
             elapsed = int(time.time() - start_time)
             if elapsed >= timeout_total:
                 print(f"[SynVow GPT-Image-2] ⏰ {task_id[:8]}... 超时 ({elapsed}s)")
@@ -373,7 +370,8 @@ class SynVowGptImage2:
                     continue
                 for _attempt in range(3):
                     try:
-                        r = requests.get(img_url, timeout=120, verify=False)
+                        with requests.Session() as _s:
+                            r = _s.get(img_url, timeout=120, verify=False)
                         r.raise_for_status()
                         img = Image.open(io.BytesIO(r.content)).convert("RGB")
                         arr = np.array(img).astype(np.float32) / 255.0
@@ -382,7 +380,7 @@ class SynVowGptImage2:
                     except Exception as e:
                         print(f"[SynVow GPT-Image-2] 下载图片失败 (attempt {_attempt+1}/3) {img_url}: {e}")
                         if _attempt < 2:
-                            time.sleep(3)
+                            time.sleep(3 * (_attempt + 1))
                         else:
                             tensors.append(self._blank_image())
             if tensors:
@@ -403,10 +401,84 @@ class SynVowGptImage2:
         return (self._blank_image(), technical_response, image_urls_str, chat_history)
 
 
+class SynVowGptImage2All(SynVowGptImage2):
+    """gpt-image-2-all-默认，无 quality/resolution 参数"""
+
+    FUNCTION = "generate_all"
+    CATEGORY = "\U0001f4abSynVow_api"
+    OUTPUT_NODE = False
+    INPUT_IS_LIST = True
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "direction": (["文生图", "图生图"], {"default": "文生图"}),
+                "aspect_ratio": (list(_RATIO_TO_SIZE_1K.keys()), {"default": "1:1"}),
+                "count": ("INT", {"default": 1, "min": 1, "max": 4}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
+            },
+            "optional": {
+                "prompt": ("STRING", {"multiline": True, "default": ""}),
+                "prompts_list": ("STRING", {"forceInput": True}),
+                "images_list": ("IMAGE",),
+                "image1": ("IMAGE",),
+                "image2": ("IMAGE",),
+                "image3": ("IMAGE",),
+                "image4": ("IMAGE",),
+                "image5": ("IMAGE",),
+                "image6": ("IMAGE",),
+                "image7": ("IMAGE",),
+                "image8": ("IMAGE",),
+            },
+        }
+
+    RETURN_TYPES = ("IMAGE", "STRING", "STRING", "STRING")
+    RETURN_NAMES = ("images", "response", "image_urls", "chats")
+
+    @classmethod
+    def IS_CHANGED(cls, **kwargs):
+        return float("NaN")
+
+    def generate_all(self, direction, aspect_ratio, count, seed,
+                     prompt=None, prompts_list=None, images_list=None,
+                     image1=None, image2=None, image3=None, image4=None,
+                     image5=None, image6=None, image7=None, image8=None):
+        return self.generate(
+            direction=direction,
+            mode=["默认"],
+            quality=["auto"],
+            resolution=["1K"],
+            aspect_ratio=aspect_ratio,
+            count=count,
+            seed=seed,
+            prompt=prompt,
+            prompts_list=prompts_list,
+            images_list=images_list,
+            image1=image1, image2=image2, image3=image3, image4=image4,
+            image5=image5, image6=image6, image7=image7, image8=image8,
+        )
+
+    def _build_payload(self, model, prompt, size, quality, seed, is_img2img, img_tensors):
+        # model 由父类拼为 gpt-image-2-{direction}-默认，替换前缀得到 gpt-image-2-all-{direction}-默认
+        all_model = model.replace("gpt-image-2-", "gpt-image-2-all-", 1)
+        payload = {"model": all_model, "prompt": prompt}
+        if size and size != "auto":
+            payload["size"] = size
+        if is_img2img and img_tensors:
+            b64_list = [self._tensor_to_b64(t) for t in img_tensors]
+            payload["image"] = b64_list[0]
+            if len(b64_list) > 1:
+                payload["images"] = b64_list[1:]
+        return payload
+
+
 NODE_CLASS_MAPPINGS = {
     "SynVowGptImage2": SynVowGptImage2,
+    "SynVowGptImage2All": SynVowGptImage2All,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "SynVowGptImage2": "SynVow GPT-Image-2",
+    "SynVowGptImage2All": "SynVow GPT-Image-2-all",
 }

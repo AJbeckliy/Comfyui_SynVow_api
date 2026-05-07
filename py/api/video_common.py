@@ -42,7 +42,7 @@ def parse_task_id(response_json):
     return task_id
 
 
-def poll_video_result(api_key, model, task_id, timeout=300, interval=5, tag="Video"):
+def poll_video_result(api_key, model, task_id, timeout=1800, interval=5, tag="Video"):
     """通用视频任务轮询（异步，不阻塞事件循环）"""
     try:
         loop = asyncio.get_running_loop()
@@ -58,8 +58,9 @@ def poll_video_result(api_key, model, task_id, timeout=300, interval=5, tag="Vid
         return asyncio.run(_async_poll_video(api_key, model, task_id, timeout, interval, tag))
 
 
-async def _async_poll_video(api_key, model, task_id, timeout=300, interval=5, tag="Video"):
+async def _async_poll_video(api_key, model, task_id, timeout=1800, interval=5, tag="Video"):
     """异步视频轮询实现"""
+    import comfy.model_management as mm
     url = f"{DIRECT_API_BASE}/api/models/tasks"
     headers = synvow_auth.make_api_headers(api_key)
     start = time.time()
@@ -68,6 +69,7 @@ async def _async_poll_video(api_key, model, task_id, timeout=300, interval=5, ta
     async with aiohttp.ClientSession() as session:
         while True:
             count += 1
+            mm.throw_exception_if_processing_interrupted()
             if time.time() - start > timeout:
                 raise Exception(f"任务 {task_id} 超时 ({timeout}秒)")
             try:
@@ -94,6 +96,7 @@ async def _async_poll_video(api_key, model, task_id, timeout=300, interval=5, ta
                     raise
                 print(f"⚠️ [{tag}] 轮询异常: {e}")
             await asyncio.sleep(interval)
+            mm.throw_exception_if_processing_interrupted()
 
 
 def extract_video_url(result_data):
@@ -153,6 +156,44 @@ def download_video(video_url, task_id, save_path="", prefix="video", max_retries
         if attempt < max_retries - 1:
             time.sleep(3)
     return None
+
+
+def extract_queue_ticket(resp_data):
+    """从提交响应中提取排队 ticket，若无排队信息则返回 None"""
+    if not isinstance(resp_data, dict):
+        return None
+    data = resp_data.get("data") or resp_data
+    if not isinstance(data, dict):
+        return None
+    ticket_id = data.get("ticket_id")
+    if ticket_id:
+        return {"ticket_id": ticket_id, "queue_position": data.get("queue_position")}
+    return None
+
+
+def wait_for_queue_ready(api_key, ticket_id, tag="Video", timeout=1800, interval=5):
+    """轮询排队状态直到就绪，返回 ready 响应 data"""
+    import comfy.model_management as mm
+    url = f"{DIRECT_API_BASE}/api/models/queue/status"
+    headers = synvow_auth.make_api_headers(api_key)
+    start = time.time()
+    while True:
+        mm.throw_exception_if_processing_interrupted()
+        if time.time() - start > timeout:
+            raise Exception(f"[{tag}] 排队超时 ({timeout}s)")
+        try:
+            res = requests.post(url, headers=headers, json={"ticket_id": ticket_id}, verify=False, timeout=30)
+            data = res.json()
+            inner = data.get("data") or data
+            status = (inner.get("status") or "").upper()
+            pos = inner.get("queue_position", "")
+            print(f"⏳ [{tag}] 排队中: status={status} pos={pos}")
+            if status in ("READY", "SUCCESS", "DONE", "FINISH", "FINISHED", "COMPLETED"):
+                return inner
+        except Exception as e:
+            print(f"[{tag}] 排队状态查询异常: {e}")
+        time.sleep(interval)
+        mm.throw_exception_if_processing_interrupted()
 
 
 def upload_images(api_key, image_bytes_list):

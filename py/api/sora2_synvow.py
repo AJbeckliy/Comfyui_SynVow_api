@@ -40,15 +40,17 @@ def _submit_task(api_key, model, prompt, image_tensors=None, **extra):
     return task_id, consumption_id
 
 
-def _poll_sora2_sync(api_key, model, task_id, timeout=1200, interval=5, consumption_id=""):
+def _poll_sora2_sync(api_key, model, task_id, timeout=1800, interval=5, consumption_id=""):
     """通用同步轮询（POST /api/models/tasks），适用于所有 sora2 模型"""
     import time, requests as _req
+    import comfy.model_management as mm
     headers = synvow_auth.make_api_headers(api_key)
     url = f"{DIRECT_API_BASE}/api/models/tasks"
     start = time.time()
     count = 0
     while True:
         count += 1
+        mm.throw_exception_if_processing_interrupted()
         if time.time() - start > timeout:
             raise Exception(f"任务超时 ({timeout}秒)")
         try:
@@ -86,6 +88,7 @@ def _poll_sora2_sync(api_key, model, task_id, timeout=1200, interval=5, consumpt
                 raise
             print(f"[Sora2] 轮询异常: {e}")
         time.sleep(interval)
+        mm.throw_exception_if_processing_interrupted()
 
 
 def _run_single(api_key, model, prompt, image_tensors, save_path, filename="", **extra):
@@ -138,7 +141,7 @@ def _poll_batch_serial(api_key, model, task_list, save_path):
         next_pending = []
         for idx, task_id, fname in pending:
             try:
-                result = _poll_sora2_sync(api_key, model, task_id, timeout=1200, interval=5)
+                result = _poll_sora2_sync(api_key, model, task_id, timeout=1800, interval=5)
                 url = extract_video_url(result)
                 path = download_video(url, task_id, save_path, prefix="sora2", filename=fname) or ""
                 results[idx] = {"success": True, "video_path": path, "video_url": url, "task_id": task_id}
@@ -168,17 +171,7 @@ def _collect_tensors(image_1, image_2, image_3, image_4):
 
 
 def _make_preview_result(path, video_url, task_info):
-    """生成带内嵌预览的返回值"""
-    import os, shutil, folder_paths as _fp
-    gifs = []
-    if path and os.path.isfile(path):
-        out_dir = _fp.get_output_directory()
-        fname = os.path.basename(path)
-        preview_path = os.path.join(out_dir, fname)
-        if os.path.normpath(path) != os.path.normpath(preview_path):
-            shutil.copy2(path, preview_path)
-        gifs.append({"filename": fname, "subfolder": "", "type": "output", "format": "video/mp4"})
-    return {"ui": {"gifs": gifs}, "result": (path, video_url, task_info)}
+    return (path, video_url, task_info)
 
 
 # ---------------------------------------------------------------------------
@@ -396,18 +389,7 @@ class SynVowSora2Video_TBatch:
             if r.get("success"): ok += 1
         info = json.dumps({"total": len(prompts), "successful": ok, "failed": len(prompts) - ok}, ensure_ascii=False)
 
-        # 批量预览
-        import os, shutil, folder_paths as _fp
-        gifs = []
-        out_dir = _fp.get_output_directory()
-        for p in paths:
-            if p and os.path.isfile(p):
-                fname = os.path.basename(p)
-                preview_path = os.path.join(out_dir, fname)
-                if os.path.normpath(p) != os.path.normpath(preview_path):
-                    shutil.copy2(p, preview_path)
-                gifs.append({"filename": fname, "subfolder": "", "type": "output", "format": "video/mp4"})
-        return {"ui": {"gifs": gifs}, "result": (paths, urls, info)}
+        return (paths, urls, info)
 
 
 # ---------------------------------------------------------------------------
@@ -516,18 +498,7 @@ class SynVowSora2Video_ProBatch:
             if r.get("success"): ok += 1
         info = json.dumps({"total": len(prompts), "successful": ok, "failed": len(prompts) - ok}, ensure_ascii=False)
 
-        # 批量预览
-        import os, shutil, folder_paths as _fp
-        gifs = []
-        out_dir = _fp.get_output_directory()
-        for p in paths:
-            if p and os.path.isfile(p):
-                fname = os.path.basename(p)
-                preview_path = os.path.join(out_dir, fname)
-                if os.path.normpath(p) != os.path.normpath(preview_path):
-                    shutil.copy2(p, preview_path)
-                gifs.append({"filename": fname, "subfolder": "", "type": "output", "format": "video/mp4"})
-        return {"ui": {"gifs": gifs}, "result": (paths, urls, info)}
+        return (paths, urls, info)
 
 
 NODE_CLASS_MAPPINGS = {

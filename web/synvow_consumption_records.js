@@ -37,6 +37,9 @@ export function showConsumptionRecordsDialog() {
         .sv-consumption-page-btn:disabled { opacity:0.5; cursor:not-allowed; }
         .sv-consumption-page-info { color:#8899aa; font-size:13px; }
         .sv-consumption-amount { color:#ef4444; }
+        .sv-consumption-download { color:#2dd4bf; text-decoration:none; font-size:12px; padding:3px 8px; border:1px solid #2dd4bf40; border-radius:4px; cursor:pointer; background:none; }
+        .sv-consumption-download:hover { background:#2dd4bf20; }
+        .sv-consumption-no-res { color:#445566; font-size:12px; }
     `;
     document.head.appendChild(style);
 
@@ -106,6 +109,7 @@ export function showConsumptionRecordsDialog() {
                                     <th>状态</th>
                                     <th>模型</th>
                                     <th>消费金额</th>
+                                    <th>资源</th>
                                     <th>时间</th>
                                 </tr>
                             </thead>
@@ -115,11 +119,29 @@ export function showConsumptionRecordsDialog() {
                                     const statusOk = item.status === 1;
                                     const statusBadge = `<span class="sv-consumption-type" style="background:${statusOk ? '#22c55e20' : '#ef444420'};color:${statusOk ? '#22c55e' : '#ef4444'}">${statusOk ? '成功' : '失败'}</span>`;
                                     const time = new Date(item.created_at).toLocaleString('zh-CN');
+                                    let resUrl = item.url && String(item.url).startsWith('http') ? item.url : null;
+                                    if (!resUrl && item.source) {
+                                        try {
+                                            const src = typeof item.source === 'string' ? JSON.parse(item.source) : item.source;
+                                            const d1 = src.data || {};
+                                            const d2 = d1.data || {};
+                                            const d3 = d2.data || [];
+                                            const out = d1.output
+                                                || (Array.isArray(d3) && d3.length ? d3[0].url : null)
+                                                || (Array.isArray(d2) && d2.length ? d2[0].url : null)
+                                                || src.output || src.url || null;
+                                            if (out && String(out).startsWith('http')) resUrl = out;
+                                        } catch (e) {}
+                                    }
+                                    const resCell = resUrl
+                                        ? `<a class="sv-consumption-download" href="${resUrl}" target="_blank">打开</a>`
+                                        : `<span class="sv-consumption-no-res">无</span>`;
                                     return `
                                         <tr>
                                             <td>${statusBadge}</td>
                                             <td>${modelName}</td>
                                             <td class="sv-consumption-amount" style="color:${statusOk ? '#ef4444' : '#22c55e'}">${statusOk ? '-' : '+'}¥${parseFloat(item.amount).toFixed(5)}</td>
+                                            <td>${resCell}</td>
                                             <td>${time}</td>
                                         </tr>
                                     `;

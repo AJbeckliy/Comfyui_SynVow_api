@@ -340,9 +340,7 @@ for _f in glob.glob(os.path.join(_py_tools_dir, "*.py")):
     if _name == "__init__":
         continue
     try:
-        _spec = importlib.util.spec_from_file_location(f"synvow_tools.{_name}", _f)
-        _mod = importlib.util.module_from_spec(_spec)
-        _spec.loader.exec_module(_mod)
+        _mod = importlib.import_module(f".py.tools.{_name}", package=__package__)
         if hasattr(_mod, "NODE_CLASS_MAPPINGS"):
             NODE_CLASS_MAPPINGS.update(_mod.NODE_CLASS_MAPPINGS)
         if hasattr(_mod, "NODE_DISPLAY_NAME_MAPPINGS"):
