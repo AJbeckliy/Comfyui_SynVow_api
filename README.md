@@ -26,6 +26,8 @@ ComfyUI 用于 SynVow API 集成的自定义节点。
 | SynVow Nano2 批量出图 | nano2 | Batch version / 批量版本 |
 | SynVow 文本分割 | — | Split text by delimiter, output text + list / 按分隔符切分文本，输出单条与列表 |
 | SynVow GPT-Image-2 | gpt-image-2-文生图-默认 / gpt-image-2-图生图-默认 | GPT-Image-2 text-to-image & image-to-image / 文生图·图生图 |
+| 🛒 电商详情页提示词生成器 | gemini-* | Multi-screen e-commerce detail page prompt generator with product & style reference images / 多屏电商详情页提示词生成，支持产品参考图与风格参考图 |
+| 提示词文本编辑器 | — | Interactive text list editor in workflow / 工作流内交互式文本列表编辑器 |
 
 ---
 
@@ -59,6 +61,21 @@ ComfyUI 用于 SynVow API 集成的自定义节点。
 ---
 
 ## 更新日志
+
+### 2026-05-09
+- **新增 `🛒 电商详情页提示词生成器` 节点**（`💫SynVow_api/tools` 分类）
+  - 支持 8 个产品参考图输入（严格锁定产品外观）+ 4 个风格参考图输入（提取色调/光影/排版风格）
+  - 两类图片严格区分，禁止混用：产品图仅约束外观，风格图仅输出色调/背景氛围/光影/排版/构图描述
+  - 支持多屏详情页叙事顺序规划（Hero → Proof → CTA），每次最多生成 20 屏提示词
+  - 支持设计风格、场景偏好、输出语言等参数配置
+  - 使用 SynVow 账号直接调用，无需手动填写 API Key
+- **新增 `提示词文本编辑器` 节点**（`💫SynVow_api/tools` 分类）
+  - 工作流执行过程中弹出交互式文本编辑界面，支持逐条编辑提示词列表
+  - 点击 Continue 确认后继续执行，点击 Cancel 中断当前队列
+- **优化 `GPT-Image-2 Prompt Optimizer` 节点**
+  - 新增 `layout_type`（布局类型）和 `text_policy`（文字策略）参数
+  - `text_policy=不加文字` 时自动清除 schema 中所有文字诱导字段
+  - 新增 `visual_focus`、`layout_plan`、`typography_plan`、`copy_strategy`、`information_hierarchy` 输出字段
 
 ### 2026-05-07
 - **新增 `SynVow 视频预览` 节点**（`💫SynVow_api/tools` 分类）
