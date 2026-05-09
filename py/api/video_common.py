@@ -196,6 +196,22 @@ def wait_for_queue_ready(api_key, ticket_id, tag="Video", timeout=1800, interval
         mm.throw_exception_if_processing_interrupted()
 
 
+def upload_video_file(api_key, video_path):
+    """上传本地视频文件到 synvow，返回 URL"""
+    url = f"{DIRECT_API_BASE}/api/upload/videos"
+    headers = {"X-API-Key": api_key}
+    fname = os.path.basename(video_path)
+    with open(video_path, "rb") as f:
+        res = requests.post(url, headers=headers, files=[("files", (fname, f, "video/mp4"))], verify=False, timeout=120)
+    data = res.json()
+    if res.status_code != 200 or data.get("code") != 200:
+        raise Exception(f"视频上传失败: {data}")
+    urls = data.get("data", {}).get("urls", [])
+    if not urls:
+        raise Exception(f"视频上传返回无 URL: {data}")
+    return urls[0]
+
+
 def upload_images(api_key, image_bytes_list):
     """上传图片到 synvow，返回 URL 列表"""
     url = f"{DIRECT_API_BASE}/api/upload/images"
