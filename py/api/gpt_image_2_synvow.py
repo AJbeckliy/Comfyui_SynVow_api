@@ -124,7 +124,9 @@ class SynVowGptImage2:
 
     @classmethod
     def IS_CHANGED(cls, **kwargs):
-        return float("NaN")
+        import hashlib, json
+        key = json.dumps({k: str(v) for k, v in kwargs.items()}, sort_keys=True, ensure_ascii=False)
+        return hashlib.md5(key.encode()).hexdigest()
 
     def _format_history(self):
         if not SynVowGptImage2._conversation_history:
@@ -189,7 +191,7 @@ class SynVowGptImage2:
                 if status in ("SUCCESS", "success", "completed", "done", "finished"):
                     print(f"[SynVow GPT-Image-2] ✅ {task_id[:8]}... 完成 ({elapsed}s)")
                     return poll_json
-                elif status in ("FAILURE", "failed", "error"):
+                elif status in ("FAILURE", "failed", "error", "EXCEPTION"):
                     msg = data_field.get("fail_reason", "任务失败")
                     print(f"[SynVow GPT-Image-2] ❌ {task_id[:8]}... {msg} ({elapsed}s)")
                     return None
@@ -438,7 +440,9 @@ class SynVowGptImage2All(SynVowGptImage2):
 
     @classmethod
     def IS_CHANGED(cls, **kwargs):
-        return float("NaN")
+        import hashlib, json
+        key = json.dumps({k: str(v) for k, v in kwargs.items()}, sort_keys=True, ensure_ascii=False)
+        return hashlib.md5(key.encode()).hexdigest()
 
     def generate_all(self, direction, aspect_ratio, count, seed,
                      prompt=None, prompts_list=None, images_list=None,

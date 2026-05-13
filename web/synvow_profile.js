@@ -311,23 +311,33 @@ async function startWechatBind(token, user) {
         const res = await fetch(`${API_BASE}/auth/wechat/bind/url`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
-            body: JSON.stringify({ user_id: String(userId) })
+            body: JSON.stringify({ user_id: Number(userId) })
         });
         const data = await res.json();
         if (data.code !== 200 || !data.data) { alert(data.message || '获取微信授权链接失败'); return; }
         bindUrl = data.data.bind_url || data.data.login_url || data.data.url;
-        // 从 URL 中提取 state
-        try { state = new URL(bindUrl).searchParams.get('state'); } catch(e) {}
+        state = data.data.state;
+        if (!state) { try { state = new URL(bindUrl).searchParams.get('state'); } catch(e) {} }
         if (!bindUrl) { alert('返回数据中未找到授权链接'); return; }
     } catch(e) { alert('网络错误，请稍后重试'); return; }
 
-    // 2. 显示二维码弹窗（用 img 加载微信扫码页截图，实际是直接展示 bind_url 的 QR）
+    // 2. 用 iframe 内嵌微信扫码页（与登录流程一致）
+    function buildIframeSrc(url) {
+        try {
+            const u = new URL(url);
+            const appid = u.searchParams.get("appid");
+            const redirectUri = u.searchParams.get("redirect_uri");
+            const st = u.searchParams.get("state");
+            return `https://open.weixin.qq.com/connect/qrconnect?appid=${appid}&scope=snsapi_login&redirect_uri=${encodeURIComponent(redirectUri)}&state=${st}&login_type=jssdk&self_redirect=true&style=black`;
+        } catch (_) { return url; }
+    }
+
     const qrModal = document.createElement('div');
     qrModal.className = 'sv-wechat-qr-modal';
     qrModal.innerHTML = `
         <div class="sv-wechat-qr-box">
             <div class="sv-wechat-qr-title">微信扫码绑定</div>
-            <img class="sv-wechat-qr-img" src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(bindUrl)}" alt="微信绑定二维码">
+            <iframe class="sv-wechat-qr-iframe" src="${buildIframeSrc(bindUrl)}" style="width:300px;height:400px;border:none;border-radius:8px;background:#fff;"></iframe>
             <div class="sv-wechat-qr-tip" id="sv-wechat-bind-tip">请使用微信扫码完成绑定</div>
             <button class="sv-wechat-qr-close" id="sv-wechat-qr-close-btn">取消</button>
         </div>
@@ -351,7 +361,6 @@ async function startWechatBind(token, user) {
                 if (data.code === 200) {
                     stopPoll();
                     qrModal.remove();
-                    // 更新本地用户信息
                     const u = JSON.parse(localStorage.getItem('sv_user') || '{}');
                     u.wechat_openid = data.data?.openid || 'bound';
                     localStorage.setItem('sv_user', JSON.stringify(u));
@@ -361,7 +370,6 @@ async function startWechatBind(token, user) {
                 }
             } catch(e) { /* 忽略轮询异常 */ }
         }, 2000);
-        // 2分钟超时
         setTimeout(() => {
             if (pollTimer) {
                 stopPoll();

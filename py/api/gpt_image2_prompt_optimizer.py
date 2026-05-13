@@ -4,6 +4,7 @@ SynVow GPT-Image-2 Prompt Optimizer 节点 V1.5 — 双LLM Schema流程
 
 import json
 import pathlib
+import re
 import requests
 import urllib3
 
@@ -54,7 +55,16 @@ def _chat(headers, model, system_prompt, user_message):
         "stream": False,
     }
     res = requests.post(_CHAT_URL, headers=headers, json=payload, timeout=(30, 600), verify=False)
-    res.raise_for_status()
+    try:
+        res.raise_for_status()
+    except requests.exceptions.HTTPError as e:
+        response_text = res.text[:2000] if res.text else "<empty response>"
+        print(f"[Prompt Optimizer V1.5] HTTP {res.status_code} url={res.url}")
+        print(f"[Prompt Optimizer V1.5] response={response_text}")
+        print(f"[Prompt Optimizer V1.5] request_model={model}")
+        raise RuntimeError(
+            f"SynVow API request failed: HTTP {res.status_code}; response={response_text}"
+        ) from e
     raw = synvow_auth.parse_chat_response(res.json())
     if not raw or not raw.strip():
         raise RuntimeError(f"模型未返回有效内容: {str(res.json())[:200]}")
@@ -94,10 +104,12 @@ def _remove_text_hints(schema: dict) -> dict:
     return schema
 
 
-def normalize_schema(schema: dict, aspect_ratio: str, exact_text: str, user_prompt: str, text_policy: str) -> dict:
+def normalize_schema(schema: dict, aspect_ratio: str, exact_text: str, user_prompt: str, text_policy: str, optimize_strength: str = "", layout_type: str = "") -> dict:
     schema["aspect_ratio"] = aspect_ratio
     schema["direction"] = ratio_to_direction(aspect_ratio)
     schema["text_policy"] = text_policy
+    schema["optimize_strength"] = optimize_strength
+    schema["layout_type"] = layout_type
 
     if not isinstance(schema.get("constraints"), list):
         schema["constraints"] = []
@@ -150,12 +162,12 @@ class GptImage2PromptOptimizer:
                     {"default": "保留原文"},
                 ),
                 "model": (
-                    ["gpt-5.4-mini", "gpt-5.5"],
+                    ["gpt-5.4-mini", "gpt-5.5", "gemini-3.1-flash", "gemini-3.1-pro"],
                     {"default": "gpt-5.4-mini"},
                 ),
                 "optimize_strength": (
-                    ["light", "standard", "strong"],
-                    {"default": "standard"},
+                    ["标准", "增强"],
+                    {"default": "标准"},
                 ),
                 "aspect_ratio": (
                     ["auto", "1:1", "16:9", "9:16", "4:3", "3:4", "5:4", "4:5",
@@ -175,12 +187,17 @@ class GptImage2PromptOptimizer:
 
     @classmethod
     def IS_CHANGED(cls, **kwargs):
-        return float("NaN")
+        import hashlib
+        key = json.dumps(kwargs, sort_keys=True, ensure_ascii=False, default=str)
+        return hashlib.md5(key.encode()).hexdigest()
 
     _TEXT_POLICY_MAP = {"不加文字": "none", "保留原文": "preserve", "优化原文": "enhance", "自动生成": "generate"}
 
+    _STRENGTH_MAP = {"light": "标准", "standard": "标准", "strong": "增强"}
+
     def optimize(self, user_prompt, layout_type, model, optimize_strength, mode,
                  aspect_ratio="16:9", seed=0, text_policy="保留原文", exact_text=""):
+        optimize_strength = self._STRENGTH_MAP.get(optimize_strength, optimize_strength)
         api_key = synvow_auth.read_api_key()
         headers = synvow_auth.make_api_headers(api_key)
         exact_text = exact_text or ""
@@ -195,10 +212,26 @@ class GptImage2PromptOptimizer:
         schema = generate_prompt_schema(headers, actual_model, payload)
         print(f"[Prompt Optimizer V1.5] Step2 schema={json.dumps(schema, ensure_ascii=False)[:400]}")
 
-        schema = normalize_schema(schema, aspect_ratio, exact_text, user_prompt, text_policy)
+        schema = normalize_schema(schema, aspect_ratio, exact_text, user_prompt, text_policy, optimize_strength, layout_type)
         print(f"[Prompt Optimizer V1.5] Step3 normalized schema={json.dumps(schema, ensure_ascii=False)[:400]}")
 
         optimized = render_final_prompt(headers, actual_model, schema)
+        if optimize_strength == "增强" and text_policy == "generate":
+            optimized = optimized.replace("【限制条件】", "【创作自由】")
+        if optimize_strength == "标准" and text_policy == "generate":
+            texts = schema.get("text_requirements", [])
+            text_list = "、".join([f"\"{t}\"" for t in texts])
+            strict_text_block = (
+                f"画面必须且只能显示以下文字：{text_list}。\n"
+                "不得出现除此之外的任何可读文字、装饰文字、章印文字、小标签、英文补充或无意义文字。"
+                "文字应清晰、准确、层级明确，排版稳定，不做创意发散。"
+            )
+            optimized = re.sub(
+                r"【文字要求】.*?(?=【|$)",
+                f"【文字要求】\n{strict_text_block}\n",
+                optimized,
+                flags=re.DOTALL,
+            )
         print(f"[Prompt Optimizer V1.5] Step4 result={optimized[:200]}")
 
         direction = ratio_to_direction(aspect_ratio)
@@ -224,5 +257,5 @@ NODE_CLASS_MAPPINGS = {
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "GptImage2PromptOptimizer": "GPT-Image-2 Prompt Optimizer",
+    "GptImage2PromptOptimizer": "GPT-Image-2 文生图提示词控制器",
 }

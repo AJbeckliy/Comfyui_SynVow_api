@@ -29,6 +29,9 @@ async def _proxy(method, endpoint, request, *, with_body=False, auth="jwt"):
         data = await request.json() if with_body else None
         qs = request.rel_url.query_string
         url = f"{API_BASE}{endpoint}" + (f"?{qs}" if qs else "")
+        if data and isinstance(data, dict) and "user_id" in data:
+            data["user_id"] = int(data["user_id"])
+
 
 
         timeout = aiohttp.ClientTimeout(total=15) if auth == "jwt" else None
