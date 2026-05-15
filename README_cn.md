@@ -119,7 +119,6 @@ ComfyUI 用于 SynVow 集成的自定义节点。
 ## 依赖
 
 - Python `requests`、`aiohttp`（ComfyUI 环境通常已自带）
-- 需要 [SynVow](https://service.synvow.com) 账号及 API 权限
 
 ---
 
