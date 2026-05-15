@@ -119,7 +119,6 @@ ComfyUI custom nodes for SynVow integration.
 ## Requirements
 
 - Python `requests`, `aiohttp` (usually already available in ComfyUI environment)
-- A [SynVow](https://service.synvow.com) account with API access
 
 ---
 
