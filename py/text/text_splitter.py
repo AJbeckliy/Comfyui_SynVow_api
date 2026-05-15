@@ -1,5 +1,6 @@
-# 文本分割节点
-
+"""
+文本分割节点
+"""
 from typing import List, Dict, Any, Tuple, Union
 
 class SynVowApiTextSplitter:
@@ -17,7 +18,7 @@ class SynVowApiTextSplitter:
     RETURN_NAMES = ("text", "list")
     OUTPUT_IS_LIST = (False, True)
     FUNCTION = "split_text"
-    CATEGORY = "💫SynVow_api/tools"
+    CATEGORY = "💫SynVow_api/Text"
     DESCRIPTION = "按分隔符切分文本"
 
     def validate_input(self, text: str, delimiter: str) -> None:

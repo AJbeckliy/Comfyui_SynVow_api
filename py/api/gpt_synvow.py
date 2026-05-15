@@ -1,6 +1,5 @@
-﻿"""
-SynVow Gemini API node - Chat/Vision via local proxy
-Uses Proxy_Router + X-API-Key auth (same pattern as NanoBanana)
+"""
+SynVow GPT API node - Chat
 """
 
 import concurrent.futures
@@ -9,10 +8,10 @@ import requests as _requests
 from . import synvow_auth
 from .media_common import upload_image as _upload_image, DIRECT_API_BASE
 
-GEMINI_MODEL_OPTIONS = ["gemini-3.1-pro-2605", "gemini-3-pro-2605"]
+GPT_MODEL_OPTIONS = ["gpt-5.5-2605", "gpt-5.4-2605"]
 
 
-class SynVowGeminiAPI:
+class SynVowGPTAPI:
     FUNCTION = "generate"
     CATEGORY = "💫SynVow_api/api/文本"
     OUTPUT_IS_LIST = (True,)
@@ -21,7 +20,7 @@ class SynVowGeminiAPI:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "模型": (GEMINI_MODEL_OPTIONS, {"default": "gemini-3.1-pro-2605"}),
+                "模型": (GPT_MODEL_OPTIONS, {"default": "gpt-5.5-2605"}),
                 "user_prompt": ("STRING", {"multiline": True, "default": ""}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
@@ -49,7 +48,6 @@ class SynVowGeminiAPI:
         return hashlib.md5(key.encode()).hexdigest()
 
     def _request_single(self, img_tensors, model_name, user_prompt, seed, api_key):
-        """img_tensors: 单个 tensor 或 tensor 列表，多张图合并进一条消息；空列表=纯文本"""
         try:
             if not isinstance(img_tensors, (list, tuple)):
                 img_tensors = [img_tensors]
@@ -69,12 +67,12 @@ class SynVowGeminiAPI:
             }
             headers = synvow_auth.make_api_headers(api_key)
             url = f"{DIRECT_API_BASE}/api/models/completions"
-            print(f"[Gemini] {model_name} 模型正在生成...")
+            print(f"[GPT] {model_name} 模型正在生成...")
             res = _requests.post(url, headers=headers, json=request_body, timeout=600, verify=False)
             if res.status_code != 200:
                 return f"HTTP {res.status_code}: {res.text[:200]}"
             response_data = res.json()
-            print(f"[Gemini] {model_name} 模型生成完毕。")
+            print(f"[GPT] {model_name} 模型生成完毕。")
             return synvow_auth.parse_chat_response(response_data) or "Error: empty response"
         except Exception as e:
             return str(e)
@@ -84,14 +82,13 @@ class SynVowGeminiAPI:
                  image_5=None, image_6=None, image_7=None, image_8=None,
                  image_9=None, image_10=None):
         api_key = synvow_auth.read_api_key()
-        model_name = 模型 or "gemini-3.1-pro-2605"
+        model_name = 模型 or "gpt-5.5-2605"
 
         single_imgs = [img for img in [image_1, image_2, image_3, image_4, image_5,
                                        image_6, image_7, image_8, image_9, image_10]
                        if img is not None]
         task_inputs = [single_imgs] if single_imgs else [[]]
 
-        print(f"[SynVow Gemini] 并发处理 {len(task_inputs)} 个任务, model={model_name}")
         outputs = [None] * len(task_inputs)
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=max(len(task_inputs), 1)) as executor:
@@ -115,8 +112,8 @@ class SynVowGeminiAPI:
 
 
 NODE_CLASS_MAPPINGS = {
-    "SynVowGeminiAPI": SynVowGeminiAPI,
+    "SynVowGPTAPI": SynVowGPTAPI,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "SynVowGeminiAPI": "SynVow Gemini 提示词生成",
+    "SynVowGPTAPI": "SynVow GPT 提示词生成",
 }

@@ -1,37 +1,108 @@
 ﻿# Comfyui_SynVow_api
 
-ComfyUI custom nodes for [SynVow](https://service.synvow.com) API integration.
-
-ComfyUI 用于 SynVow API 集成的自定义节点。
+ComfyUI custom nodes for SynVow integration.
 
 ---
 
-## Supported Models 支持的模型
+## Changelog
 
-| Node 节点 | Model | Description 描述 |
-|-----------|-------|-----------------|
-| SynVow Sora2 视频生成 | sora-2 | OpenAI Sora2 image-to-video (10/15s) / OpenAI Sora2 图像转视频（10/15 秒） |
-| SynVow Sora2 优质视频生成 | sora2-优质 | OpenAI Sora2 Pro image-to-video (4/8/12s) / 优质模式（4/8/12 秒） |
-| SynVow Sora2 批量视频生成 | sora-2 | Batch version / 批量版本 |
-| SynVow Sora2 优质批量视频生成 | sora2-优质 | Batch Pro version / 优质批量版本 |
-| SynVow Veo3.1 视频生成 | veo3.1 | Google Veo3.1 text/image-to-video / 文生视频·图生视频 |
-| SynVow Veo3.1 批量视频生成 | veo3.1 | Batch version / 批量版本 |
-| SynVow Grok 视频生成 | grok-* | xAI Grok image-to-video / 图生视频 |
-| SynVow Grok 批量视频生成 | grok-* | Batch version / 批量版本 |
-| SynVow Gemini API 图生文 | gemini-* | Google Gemini multimodal text output / 多模态文本输出 |
-| SynVow Gemini 提示词生成 | gemini-* | Prompt generation via Gemini / 提示词生成 |
-| SynVow NanoBanana Pro 图像生成 | nanobanana | Image generation (T2I / I2I) / 文生图·图生图 |
-| SynVow NanoBanana Pro 批量出图 | nanobanana | Batch image generation / 批量出图 |
-| SynVow Nano2 图像生成 | nano2 | Nano2 image generation (T2I / I2I) / 文生图·图生图 |
-| SynVow Nano2 批量出图 | nano2 | Batch version / 批量版本 |
-| SynVow 文本分割 | — | Split text by delimiter, output text + list / 按分隔符切分文本，输出单条与列表 |
-| SynVow GPT-Image-2 | gpt-image-2-文生图-默认 / gpt-image-2-图生图-默认 | GPT-Image-2 text-to-image & image-to-image / 文生图·图生图 |
-| 🛒 电商详情页提示词生成器 | gemini-* | Multi-screen e-commerce detail page prompt generator with product & style reference images / 多屏电商详情页提示词生成，支持产品参考图与风格参考图 |
-| 提示词文本编辑器 | — | Interactive text list editor in workflow / 工作流内交互式文本列表编辑器 |
+### 2026-05-15
+- **Refactored all nodes; previous nodes are deprecated**
+- **Added `字符串范围提取器`** (`💫SynVow_api/Text`)
+  - Supports mark pattern mode (`{|}`) and JSON field extraction mode (`{[field]}`)
+  - Outputs a list of matched segments; supports single-index or full-list output
+- **Added `列表批次转换器`** (`💫SynVow_api/Text`)
+  - Groups multiline text or JSON array by `batch_size`; batches separated by `---`
+- **Added `提示词范围选择器`** (`💫SynVow_api/Text`)
+  - Selects a subset from a text list by start/end index; auto-truncates on overflow
+- **Added `提示词选择器`** (`💫SynVow_api/Text`)
+  - Selects a single item from a text list by index; returns last item on overflow
+- **Added `TXT文件加载器`** (`💫SynVow_api/Text`)
+  - Reads one or multiple TXT files by path; supports `file_index` to target a single file
+- **Added `文件夹扫描器`** (`💫SynVow_api/Utils`)
+  - Recursively scans a folder and outputs path list and count
+  - `file_type` filter: `all` / `images` / `txt` / `video` / `audio`
+  - Supports natural sort, time sort, and max depth limit
+- **Added `批次图像加载器`** (`💫SynVow_api/Image`)
+  - Loads images from a folder by batch index; outputs tensor, count, and filename list
+- **Added `文件夹图像列表加载器`** (`💫SynVow_api/Image`)
+  - Loads images by group index; outputs image list, filename list, total groups, and frame count
+- **Added `图像范围选择器`** (`💫SynVow_api/Image`)
+  - Selects a range of images from an image list or batch by start/end index
+- **Added `图像列表组合器`** (`💫SynVow_api/Image`)
+  - Composes up to 10 image inputs into an ordered image list
+- **Added `图像加载器`** (`💫SynVow_api/Image`)
+  - Loads a single image; additionally outputs filename, full path, folder path, and mask
 
 ---
 
-## Installation 安装
+## Supported Nodes
+
+### 💫SynVow_api/api/Image
+
+| Node | Model | Description |
+|------|-------|-------------|
+| SynVow NanoBanana | nanobanana | Text-to-image |
+| SynVow NanoBanana (T_batch) | nanobanana | Batch text-to-image |
+| SynVow NanoBanana (I_batch) | nanobanana | Batch image-to-image |
+| SynVow NanoBanana (T_I_batch) | nanobanana | Batch T2I + I2I |
+| SynVow GPT-Image-2 | gpt-image-2 | Text-to-image & image-to-image |
+| SynVow GPT-Image-2 (T_batch) | gpt-image-2 | Batch text-to-image |
+| SynVow GPT-Image-2 (I_batch) | gpt-image-2 | Batch image-to-image |
+| SynVow GPT-Image-2 (T_I_batch) | gpt-image-2 | Batch T2I + I2I |
+
+### 💫SynVow_api/api/Video
+
+| Node | Model | Description |
+|------|-------|-------------|
+| SynVow Seedance2.0 视频生成 | seedance2 | Text/image to video |
+| SynVow Seedance2.0 批量视频生成 | seedance2 | Batch video generation |
+
+### 💫SynVow_api/api/Text
+
+| Node | Model | Description |
+|------|-------|-------------|
+| SynVow Gemini 提示词生成 | gemini-* | Prompt generation via Gemini |
+| SynVow GPT 提示词生成 | gpt-* | Prompt generation via GPT |
+| GPT-Image-2 文生图提示词控制器 | gemini-* / gpt-* | Optimize image generation prompts via LLM |
+| 图生图提示词控制器 | gemini-* / gpt-* | Reference image prompt optimizer |
+| 🛒 电商详情页提示词生成器 | gemini-* | Multi-screen e-commerce detail page prompt generator |
+
+### 💫SynVow_api/Text
+
+| Node | Model | Description |
+|------|-------|-------------|
+| 文本停留编辑器 | — | Interactive text list editor in workflow |
+| SynVow 文本分割 | — | Split text by delimiter, output text + list |
+| 文本重复 | — | Repeat text N times |
+| 字符串范围提取器 | — | Extract text segments by mark pattern or JSON field |
+| 列表批次转换器 | — | Split text list into fixed-size batches |
+| 提示词范围选择器 | — | Select a range of items from text list by index |
+| 提示词选择器 | — | Select a single item from text list by index |
+| TXT文件加载器 | — | Load one or multiple TXT files by path |
+
+### 💫SynVow_api/Image
+
+| Node | Model | Description |
+|------|-------|-------------|
+| 批次图像加载器 | — | Load a batch of images from folder by index |
+| 文件夹图像列表加载器 | — | Load images from folder by group index |
+| 图像范围选择器 | — | Select a range of images from image list by index |
+| 图像列表组合器 | — | Compose up to 10 images into an image list |
+| 图像加载器 | — | Load image with filename, path and mask output |
+
+### 💫SynVow_api/Utils
+
+| Node | Model | Description |
+|------|-------|-------------|
+| 文件夹扫描器 | — | Scan folder and output path list, filter by type (images/video/audio/txt) |
+| 加载视频（输出路径） | — | Load video file and output its path |
+| 加载音频（输出路径） | — | Load audio file and output its path |
+| SynVow 视频预览 | — | Preview generated video inside the node |
+
+---
+
+## Installation
 
 1. Clone this repo into your ComfyUI `custom_nodes` directory:
 
@@ -45,62 +116,18 @@ ComfyUI 用于 SynVow API 集成的自定义节点。
 
 ---
 
-## Requirements 依赖
+## Requirements
 
 - Python `requests`, `aiohttp` (usually already available in ComfyUI environment)
-- A [SynVow](https://service.synvow.com) account with API access / 需要 SynVow 账号及 API 权限
+- A [SynVow](https://service.synvow.com) account with API access
 
 ---
 
-## Usage 使用方法
+## Usage
 
-1. Click the SynVow icon in the ComfyUI menu bar to log in. / 点击菜单栏 SynVow 图标登录。
-2. Add any SynVow node to your workflow. / 将节点添加到工作流。
-3. Connect inputs and run. Videos/images are saved to the configured output path. / 连接输入并运行，视频/图片保存到配置的输出路径。
-
----
-
-## 更新日志
-
-### 2026-05-09
-- **新增 `🛒 电商详情页提示词生成器` 节点**（`💫SynVow_api/tools` 分类）
-  - 支持 8 个产品参考图输入（严格锁定产品外观）+ 4 个风格参考图输入（提取色调/光影/排版风格）
-  - 两类图片严格区分，禁止混用：产品图仅约束外观，风格图仅输出色调/背景氛围/光影/排版/构图描述
-  - 支持多屏详情页叙事顺序规划（Hero → Proof → CTA），每次最多生成 20 屏提示词
-  - 支持设计风格、场景偏好、输出语言等参数配置
-  - 使用 SynVow 账号直接调用，无需手动填写 API Key
-- **新增 `提示词文本编辑器` 节点**（`💫SynVow_api/tools` 分类）
-  - 工作流执行过程中弹出交互式文本编辑界面，支持逐条编辑提示词列表
-  - 点击 Continue 确认后继续执行，点击 Cancel 中断当前队列
-- **优化 `GPT-Image-2 Prompt Optimizer` 节点**
-  - 新增 `layout_type`（布局类型）和 `text_policy`（文字策略）参数
-  - `text_policy=不加文字` 时自动清除 schema 中所有文字诱导字段
-  - 新增 `visual_focus`、`layout_plan`、`typography_plan`、`copy_strategy`、`information_hierarchy` 输出字段
-
-### 2026-05-07
-- **新增 `SynVow 视频预览` 节点**（`💫SynVow_api/tools` 分类）
-  - 接收 `video_path` 输入接口，支持在节点内直接预览生成的视频
-  - 自动将视频复制到 ComfyUI output 目录后渲染
-- **新增 `GPT-Image-2 Prompt Optimizer` 节点**（`💫SynVow_api/tools` 分类）
-  - 通过 LLM 对图像生成提示词进行优化，支持多种任务类型和优化强度
-- **新增取消轮询按钮**
-  - 所有 SynVow 视频/图像生成节点新增 **取消轮询** 按钮，点击后发送中断信号终止当前轮询
-- **视频生成节点重构**
-  - `grok_synvow.py`、`veo3_synvow.py`、`sora2_synvow.py` 移除内嵌视频预览逻辑，统一交由 `SynVow 视频预览` 节点处理
-- **修复** `GPT-Image-2 Prompt Optimizer` 节点在模型未返回有效内容时崩溃的问题
-
-### 2026-04-21
-- **新增 `SynVow GPT-Image-2` 节点**
-  - 支持 GPT-Image-2 文生图（`gpt-image-2-文生图-默认`）和图生图（`gpt-image-2-图生图-默认`）
-  - 图生图最多支持 4 张输入图（base64 编码传输）
-  - 支持尺寸选择：`1024x1024`、`1536x1024`、`1024x1536`
-  - 采用异步提交 + 轮询机制，携带 `consumption_id` 支持失败自动退费
-  - 输出图像张量、图片 URL、响应信息及对话历史
-
-### 2026-04-10
-- **新增 `SynVow 文本分割` 节点**（`💫SynVow_api/tools` 分类）
-  - 按分隔符切分文本
-  - 输出 `text`（单条/全文）和 `list`（列表，可直接接批量节点 `prompts_list`）
+1. Click the SynVow icon in the ComfyUI menu bar to log in.
+2. Add any SynVow node to your workflow.
+3. Connect inputs and run. Videos/images are saved to the configured output path.
 
 ---
 

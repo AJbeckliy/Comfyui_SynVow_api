@@ -3,7 +3,8 @@
  * 布局: ⠿ | SV主按钮 | 👤用户按钮 | ⚙设置按钮
  */
 import { app } from "../../../scripts/app.js";
-import { $el } from "./dom.js";
+import { api } from "../../../scripts/api.js";
+import { $el, getToken } from "./dom.js";
 import { showLoginDialog, clearAuthFile } from "./synvow_login.js";
 import { showRechargeDialog } from "./synvow_recharge.js";
 import { showRechargeRecordsDialog } from "./synvow_recharge_records.js";
@@ -16,6 +17,11 @@ function loadPos() {
 }
 function savePos(x, y) {
     localStorage.setItem("sv_float_pos", JSON.stringify({ x, y }));
+}
+
+function setBalanceDefault() {
+    const el = document.getElementById("sv-main-balance");
+    if (el) el.textContent = "0.00";
 }
 
 app.registerExtension({
@@ -44,8 +50,8 @@ app.registerExtension({
             .sv-drag-handle span { width:2.5px; height:2.5px; border-radius:50%; background:#fff; display:block; }
             .sv-main-btn {
                 background: #4a9eff; color: white; border: none;
-                padding: 7px 13px; font-size: 12px; font-weight: bold; cursor: pointer;
-                display: flex; align-items: flex-end; gap: 5px;
+                padding: 7px 10px; font-size: 12px; font-weight: bold; cursor: pointer;
+                display: flex; align-items: center; gap: 5px; min-width: 72px;
                 border-radius: 6px; position: relative; overflow: hidden;
             }
             .sv-main-btn::after {
@@ -56,7 +62,7 @@ app.registerExtension({
             @keyframes sv-shine { 0%{top:-100%;left:-100%} 50%,100%{top:100%;left:100%} }
             .sv-main-btn:hover { filter: brightness(1.15); }
             .sv-main-label { font-size: 12px; }
-            .sv-main-balance { font-size: 14px; }
+            .sv-main-balance { font-size: 14px; min-width: 32px; text-align:left; display:inline-block; }
             /* 登录状态按钮 */
             .sv-user-btn {
                 background: #3a3a3a; color: white; border: none;
@@ -93,28 +99,21 @@ app.registerExtension({
 
         const svIcon = `<img src="/extensions/Comfyui_SynVow_api/xb_icon.svg" style="width:18px;height:18px;pointer-events:none">`;
 
-        // 九点拖拽标识
         const dragHandle = $el("div.sv-drag-handle", {}, Array.from({ length: 9 }, () => $el("span")));
 
-        // 主按钮：图标 + 余额 + 下拉（充值星币）
         const mainBtn = $el("button.sv-main-btn", { id: "sv-main-btn" });
         mainBtn.innerHTML = svIcon;
-        mainBtn.appendChild($el("span.sv-main-balance", { id: "sv-main-balance" }));
+        mainBtn.appendChild($el("span.sv-main-balance", { id: "sv-main-balance", textContent: "0.00" }));
 
-        const mainMenu = $el("div.sv-dropdown", { id: "sv-main-menu" }, [
-            $el("div.sv-dropdown-item", { innerHTML: `<img src="/extensions/Comfyui_SynVow_api/xb_icon.svg" style="width:16px;height:16px"> 充值星币`, onclick: () => { hideMenus(); showRechargeDialog(); } }),
-            $el("div.sv-dropdown-item", { textContent: "🔄 刷新余额", onclick: () => { hideMenus(); window.dispatchEvent(new CustomEvent("synvow_refresh_balance")); } }),
-        ]);
+        const mainMenu = $el("div.sv-dropdown", { id: "sv-main-menu" });
         mainMenu.style.left = "0";
         const mainBtnWrap = $el("div", { style: "position:relative" }, [mainBtn, mainMenu]);
 
-        // 登录状态按钮 + 下拉
         const userIcon = $el("span.sv-user-icon", { innerHTML: `<svg viewBox="0 0 24 24" width="16" height="16" style="vertical-align:middle"><circle cx="12" cy="8" r="4" fill="#4a9eff"/><path d="M4 20c0-4 4-7 8-7s8 3 8 7" fill="#2dd4bf"/></svg>` });
         const userLabel = document.createTextNode(
-            (() => { 
-                const t = localStorage.getItem("sv_token");
-                if (!t || t === "undefined" || t === "") return "未登录";
-                try { return JSON.parse(localStorage.getItem("sv_user") || "null")?.nickname || "已登录"; } catch { return "已登录"; } 
+            (() => {
+                if (!getToken()) return "未登录";
+                try { return JSON.parse(localStorage.getItem("sv_user") || "null")?.nickname || "已登录"; } catch { return "已登录"; }
             })()
         );
         const userBtn = $el("button.sv-user-btn", { id: "sv-user-btn" }, [userIcon]);
@@ -129,21 +128,21 @@ app.registerExtension({
                     localStorage.removeItem("sv_user");
                     userLabel.nodeValue = "未登录";
                     userIcon.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" style="vertical-align:middle"><circle cx="12" cy="8" r="4" fill="#666"/><path d="M4 20c0-4 4-7 8-7s8 3 8 7" fill="#888"/></svg>`;
+                    setBalanceDefault();
                     clearAuthFile();
                 }
             }})
         ]);
         userMenu.style.right = "0";
 
-        // 设置按钮 + 下拉（个人中心、充值中心等）
         const settingsBtn = $el("button.sv-settings-btn", { id: "sv-settings-btn", textContent: "⚙" });
 
         const settingsMenu = $el("div.sv-dropdown", { id: "sv-settings-menu" }, [
-            $el("div.sv-dropdown-item", { textContent: "个人中心",  onclick: () => { hideMenus(); showProfileDialog(); } }),
-            $el("div.sv-dropdown-item", { textContent: "充值星币",  onclick: () => { hideMenus(); showRechargeDialog(); } }),
-            $el("div.sv-dropdown-item", { textContent: "充值记录",  onclick: () => { hideMenus(); showRechargeRecordsDialog(); } }),
-            $el("div.sv-dropdown-item", { textContent: "消费记录",  onclick: () => { hideMenus(); showConsumptionRecordsDialog(); } }),
-            $el("div.sv-dropdown-item", { textContent: "模型价格",  onclick: () => { hideMenus(); showModelPriceDialog(); } }),
+            $el("div.sv-dropdown-item", { textContent: "个人中心", onclick: () => { hideMenus(); getToken() ? showProfileDialog() : showLoginDialog(); } }),
+            $el("div.sv-dropdown-item", { textContent: "充值星币", onclick: () => { hideMenus(); getToken() ? showRechargeDialog() : showLoginDialog(); } }),
+            $el("div.sv-dropdown-item", { textContent: "充值记录", onclick: () => { hideMenus(); getToken() ? showRechargeRecordsDialog() : showLoginDialog(); } }),
+            $el("div.sv-dropdown-item", { textContent: "消费记录", onclick: () => { hideMenus(); getToken() ? showConsumptionRecordsDialog() : showLoginDialog(); } }),
+            $el("div.sv-dropdown-item", { textContent: "模型价格", onclick: () => { hideMenus(); getToken() ? showModelPriceDialog() : showLoginDialog(); } }),
             $el("div.sv-divider"),
         ]);
         settingsMenu.style.right = "0";
@@ -156,7 +155,6 @@ app.registerExtension({
         ]);
         document.body.appendChild(float);
 
-        // --- 定位 ---
         const pos = loadPos();
         if (pos) {
             float.style.left = pos.x + "px";
@@ -168,7 +166,6 @@ app.registerExtension({
             });
         }
 
-        // --- 拖拽 ---
         let dragging = false, ox = 0, oy = 0, moved = false;
         dragHandle.addEventListener("mousedown", (e) => {
             dragging = true; moved = false;
@@ -188,14 +185,12 @@ app.registerExtension({
             if (dragging) { dragging = false; if (moved) savePos(parseInt(float.style.left), parseInt(float.style.top)); }
         });
 
-        // --- 菜单交互 ---
         function hideMenus() {
             mainMenu.classList.remove("show");
             userMenu.classList.remove("show");
             settingsMenu.classList.remove("show");
         }
 
-        // 主按钮：点击弹充值下拉
         mainBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             mainMenu.classList.toggle("show");
@@ -203,18 +198,15 @@ app.registerExtension({
             settingsMenu.classList.remove("show");
         });
 
-        // 设置按钮
         settingsBtn.addEventListener("click", (e) => {
             e.stopPropagation();
             settingsMenu.classList.toggle("show");
             userMenu.classList.remove("show");
         });
 
-        // 用户按钮：已登录弹退出下拉，未登录直接弹登录框
         userBtn.addEventListener("click", (e) => {
             e.stopPropagation();
-            const token = localStorage.getItem("sv_token");
-            if (token && token !== "undefined" && token !== "") {
+            if (getToken()) {
                 userMenu.classList.toggle("show");
                 settingsMenu.classList.remove("show");
             } else {
@@ -225,87 +217,73 @@ app.registerExtension({
 
         document.addEventListener("click", hideMenus);
 
-        // --- 监听登录成功事件，更新用户按钮 ---
-        window.addEventListener("synvow_login_success", (e) => {
-            const nickname = e.detail?.nickname || "已登录";
-            userLabel.nodeValue = nickname;
-            userIcon.innerHTML = `<svg viewBox="0 0 24 24" width="16" height="16" style="vertical-align:middle"><circle cx="12" cy="8" r="4" fill="#4a9eff"/><path d="M4 20c0-4 4-7 8-7s8 3 8 7" fill="#2dd4bf"/></svg>`;
-            // 触发余额刷新
-            window.dispatchEvent(new CustomEvent("synvow_refresh_balance"));
-        });
-
-        window.addEventListener("synvow_refresh_balance", async () => {
-            const token = localStorage.getItem("sv_token");
-            if (!token || token === "undefined" || token === "") return;
+        const refreshBalance = async () => {
+            const token = getToken();
+            const mainBalanceEl = document.getElementById("sv-main-balance");
+            if (!token) {
+                setBalanceDefault();
+                return;
+            }
             try {
                 const res = await fetch("/sv_api/account/balance", { headers: { "Authorization": "Bearer " + token } });
                 const data = await res.json();
-                const mainBalanceEl = document.getElementById("sv-main-balance");
                 if (data.code === 200) {
-                    const balanceVal = parseFloat(data.data.balance || 0).toFixed(2);
-                    if (mainBalanceEl) mainBalanceEl.textContent = " " + balanceVal;
-                    try {
-                        const user = JSON.parse(localStorage.getItem("sv_user") || "null");
-                        if (user?.nickname) userLabel.nodeValue = user.nickname;
-                    } catch(_e) {}
+                    const balance = data.data?.balance ?? data.data?.account?.balance ?? 0;
+                    if (mainBalanceEl) mainBalanceEl.textContent = " " + parseFloat(balance).toFixed(2);
                 } else if (data.code === 401) {
                     localStorage.removeItem("sv_token");
                     localStorage.removeItem("sv_refresh_token");
                     localStorage.removeItem("sv_user");
                     clearAuthFile();
                     userLabel.nodeValue = "未登录";
-                    if (mainBalanceEl) mainBalanceEl.textContent = "";
+                    setBalanceDefault();
                 }
-            } catch(_e) {}
+            } catch(e) {
+                console.error("[SynVow] 余额请求失败:", e);
+            }
+        };
+
+        const refreshUserInfo = async () => {
+            const token = getToken();
+            if (!token) {
+                userLabel.nodeValue = "未登录";
+                return;
+            }
+            try {
+                const res = await fetch("/sv_api/user/info", { headers: { "Authorization": "Bearer " + token } });
+                const data = await res.json();
+                if (data.code === 200 && data.data) {
+                    localStorage.setItem("sv_user", JSON.stringify(data.data));
+                    userLabel.nodeValue = data.data?.nickname || data.data?.username || data.data?.phone_number || "已登录";
+                }
+            } catch(e) {
+                console.error("[SynVow] 用户信息请求失败:", e);
+            }
+        };
+
+        const resetAccountUI = () => {
+            userLabel.nodeValue = "未登录";
+            setBalanceDefault();
+        };
+
+        window.synvowRefreshAccount = async () => {
+            if (!getToken()) {
+                resetAccountUI();
+                return;
+            }
+            await refreshUserInfo();
+            await refreshBalance();
+        };
+
+        mainMenu.appendChild($el("div.sv-dropdown-item", { innerHTML: `<img src="/extensions/Comfyui_SynVow_api/xb_icon.svg" style="width:16px;height:16px"> 充值星币`, onclick: () => { hideMenus(); getToken() ? showRechargeDialog() : showLoginDialog(); } }));
+        mainMenu.appendChild($el("div.sv-dropdown-item", { textContent: "🔄 刷新余额", onclick: () => { hideMenus(); window.synvowRefreshAccount?.(); } }));
+
+        api.addEventListener("synvow_refresh_balance", () => {
+            window.synvowRefreshAccount?.();
         });
 
-        // --- 加载余额 ---
-        if (localStorage.getItem("sv_token") && localStorage.getItem("sv_token") !== "undefined" && localStorage.getItem("sv_token") !== "") {
-            setTimeout(async () => {
-                const _token = localStorage.getItem("sv_token");
-                try {
-                    let _res  = await fetch("/sv_api/account/balance", { headers: { "Authorization": "Bearer " + _token } });
-                    let _data = await _res.json();
-                    if (_data.code === 401) {
-                        const _rt = localStorage.getItem("sv_refresh_token");
-                        if (_token || _rt) {
-                            try {
-                                const _rr = await fetch("/sv_api/auth/refresh", {
-                                    method: "POST", headers: { "Content-Type": "application/json" },
-                                    body: JSON.stringify({ token: _token || "", refresh_token: _rt || "" })
-                                });
-                                const _rd = await _rr.json();
-                                if (_rd.code === 200 && _rd.data?.access_token) {
-                                    localStorage.setItem("sv_token", _rd.data.access_token);
-                                    if (_rd.data.refresh_token) localStorage.setItem("sv_refresh_token", _rd.data.refresh_token);
-                                    _res  = await fetch("/sv_api/account/balance", { headers: { "Authorization": "Bearer " + _rd.data.access_token } });
-                                    _data = await _res.json();
-                                }
-                            } catch(_e) {}
-                        }
-                    }
-                    const _mainEl = document.getElementById("sv-main-balance");
-                    if (_data.code === 200) {
-                        const _balVal = parseFloat(_data.data.balance || 0).toFixed(2);
-                        if (_mainEl) _mainEl.textContent = " " + _balVal;
-                        try {
-                            const _user = JSON.parse(localStorage.getItem("sv_user") || "null");
-                            if (_user?.nickname) userLabel.nodeValue = _user.nickname;
-                        } catch(_e) {}
-                    } else if (_data.code === 401) {
-                        // token 彻底失效，清除所有认证信息
-                        localStorage.removeItem("sv_token");
-                        localStorage.removeItem("sv_refresh_token");
-                        localStorage.removeItem("sv_user");
-                        clearAuthFile();
-                        userLabel.nodeValue = "未登录";
-                        if (_mainEl) _mainEl.textContent = "";
-                    }
-                } catch(_e) {
-                    const _el = document.getElementById("sv-balance");
-                    if (_el) _el.textContent = "连接失败";
-                }
-            }, 500);
+        if (getToken()) {
+            setTimeout(() => window.synvowRefreshAccount?.(), 0);
         }
     }
 });

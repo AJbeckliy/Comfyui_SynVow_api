@@ -1,11 +1,11 @@
 /**
  * SynVow 充值记录对话框
  */
-import { $el } from "./dom.js";
+import { $el, getToken, injectStyle, API_BASE } from "./dom.js";
+import { showLoginDialog } from "./synvow_login.js";
 
 let recordsDialog = null;
 let currentPage = 1;
-const API_BASE = "/sv_api";
 
 const STATUS_MAP = {
     1: { text: "待支付", color: "#f59e0b" },
@@ -15,9 +15,12 @@ const STATUS_MAP = {
 };
 
 const PAYMENT_MAP = {
-    wechat: "微信支付",
+    wechat: "微信",
     wxpay: "微信支付",
-    alipay: "支付宝"
+    alipay: "支付宝",
+    phppay: "PHP支付",
+    "z-alipay": "支付宝",
+    "z-wechat": "微信"
 };
 
 export function showRechargeRecordsDialog() {
@@ -27,8 +30,7 @@ export function showRechargeRecordsDialog() {
     }
     currentPage = 1;
 
-    const style = document.createElement('style');
-    style.textContent = `
+    injectStyle("sv-records-style", `
         .sv-records-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:10001; }
         .sv-records-dialog { background:linear-gradient(180deg,#1a2a3a,#0d1a24); border-radius:12px; padding:30px; width:600px; max-height:80vh; position:relative; display:flex; flex-direction:column; }
         .sv-records-title { color:#2dd4bf; font-size:18px; font-weight:bold; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
@@ -47,8 +49,7 @@ export function showRechargeRecordsDialog() {
         .sv-records-page-btn:hover { border-color:#2dd4bf; }
         .sv-records-page-btn:disabled { opacity:0.5; cursor:not-allowed; }
         .sv-records-page-info { color:#8899aa; font-size:13px; }
-    `;
-    document.head.appendChild(style);
+    `);
 
     const contentDiv = $el("div.sv-records-content", {}, [
         $el("div.sv-records-loading", { textContent: "加载中..." })
@@ -73,18 +74,14 @@ export function showRechargeRecordsDialog() {
 
     document.body.appendChild(recordsDialog);
 
-    // 加载数据
     loadPage(1);
 
     async function loadPage(page) {
         page = parseInt(page) || 1;
         if (page < 1) page = 1;
         
-        const token = localStorage.getItem("sv_token");
-        if (!token) {
-            contentDiv.innerHTML = '<div class="sv-records-empty">请先登录</div>';
-            return;
-        }
+        const token = getToken();
+        if (!token) { showLoginDialog(); return; }
 
         contentDiv.innerHTML = '<div class="sv-records-loading">加载中...</div>';
         prevBtn.disabled = true;
@@ -92,13 +89,10 @@ export function showRechargeRecordsDialog() {
 
         try {
             const url = `${API_BASE}/account/recharge-records?page=${page}&per_page=10`;
-            console.log("[SynVow 充值记录] 请求: https://service.synvow.com/api/v1/account/recharge-records?page=" + page + "&per_page=10");
             const res = await fetch(url, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const data = await res.json();
-            console.log("[SynVow 充值记录] 响应:", JSON.stringify(data, null, 2));
-
             if (data.code === 200 && data.data) {
                 const items = data.data.items || data.data.list || [];
                 const total = data.data.total || 0;

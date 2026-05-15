@@ -1,11 +1,10 @@
 /**
  * SynVow 个人中心对话框
  */
-import { $el } from "./dom.js";
-import { showBindPhoneDialog, clearAuthFile } from "./synvow_login.js";
+import { $el, getToken, injectStyle, API_BASE } from "./dom.js";
+import { showLoginDialog, showBindPhoneDialog, clearAuthFile } from "./synvow_login.js";
 
 let profileDialog = null;
-const API_BASE = "/sv_api";
 
 export function showProfileDialog() {
     if (profileDialog) {
@@ -13,8 +12,7 @@ export function showProfileDialog() {
         profileDialog = null;
     }
 
-    const style = document.createElement('style');
-    style.textContent = `
+    injectStyle("sv-profile-style", `
         .sv-profile-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:10001; }
         .sv-profile-dialog { background:linear-gradient(180deg,#1a2a3a,#0d1a24); border-radius:12px; padding:30px; width:700px; position:relative; }
         .sv-profile-title { color:#2dd4bf; font-size:18px; font-weight:bold; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
@@ -30,11 +28,6 @@ export function showProfileDialog() {
         .sv-profile-stat { text-align:center; }
         .sv-profile-stat-label { color:#8899aa; font-size:12px; margin-bottom:4px; }
         .sv-profile-stat-value { color:#2dd4bf; font-size:18px; font-weight:bold; }
-        .sv-profile-section { margin-bottom:20px; }
-        .sv-profile-section-title { color:#8899aa; font-size:13px; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
-        .sv-profile-chart { background:#0d1a24; border-radius:8px; padding:16px; height:200px; position:relative; }
-        .sv-profile-chart-title { color:#8899aa; font-size:12px; margin-bottom:12px; }
-        .sv-profile-chart-canvas { width:100%; height:160px; }
         .sv-profile-bind-status { padding:2px 8px; border-radius:4px; font-size:12px; }
         .sv-profile-bind-yes { background:#22c55e20; color:#22c55e; }
         .sv-profile-bind-no { background:#ef444420; color:#ef4444; }
@@ -49,8 +42,7 @@ export function showProfileDialog() {
         .sv-wechat-qr-img { width:200px; height:200px; background:white; padding:8px; border-radius:8px; margin-bottom:12px; }
         .sv-wechat-qr-tip { color:#8899aa; font-size:13px; margin-bottom:16px; }
         .sv-wechat-qr-close { background:#1e3a4a; border:1px solid #334455; border-radius:4px; padding:6px 16px; color:white; font-size:13px; cursor:pointer; }
-    `;
-    document.head.appendChild(style);
+    `);
 
     const contentDiv = $el("div", {}, [
         $el("div.sv-profile-loading", { textContent: "加载中..." })
@@ -72,26 +64,23 @@ export function showProfileDialog() {
     loadProfile();
 
     async function loadProfile() {
-        const token = localStorage.getItem("sv_token");
+        const token = getToken();
         if (!token) {
-            contentDiv.innerHTML = '<div class="sv-profile-loading">请先登录</div>';
+            profileDialog.remove();
+            profileDialog = null;
+            showLoginDialog();
             return;
         }
 
         const user = JSON.parse(localStorage.getItem("sv_user") || "{}");
 
         try {
-            console.log("[SynVow 个人中心] 请求: https://service.synvow.com/api/v1/account/summary");
-            console.log("[SynVow 个人中心] Token:", token ? token.substring(0, 30) + "..." : "无");
             const res = await fetch(`${API_BASE}/account/summary`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const data = await res.json();
-            console.log("[SynVow 个人中心] 响应:", JSON.stringify(data, null, 2));
-
             if (data.code === 200 && data.data) {
                 const summary = data.data;
-                console.log("[SV] summary数据:", summary);
                 const phoneNumber = user.phone_number || "未绑定";
                 const maskedPhone = phoneNumber.length >= 11 ? 
                     phoneNumber.substring(0, 3) + "****" + phoneNumber.substring(7) : phoneNumber;
@@ -136,15 +125,6 @@ export function showProfileDialog() {
                             }
                         </div>
                     </div>
-                    <div class="sv-profile-section">
-                        <div class="sv-profile-section-title">
-                            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:14px;height:14px"><path d="M3 3v18h18"/><path d="M18 17V9"/><path d="M13 17V5"/><path d="M8 17v-3"/></svg>
-                            使用量走势（最近7天）
-                        </div>
-                        <div class="sv-profile-chart">
-                            <canvas id="sv-usage-chart" class="sv-profile-chart-canvas"></canvas>
-                        </div>
-                    </div>
                 `;
 
                 // 绑定修改昵称事件
@@ -162,15 +142,14 @@ export function showProfileDialog() {
                 if (logoutBtn) logoutBtn.onclick = () => {
                     if (confirm('确定要退出登录吗？')) {
                         localStorage.removeItem('sv_token');
+                        localStorage.removeItem('sv_refresh_token');
                         localStorage.removeItem('sv_user');
-                        document.getElementById('synvow-status').textContent = '未登录';
-                        document.querySelector('.sv-profile-overlay').style.display = 'none';
                         clearAuthFile();
+                        hideProfileDialog();
+                        window.synvowRefreshAccount?.();
                     }
                 };
                 
-                // 绘制图表（从消费记录获取真实数据）
-                drawChartFromRecords(token);
             } else {
                 contentDiv.innerHTML = `<div class="sv-profile-loading">${data.message || '获取信息失败'}</div>`;
             }
@@ -179,122 +158,6 @@ export function showProfileDialog() {
         }
     }
 
-    async function drawChartFromRecords(token) {
-        // 生成最近7天的日期标签（格式 M/D）
-        const days = 7;
-        const labels = [];
-        const dateKeys = []; // YYYY-MM-DD 格式，用于分组
-        for (let i = days - 1; i >= 0; i--) {
-            const d = new Date();
-            d.setDate(d.getDate() - i);
-            labels.push(`${d.getMonth() + 1}/${d.getDate()}`);
-            dateKeys.push(d.toISOString().slice(0, 10));
-        }
-
-        // 拉取前3页消费记录，按日期分组求和
-        const dayTotals = {};
-        dateKeys.forEach(k => dayTotals[k] = 0);
-
-        try {
-            for (let page = 1; page <= 3; page++) {
-                const res = await fetch(`${API_BASE}/account/consumption-records?page=${page}&per_page=10`, {
-                    headers: { "Authorization": `Bearer ${token}` }
-                });
-                const data = await res.json();
-                if (data.code !== 200 || !data.data) break;
-                const items = data.data.items || data.data.list || [];
-                if (items.length === 0) break;
-
-                let hasRelevant = false;
-                for (const item of items) {
-                    if (item.status !== 1) continue; // 只统计成功的
-                    const dateKey = item.created_at?.slice(0, 10);
-                    if (dateKey && dayTotals.hasOwnProperty(dateKey)) {
-                        dayTotals[dateKey] += parseFloat(item.amount) || 0;
-                        hasRelevant = true;
-                    }
-                }
-                // 如果这页最早的记录已经超出7天范围，不需要继续翻页
-                const oldest = items[items.length - 1]?.created_at?.slice(0, 10);
-                if (oldest && oldest < dateKeys[0]) break;
-            }
-        } catch(e) { /* 拉取失败时用全0数据 */ }
-
-        const chartData = dateKeys.map(k => parseFloat(dayTotals[k].toFixed(4)));
-        drawChart(labels, chartData);
-    }
-
-    function drawChart(labels, data) {
-        const canvas = document.getElementById('sv-usage-chart');
-        if (!canvas) return;
-        const ctx = canvas.getContext('2d');
-        const width = canvas.offsetWidth || 600;
-        const height = canvas.offsetHeight || 160;
-        canvas.width = width;
-        canvas.height = height;
-        const days = labels.length;
-        const padding = { top: 20, right: 20, bottom: 30, left: 40 };
-        const chartWidth = width - padding.left - padding.right;
-        const chartHeight = height - padding.top - padding.bottom;
-
-        // 绘制背景网格
-        ctx.strokeStyle = '#334455';
-        ctx.lineWidth = 0.5;
-        for (let i = 0; i <= 4; i++) {
-            const y = padding.top + (chartHeight / 4) * i;
-            ctx.beginPath();
-            ctx.moveTo(padding.left, y);
-            ctx.lineTo(width - padding.right, y);
-            ctx.stroke();
-        }
-
-        // 绘制Y轴标签
-        ctx.fillStyle = '#667788';
-        ctx.font = '10px sans-serif';
-        ctx.textAlign = 'right';
-        const maxVal = Math.max(...data) * 1.2 || 1;
-        for (let i = 0; i <= 4; i++) {
-            const val = (maxVal * (4 - i) / 4).toFixed(1);
-            const y = padding.top + (chartHeight / 4) * i;
-            ctx.fillText(val, padding.left - 5, y + 3);
-        }
-
-        // 绘制X轴标签
-        ctx.textAlign = 'center';
-        labels.forEach((label, i) => {
-            const x = padding.left + (chartWidth / (days - 1)) * i;
-            ctx.fillText(label, x, height - 10);
-        });
-
-        // 绘制折线
-        ctx.strokeStyle = '#22c55e';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        data.forEach((val, i) => {
-            const x = padding.left + (chartWidth / (days - 1)) * i;
-            const y = padding.top + chartHeight - (val / maxVal) * chartHeight;
-            if (i === 0) ctx.moveTo(x, y);
-            else ctx.lineTo(x, y);
-        });
-        ctx.stroke();
-
-        // 绘制数据点和数值
-        ctx.fillStyle = '#22c55e';
-        data.forEach((val, i) => {
-            const x = padding.left + (chartWidth / (days - 1)) * i;
-            const y = padding.top + chartHeight - (val / maxVal) * chartHeight;
-            ctx.beginPath();
-            ctx.arc(x, y, 3, 0, Math.PI * 2);
-            ctx.fill();
-            
-            // 绘制数值标签
-            ctx.fillStyle = '#ffffff';
-            ctx.font = '10px sans-serif';
-            ctx.textAlign = 'center';
-            ctx.fillText(val.toFixed(2), x, y - 8);
-            ctx.fillStyle = '#22c55e';
-        });
-    }
 }
 
 export function hideProfileDialog() {
@@ -322,22 +185,22 @@ async function startWechatBind(token, user) {
     } catch(e) { alert('网络错误，请稍后重试'); return; }
 
     // 2. 用 iframe 内嵌微信扫码页（与登录流程一致）
-    function buildIframeSrc(url) {
+    const iframeSrc = (() => {
         try {
-            const u = new URL(url);
+            const u = new URL(bindUrl);
             const appid = u.searchParams.get("appid");
             const redirectUri = u.searchParams.get("redirect_uri");
             const st = u.searchParams.get("state");
             return `https://open.weixin.qq.com/connect/qrconnect?appid=${appid}&scope=snsapi_login&redirect_uri=${encodeURIComponent(redirectUri)}&state=${st}&login_type=jssdk&self_redirect=true&style=black`;
-        } catch (_) { return url; }
-    }
+        } catch (_) { return bindUrl; }
+    })();
 
     const qrModal = document.createElement('div');
     qrModal.className = 'sv-wechat-qr-modal';
     qrModal.innerHTML = `
         <div class="sv-wechat-qr-box">
             <div class="sv-wechat-qr-title">微信扫码绑定</div>
-            <iframe class="sv-wechat-qr-iframe" src="${buildIframeSrc(bindUrl)}" style="width:300px;height:400px;border:none;border-radius:8px;background:#fff;"></iframe>
+            <iframe class="sv-wechat-qr-iframe" src="${iframeSrc}" style="width:300px;height:400px;border:none;border-radius:8px;background:#fff;"></iframe>
             <div class="sv-wechat-qr-tip" id="sv-wechat-bind-tip">请使用微信扫码完成绑定</div>
             <button class="sv-wechat-qr-close" id="sv-wechat-qr-close-btn">取消</button>
         </div>
@@ -411,19 +274,12 @@ function showEditNicknameDialog(currentNickname) {
 
         const token = localStorage.getItem("sv_token");
         try {
-            const reqBody = { nickname: newNickname };
-            console.log("[SynVow 修改昵称] 请求: https://service.synvow.com/api/v1/user/info", JSON.stringify(reqBody, null, 2));
             const res = await fetch(`${API_BASE}/user/info`, {
                 method: 'PUT',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                body: JSON.stringify(reqBody)
+                headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                body: JSON.stringify({ nickname: newNickname })
             });
             const data = await res.json();
-            console.log("[SynVow 修改昵称] 响应:", JSON.stringify(data, null, 2));
-
             if (data.code === 200) {
                 // 更新本地存储的用户信息
                 const user = JSON.parse(localStorage.getItem("sv_user") || "{}");
@@ -508,8 +364,8 @@ function showChangePasswordDialog() {
 
     document.getElementById('sv-pwd-submit').onclick = async () => {
         const oldPwd = document.getElementById('sv-old-pwd').value;
-        const newPwd = document.getElementById('sv-new-pwd').value;
-        const confirmPwd = document.getElementById('sv-confirm-pwd').value;
+        const newPwd = newPwdEl.value;
+        const confirmPwd = confirmPwdEl.value;
 
         if (!oldPwd || !newPwd || !confirmPwd) { alert('请填写完整信息'); return; }
         if (newPwd.length < 6) { alert('新密码至少6位'); return; }

@@ -1,94 +1,53 @@
-"""
+﻿"""
 NanoBanana SynVow API nodes - 图像生成 / 批量生成
-传图走图生图，不传图走文生图，模型固定 nano-banana-2
 """
 
+import concurrent.futures
 import io
-import json
+import random as _random
 import time
-import uuid
-import asyncio
 
+import comfy.utils
 import numpy as np
 import requests
-import aiohttp
 import torch
 import urllib3
-from PIL import Image, ImageOps
-from concurrent.futures import ThreadPoolExecutor, as_completed
-import server
-from aiohttp import web
+from PIL import Image
 
 from . import synvow_auth
+from .media_common import upload_image as _upload_image
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-pending_batch_sessions = {}
-DIRECT_API_BASE = "https://service.synvow.com/api/v1"
-
-# 模式 → 实际模型名（文生图 / 图生图）
-MODE_OPTIONS = ["默认", "优质"]
-MODE_T2I_MAP = {"默认": "nano-banana-2-文生图", "优质": "nano-banana-2-文生图-优质"}
-MODE_I2I_MAP = {"默认": "nano-banana-2-默认", "优质": "nano-banana-2-优质"}
+_MODEL_OPTIONS = [
+    "nano-banana-2-2605",
+    "nano-banana-pro-2605",
+]
 
 
-def create_session(unique_id, source):
-    session_id = str(uuid.uuid4())
-    pending_batch_sessions[session_id] = {"cancelled": False, "node_id": unique_id, "source": source}
-    return session_id
-
-
-def send_polling_status(unique_id, session_id, status, total=None):
-    payload = {"node_id": unique_id, "session_id": session_id, "status": status}
-    if total is not None:
-        payload["total"] = total
-    server.PromptServer.instance.send_sync("batch_polling_status", payload)
-
-
-def cleanup_session(session_id):
-    if session_id in pending_batch_sessions:
-        del pending_batch_sessions[session_id]
-
-
-def tensor_to_pil_image(image_tensor):
+def _tensor_to_pil(image_tensor):
     if len(image_tensor.shape) > 3:
         image_tensor = image_tensor[0]
     i = 255. * image_tensor.cpu().numpy()
     return Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
 
 
-# 全部比例（Nano2 使用）
-ASPECT_RATIOS = {
-    "1:1": (1, 1), "2:3": (2, 3), "3:2": (3, 2), "3:4": (3, 4), "4:3": (4, 3),
-    "4:5": (4, 5), "5:4": (5, 4), "9:16": (9, 16), "16:9": (16, 9), "21:9": (21, 9),
-    "1:4": (1, 4), "4:1": (4, 1), "1:8": (1, 8), "8:1": (8, 1),
-}
-
-# NanoBanana Pro 支持的比例（不含 1:4/4:1/1:8/8:1）
-PRO_ASPECT_RATIOS = {k: v for k, v in ASPECT_RATIOS.items()
-                     if k not in ("1:4", "4:1", "1:8", "8:1")}
+_ASPECT_RATIOS = [
+    "auto", "1:1", "16:9", "9:16", "4:3", "3:4", "4:5", "5:4",
+    "2:3", "3:2", "21:9", "1:4", "4:1", "1:8", "8:1",
+]
 
 
-def calc_size_from_ratio(aspect_ratio, image_size):
-    base_sizes = {"1K": 1024, "2K": 2048, "4K": 4096}
-    base = base_sizes.get(image_size, 2048)
-    if aspect_ratio not in ASPECT_RATIOS:
-        return None, None
-    w_ratio, h_ratio = ASPECT_RATIOS[aspect_ratio]
-    if w_ratio >= h_ratio:
-        w = base
-        h = int(base * h_ratio / w_ratio)
-    else:
-        h = base
-        w = int(base * w_ratio / h_ratio)
-    return w, h
-
-
-def find_closest_aspect_ratio(width, height):
+def _find_closest_aspect_ratio(width, height):
+    _ratios = {
+        "1:1": (1,1), "16:9": (16,9), "9:16": (9,16), "4:3": (4,3), "3:4": (3,4),
+        "4:5": (4,5), "5:4": (5,4), "2:3": (2,3), "3:2": (3,2), "21:9": (21,9),
+        "1:4": (1,4), "4:1": (4,1), "1:8": (1,8), "8:1": (8,1),
+    }
     input_ratio = width / height
     best_match = "1:1"
-    min_diff = float('inf')
-    for name, (w, h) in ASPECT_RATIOS.items():
+    min_diff = float("inf")
+    for name, (w, h) in _ratios.items():
         diff = abs(input_ratio - w / h)
         if diff < min_diff:
             min_diff = diff
@@ -96,823 +55,538 @@ def find_closest_aspect_ratio(width, height):
     return best_match
 
 
-def _check_auth_error(resp):
-    if resp.status_code == 401:
-        raise RuntimeError("Auth expired, please login again")
+def _blank_image(h=1024, w=1024):
+    return torch.zeros((1, h, w, 3), dtype=torch.float32)
 
 
-def _extract_task_id(response_json):
-    if not isinstance(response_json, dict):
-        return None
-    task_data = response_json.get("data", {})
-    return (
-        response_json.get("task_id")
-        or (task_data.get("task_id") if isinstance(task_data, dict) else None)
-        or ((task_data.get("data") or {}).get("task_id") if isinstance(task_data, dict) else None)
-        or ((task_data.get("sourceData") or {}).get("task_id") if isinstance(task_data, dict) else None)
-    )
+def _extract_urls(d):
+    if isinstance(d, list):
+        return [item["url"] for item in d if isinstance(item, dict) and item.get("url")]
+    if isinstance(d, dict):
+        if "url" in d and d["url"]:
+            return [d["url"]]
+        for key in ("results", "data", "sourceData", "images"):
+            if key in d:
+                result = _extract_urls(d[key])
+                if result:
+                    return result
+    return []
 
 
-def submit_image_task(api_key, model, prompt, images=None, aspect_ratio=None, image_size=None, seed=0):
-    import random as _random
-    url = f"{DIRECT_API_BASE}/api/models/image/edit"
-    params = {"async": "true"}
-    headers = synvow_auth.make_api_headers(api_key)
-
-    if seed == 0:
-        seed = _random.randint(1, 2147483647)
-
-    data = {"model": model, "prompt": prompt, "response_format": "url", "async": "true", "seed": seed}
-    if aspect_ratio:
-        data["aspect_ratio"] = aspect_ratio
+def _build_payload(model, prompt, aspect_ratio, image_size, is_img2img, img_tensors, api_key=None):
+    payload = {"model": model, "prompt": prompt, "replyType": "async"}
+    if aspect_ratio and aspect_ratio != "auto":
+        payload["aspectRatio"] = aspect_ratio
     if image_size:
-        data["image_size"] = image_size
-
-    tag = "I2I" if images else "T2I"
-
-    if images:
-        import base64
-        data_uris = []
-        for img in images:
-            pil = img if hasattr(img, "save") else Image.fromarray(
-                (np.array(img) * 255).clip(0, 255).astype(np.uint8)
-            )
-            rgb = pil.convert("RGB") if pil.mode != "RGB" else pil
-            buf = io.BytesIO()
-            rgb.save(buf, format="JPEG", quality=85)
-            b64 = base64.b64encode(buf.getvalue()).decode("utf-8")
-            data_uris.append(f"data:image/jpeg;base64,{b64}")
-        data["image"] = data_uris[0]
-        if len(data_uris) > 1:
-            data["images"] = data_uris[1:]
-
-    res = requests.post(url, headers=headers, params=params, json=data, timeout=300, verify=False)
-
-    _check_auth_error(res)
-    if not res.text.strip():
-        raise Exception(f"Empty response from server (status {res.status_code})")
-    try:
-        response_json = res.json()
-    except Exception:
-        raise Exception(f"服务器返回非JSON (status {res.status_code}): {res.text[:200]}")
-
-    resp_code = response_json.get("code", res.status_code) if isinstance(response_json, dict) else res.status_code
-    if res.status_code != 200 or (isinstance(resp_code, int) and resp_code >= 400):
-        msg = response_json.get("message", str(response_json)) if isinstance(response_json, dict) else str(response_json)
-        raise Exception(f"Request failed ({resp_code}): {msg[:200]}")
-
-    task_id = _extract_task_id(response_json)
-    consumption_id = response_json.get("consumption_id") if isinstance(response_json, dict) else None
-    if task_id:
-        return {"type": "async", "task_id": task_id, "consumption_id": consumption_id}
-    else:
-        return {"type": "sync", "data": response_json}
+        payload["imageSize"] = image_size
+    if is_img2img and img_tensors and api_key:
+        img_urls = [_upload_image(api_key, t) for t in img_tensors]
+        payload["images"] = img_urls
+    return payload
 
 
-def poll_task_result(api_key, task_id, session_id=None, model=None, consumption_id=None):
-    try:
-        loop = asyncio.get_running_loop()
-    except RuntimeError:
-        loop = None
-    if loop and loop.is_running():
-        import concurrent.futures
-        with concurrent.futures.ThreadPoolExecutor(max_workers=1) as pool:
-            return pool.submit(asyncio.run, _async_poll_task(api_key, task_id, session_id, model, consumption_id)).result()
-    else:
-        return asyncio.run(_async_poll_task(api_key, task_id, session_id, model, consumption_id))
+def _submit_task(payload, headers, api_url):
+    img_count = len(payload.get("images", []))
+    print(f"[NanoBanana] 提交: model={payload.get('model')} aspectRatio={payload.get('aspectRatio')} images={img_count}")
+    res = requests.post(api_url, headers=headers, json=payload,
+                        params={"async": "true"}, timeout=60, verify=False)
+    res.raise_for_status()
+    _d = res.json() if isinstance(res.json(), dict) else {}
+    task_id = (
+        _d.get("task_id")
+        or (_d.get("data") or {}).get("task_id")
+        or ((_d.get("data") or {}).get("sourceData") or {}).get("task_id")
+    )
+    consumption_id = (
+        _d.get("consumption_id")
+        or (_d.get("data") or {}).get("consumption_id")
+        or None
+    )
+    if not task_id:
+        raise RuntimeError(f"提交失败，无 task_id: {str(_d)[:200]}")
+    print(f"[NanoBanana] task_id={task_id[:8]}...")
+    return task_id, consumption_id
 
 
-async def _async_poll_task(api_key, task_id, session_id=None, model=None, consumption_id=None):
+def _poll_task(task_id, consumption_id, headers, poll_url, model):
     import comfy.model_management as mm
-    timeout = 1800
-    interval_running = 2
-    interval_queued = 5
-    poll_url = f"{DIRECT_API_BASE}/api/models/tasks"
-    headers = synvow_auth.make_api_headers(api_key)
-    poll_body = {"task_id": task_id}
-    if model:
-        poll_body["model"] = model
+    print(f"[NanoBanana] 轮询: {task_id[:8]}...")
+    poll_body = {"task_id": task_id, "model": model}
     if consumption_id is not None:
         poll_body["consumption_id"] = consumption_id
-
-    poll_count = 0
+    timeout_total = 1800
+    interval = 5
     start_time = time.time()
-    short_id = task_id[:8]
-
-    async with aiohttp.ClientSession() as session:
-        while True:
-            mm.throw_exception_if_processing_interrupted()
-            if session_id and session_id in pending_batch_sessions:
-                if pending_batch_sessions[session_id].get("cancelled", False):
-                    print(f"[{short_id}] Cancelled", flush=True)
-                    return None
-            poll_count += 1
-            elapsed = time.time() - start_time
-            if elapsed > timeout:
-                print(f"[{short_id}] Timeout ({timeout}s)", flush=True)
-                return None
-
-            try:
-                async with session.post(poll_url, headers=headers, json=poll_body,
-                                        ssl=False, timeout=aiohttp.ClientTimeout(total=30)) as resp:
-                    if resp.status == 401:
-                        raise RuntimeError("Auth expired, please login again")
-                    response_json = await resp.json()
-            except RuntimeError:
-                raise
-            except Exception as e:
-                raise Exception(f"轮询请求失败: {e}")
-
-            data = response_json.get("data", response_json)
-            status = data.get("status", "")
-            if not status:
-                print(f"[poll] full response_json: {str(response_json)[:500]}", flush=True)
-
-            if status == "SUCCESS":
-                print(f"✅ [{short_id}] {poll_count}次 {elapsed:.1f}s SUCCESS", flush=True)
-                return data
-            elif status == "FAILURE":
-                reason = data.get("fail_reason", "Unknown")
-                print(f"❌ [{short_id}] {poll_count}次 {elapsed:.1f}s FAILURE ({reason})", flush=True)
-                return None
-            elif status in ("NOT_START", "QUEUED", "PENDING"):
-                print(f"⏳ [{short_id}] {poll_count}次 {elapsed:.1f}s {status} (排队中)", flush=True)
-                await asyncio.sleep(interval_queued)
-                mm.throw_exception_if_processing_interrupted()
-                continue
-            else:
-                print(f"⏳ [{short_id}] {poll_count}次 {elapsed:.1f}s status={repr(status)} data_keys={list(data.keys()) if isinstance(data, dict) else type(data)}", flush=True)
-
-            await asyncio.sleep(interval_running)
-            mm.throw_exception_if_processing_interrupted()
-
-
-def _download_single_image(url, max_retries=3):
-    for attempt in range(max_retries):
+    while True:
+        mm.throw_exception_if_processing_interrupted()
+        time.sleep(interval)
+        mm.throw_exception_if_processing_interrupted()
+        elapsed = int(time.time() - start_time)
+        if elapsed >= timeout_total:
+            print(f"[NanoBanana] 超时: {task_id[:8]}... ({elapsed}s)")
+            return None
         try:
-            res = requests.get(url, timeout=120, verify=False)
-            if res.status_code == 200:
-                return Image.open(io.BytesIO(res.content)).convert("RGB")
-        except Exception:
-            if attempt < max_retries - 1:
-                time.sleep(2)
-    return None
+            poll_res = requests.post(poll_url, headers=headers, json=poll_body, timeout=30, verify=False)
+            poll_res.raise_for_status()
+            poll_json = poll_res.json()
+            data_field = poll_json.get("data", poll_json) if isinstance(poll_json, dict) else poll_json
+            status = data_field.get("status", "") if isinstance(data_field, dict) else ""
+            print(f"[NanoBanana] {task_id[:8]}... status={status} ({elapsed}s)")
+            if status in ("SUCCESS", "success", "succeeded", "completed", "done", "finished"):
+                return poll_json
+            elif status in ("FAILURE", "failed", "error", "EXCEPTION"):
+                msg = data_field.get("fail_reason", "任务失败")
+                print(f"[NanoBanana] 失败: {task_id[:8]}... {msg}")
+                return None
+        except Exception as e:
+            raise Exception(f"轮询请求失败: {e}")
 
 
-def download_image_from_result(result_data, target_w=None, target_h=None):
-    inner_data = result_data.get("data", {})
-    if isinstance(inner_data, dict):
-        source_data = inner_data.get("sourceData", {})
-        if isinstance(source_data, dict) and "data" in source_data:
-            image_list = source_data.get("data", [])
+def _download_image(img_url):
+    for attempt in range(3):
+        try:
+            r = requests.get(img_url, timeout=120, verify=False)
+            r.raise_for_status()
+            img = Image.open(io.BytesIO(r.content)).convert("RGB")
+            arr = np.array(img).astype(np.float32) / 255.0
+            return torch.from_numpy(arr).unsqueeze(0)
+        except Exception as e:
+            print(f"[NanoBanana] 下载图片失败 (attempt {attempt+1}/3) {img_url}: {e}")
+            if attempt < 2:
+                time.sleep(3 * (attempt + 1))
+    return _blank_image()
+
+
+def _collect_tensors(image_urls):
+    downloaded = {i: _download_image(u) for i, u in enumerate(image_urls) if u}
+    ref_h, ref_w = 1024, 1024
+    for t in downloaded.values():
+        ref_h, ref_w = t.shape[1], t.shape[2]
+        break
+    tensors = [downloaded.get(i, _blank_image(ref_h, ref_w)) for i in range(len(image_urls))]
+    if not tensors:
+        return _blank_image()
+    h, w = tensors[0].shape[1], tensors[0].shape[2]
+    resized = []
+    for t in tensors:
+        if t.shape[1] != h or t.shape[2] != w:
+            pil = Image.fromarray((t[0].cpu().numpy() * 255).clip(0, 255).astype(np.uint8))
+            pil = pil.resize((w, h), Image.LANCZOS)
+            t = torch.from_numpy(np.array(pil).astype(np.float32) / 255.0).unsqueeze(0)
+        resized.append(t)
+    return torch.cat(resized, dim=0)
+
+
+def _download_urls_with_placeholder(image_urls):
+    downloaded = {i: _download_image(u) for i, u in enumerate(image_urls) if u}
+    ref_h, ref_w = 1024, 1024
+    for t in downloaded.values():
+        ref_h, ref_w = t.shape[1], t.shape[2]
+        break
+    return [downloaded.get(i, _blank_image(ref_h, ref_w)) for i in range(len(image_urls))]
+
+
+def _unpack(v):
+    return v[0] if isinstance(v, list) else v
+
+
+def _run_tasks(tasks, model, aspect_ratio, image_size, is_img2img, api_key, headers, api_url, poll_url):
+    total = len(tasks)
+    pbar = comfy.utils.ProgressBar(total)
+
+    submitted = []
+    for i, (p, imgs) in enumerate(tasks):
+        payload = _build_payload(model, p, aspect_ratio, image_size, is_img2img, imgs, api_key=api_key)
+        try:
+            task_id, consumption_id = _submit_task(payload, headers, api_url)
+            submitted.append((task_id, consumption_id))
+            print(f"[NanoBanana] [{i+1}/{total}] 提交成功 task_id={task_id[:8]}...")
+        except Exception as e:
+            print(f"[NanoBanana] [{i+1}/{total}] 提交失败: {e}")
+            submitted.append(None)
+        if i < total - 1:
+            time.sleep(1)
+
+    def _poll_one(item):
+        if item is None:
+            pbar.update(1)
+            return None
+        task_id, consumption_id = item
+        result = _poll_task(task_id, consumption_id, headers, poll_url, model)
+        pbar.update(1)
+        return result
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=total) as executor:
+        poll_results = list(executor.map(_poll_one, submitted))
+
+    image_urls = []
+    for i, r in enumerate(poll_results):
+        if r is not None:
+            d = r.get("data", r) if isinstance(r, dict) else r
+            inner = d.get("data", d) if isinstance(d, dict) else d
+            urls = _extract_urls(inner) or _extract_urls(d) or _extract_urls(r)
+            print(f"[NanoBanana] task[{i}] 提取到 {len(urls)} 个URL")
+            if not urls:
+                print(f"[NanoBanana] task[{i}] 原始响应: {str(r)[:300]}")
+            image_urls.extend(urls)
         else:
-            image_list = inner_data.get("data", [])
-    else:
-        image_list = []
-    if not isinstance(image_list, list):
-        image_list = []
-    urls = [item.get("url", "") for item in image_list if isinstance(item, dict) and item.get("url")]
-    if not urls:
-        raise Exception("No image URLs in result")
-
-    image_objects = []
-    with ThreadPoolExecutor(max_workers=max(len(urls), 1)) as executor:
-        futures = [executor.submit(_download_single_image, url) for url in urls]
-        for f in futures:
-            r = f.result()
-            if r:
-                image_objects.append(r)
-    if not image_objects:
-        raise Exception("No images downloaded")
-
-    final_tensors = []
-    base_w, base_h = target_w, target_h
-    for i, img in enumerate(image_objects):
-        if i == 0 and not (target_w and target_h):
-            base_w, base_h = img.size
-        elif base_w and base_h:
-            img = img.resize((base_w, base_h), Image.LANCZOS)
-        final_tensors.append(torch.from_numpy(np.array(img).astype(np.float32) / 255.0))
-    return torch.stack(final_tensors)
+            print(f"[NanoBanana] task[{i}] 失败，黑图占位")
+            image_urls.append(None)
+    return image_urls
 
 
-def _create_error_result(error_message, original_image=None):
-    print(f"Node error: {error_message}")
-    image_out = original_image if original_image is not None else torch.zeros((1, 1, 1, 3), dtype=torch.float32)
-    task_info = json.dumps({"status": "error", "message": error_message}, ensure_ascii=False)
-    return {"ui": {"string": [error_message]}, "result": (image_out, f"Failed: {error_message}", task_info)}
+def _send_refresh():
+    try:
+        import server
+        server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
+    except Exception:
+        pass
 
-
-def _resolve_model(mode, has_images=False):
-    if has_images:
-        return MODE_I2I_MAP.get(mode, MODE_I2I_MAP["默认"])
-    return MODE_T2I_MAP.get(mode, MODE_T2I_MAP["默认"])
-
-
-def _run_generate(api_key, model, prompt, images=None, aspect_ratio="1:1", image_size="2K", seed=0, session_id=None):
-    submit_result = submit_image_task(api_key, model, prompt, images=images,
-                                      aspect_ratio=aspect_ratio, image_size=image_size, seed=seed)
-    w, h = calc_size_from_ratio(aspect_ratio, image_size)
-    if submit_result["type"] == "async":
-        task_id = submit_result["task_id"]
-        result_data = poll_task_result(api_key, task_id,
-                                       session_id=session_id, model=model,
-                                       consumption_id=submit_result.get("consumption_id"))
-        if result_data is None:
-            raise Exception("Task polling failed or timed out")
-        return download_image_from_result(result_data, target_w=w, target_h=h), task_id
-    else:
-        return download_image_from_result(submit_result["data"], target_w=w, target_h=h), ""
-
-
-# ---------------------------------------------------------------------------
-# NanoBanana Pro 节点
-# ---------------------------------------------------------------------------
 
 class SynVowNanoBanana:
-    """统一图像生成节点：传图=图生图，不传图=文生图，支持多张并发出图"""
-    FUNCTION = "execute"
-    CATEGORY = "\U0001f4abSynVow_api"
+    FUNCTION = "generate"
+    CATEGORY = "💫SynVow_api/api/图像"
+    INPUT_IS_LIST = True
 
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "模式": (MODE_OPTIONS, {"default": "默认"}),
-                "prompt": ("STRING", {"multiline": True, "default": "a cute cat napping in sunlight"}),
-                "aspect_ratio": (["auto"] + list(PRO_ASPECT_RATIOS.keys()), {"default": "1:1"}),
+                "model_type": (_MODEL_OPTIONS, {"default": "nano-banana-2-2605"}),
+                "aspect_ratio": (_ASPECT_RATIOS, {"default": "1:1"}),
                 "image_size": (["1K", "2K", "4K"], {"default": "2K"}),
-                "batch_count": ("INT", {"default": 1, "min": 1, "max": 99}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
             "optional": {
-                "image_1": ("IMAGE",), "image_2": ("IMAGE",), "image_3": ("IMAGE",),
-                "image_4": ("IMAGE",), "image_5": ("IMAGE",), "image_6": ("IMAGE",),
-                "image_7": ("IMAGE",), "image_8": ("IMAGE",), "image_9": ("IMAGE",),
-                "image_10": ("IMAGE",),
+                "prompt": ("STRING", {"multiline": True, "default": ""}),
+                "image1": ("IMAGE",), "image2": ("IMAGE",), "image3": ("IMAGE",),
+                "image4": ("IMAGE",), "image5": ("IMAGE",), "image6": ("IMAGE",),
+                "image7": ("IMAGE",), "image8": ("IMAGE",),
             },
         }
 
-    RETURN_TYPES = ("IMAGE", "STRING", "STRING")
-    RETURN_NAMES = ("image", "status", "task_info")
+    RETURN_TYPES = ("IMAGE", "STRING")
+    RETURN_NAMES = ("images", "image_urls")
 
     @classmethod
     def IS_CHANGED(cls, **kwargs):
-        return float("NaN")
+        import hashlib, json
+        key = json.dumps({k: str(v) for k, v in kwargs.items()}, sort_keys=True, ensure_ascii=False)
+        return hashlib.md5(key.encode()).hexdigest()
 
-    def execute(self, prompt, aspect_ratio="1:1", image_size="2K", batch_count=1, seed=0, **kwargs):
-        mode = kwargs.get("模式", "默认")
-        images_in = []
-        first_image_tensor = None
-        for i in range(1, 11):
-            img = kwargs.get(f"image_{i}")
-            if img is not None:
-                if first_image_tensor is None:
-                    first_image_tensor = img
-                images_in.append(tensor_to_pil_image(img))
+    def generate(self, model_type=None, aspect_ratio=None, image_size=None, seed=None,
+                 prompt=None, image1=None, image2=None, image3=None, image4=None,
+                 image5=None, image6=None, image7=None, image8=None):
+        model_type   = _unpack(model_type) or "nano-banana-2-2605"
+        aspect_ratio = _unpack(aspect_ratio) or "1:1"
+        image_size   = _unpack(image_size) or "2K"
+        seed         = _unpack(seed)
+        prompt       = _unpack(prompt)
+        image1 = _unpack(image1); image2 = _unpack(image2)
+        image3 = _unpack(image3); image4 = _unpack(image4)
+        image5 = _unpack(image5); image6 = _unpack(image6)
+        image7 = _unpack(image7); image8 = _unpack(image8)
 
-        model = _resolve_model(mode, has_images=bool(images_in))
-        tag = "I2I" if images_in else "T2I"
-        try:
-            api_key = synvow_auth.read_api_key()
-        except RuntimeError as e:
-            return _create_error_result(str(e), original_image=first_image_tensor)
+        api_key = synvow_auth.read_api_key()
+        headers = synvow_auth.make_api_headers(api_key)
+        api_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/image/edit"
+        poll_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/tasks"
 
-        if images_in and aspect_ratio == "auto":
-            aspect_ratio = find_closest_aspect_ratio(images_in[0].width, images_in[0].height)
+        imgs = [t for t in [image1, image2, image3, image4, image5, image6, image7, image8] if t is not None]
+        if aspect_ratio == "auto" and imgs:
+            pil0 = _tensor_to_pil(imgs[0])
+            aspect_ratio = _find_closest_aspect_ratio(pil0.width, pil0.height)
         elif aspect_ratio == "auto":
             aspect_ratio = "1:1"
+        is_img2img = len(imgs) > 0
 
-        if batch_count == 1:
-            try:
-                image_out, task_id = _run_generate(api_key, model, prompt,
-                                          images=images_in if images_in else None,
-                                          aspect_ratio=aspect_ratio, image_size=image_size, seed=seed)
-                status = f"SynVow {tag} | {model} | success"
-                task_info = json.dumps({"status": "SUCCESS", "task_id": task_id, "model": model}, ensure_ascii=False)
-                return {"ui": {"string": [status]}, "result": (image_out, status, task_info)}
-            except RuntimeError as e:
-                return _create_error_result(str(e), original_image=first_image_tensor)
-            except Exception as e:
-                return _create_error_result(f"{tag} failed: {e}", original_image=first_image_tensor)
+        p = str(prompt).strip() if prompt else ""
+        tasks = [(p, imgs)]
 
-        def _run_single(idx):
-            s = seed + idx if seed > 0 else 0
-            try:
-                tensor, task_id = _run_generate(api_key, model, prompt,
-                                       images=images_in if images_in else None,
-                                       aspect_ratio=aspect_ratio, image_size=image_size, seed=s)
-                return idx, tensor, task_id, None
-            except RuntimeError:
-                raise
-            except Exception as e:
-                return idx, None, "", f"Task {idx+1}: {e}"
+        image_urls = _run_tasks(tasks, model_type, aspect_ratio, image_size, is_img2img, api_key, headers, api_url, poll_url)
+        image_urls_str = "\n".join(u for u in image_urls if u)
+        if not image_urls_str:
+            image_urls_str = f"[ERROR] 生成失败 model={model_type} aspectRatio={aspect_ratio}"
 
-        results = [None] * batch_count
-        task_ids = []
-        errors = []
-        try:
-            with ThreadPoolExecutor(max_workers=batch_count) as pool:
-                futures = {pool.submit(_run_single, i): i for i in range(batch_count)}
-                for f in as_completed(futures):
-                    try:
-                        idx, tensor, task_id, err = f.result()
-                        if err:
-                            errors.append(err)
-                        else:
-                            results[idx] = tensor
-                            task_ids.append(task_id)
-                    except RuntimeError:
-                        raise
-                    except Exception as e:
-                        errors.append(str(e))
-        except RuntimeError as e:
-            return _create_error_result(str(e), original_image=first_image_tensor)
-
-        all_tensors = [t for t in results if t is not None]
-        if not all_tensors:
-            return _create_error_result(f"All failed: {'; '.join(errors)}", original_image=first_image_tensor)
-        image_out = torch.cat(all_tensors, dim=0)
-        status = f"SynVow {tag} | {len(all_tensors)}/{batch_count}"
-        if errors:
-            status += f" | errors: {'; '.join(errors)}"
-        task_info = json.dumps({"status": "SUCCESS", "task_ids": task_ids, "model": model}, ensure_ascii=False)
-        return {"ui": {"string": [status]}, "result": (image_out, status, task_info)}
+        out_tensor = _collect_tensors(image_urls)
+        _send_refresh()
+        return (out_tensor, image_urls_str)
 
 
-# ---------------------------------------------------------------------------
-# Nano2 节点
-# ---------------------------------------------------------------------------
 
-NANO2_T2I_MAP = {"默认": "Nano2-默认-文生图", "优质": "Nano2-优质-文生图"}
-NANO2_I2I_MAP = {"默认": "Nano2-默认", "优质": "Nano2-优质"}
-
-
-def _resolve_nano2_model(mode, has_images=False):
-    if has_images:
-        return NANO2_I2I_MAP.get(mode, NANO2_I2I_MAP["默认"])
-    return NANO2_T2I_MAP.get(mode, NANO2_T2I_MAP["默认"])
-
-
-class SynVowNano2:
-    """Nano2 图像生成节点：传图=图生图，不传图=文生图，支持多张并发出图"""
-    FUNCTION = "execute"
-    CATEGORY = "\U0001f4abSynVow_api"
+class SynVowNanoBanana_TBatch:
+    FUNCTION = "process_batch"
+    CATEGORY = "💫SynVow_api/api/图像"
+    INPUT_IS_LIST = True
+    OUTPUT_IS_LIST = (True, False)
 
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "模式": (MODE_OPTIONS, {"default": "默认"}),
-                "prompt": ("STRING", {"multiline": True, "default": "a cute cat napping in sunlight"}),
-                "aspect_ratio": (["auto"] + list(ASPECT_RATIOS.keys()), {"default": "1:1"}),
+                "model_type": (_MODEL_OPTIONS, {"default": "nano-banana-2-2605"}),
+                "aspect_ratio": (_ASPECT_RATIOS, {"default": "1:1"}),
                 "image_size": (["1K", "2K", "4K"], {"default": "2K"}),
-                "batch_count": ("INT", {"default": 1, "min": 1, "max": 99}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
             "optional": {
-                "image_1": ("IMAGE",), "image_2": ("IMAGE",), "image_3": ("IMAGE",),
-                "image_4": ("IMAGE",), "image_5": ("IMAGE",), "image_6": ("IMAGE",),
-                "image_7": ("IMAGE",), "image_8": ("IMAGE",), "image_9": ("IMAGE",),
-                "image_10": ("IMAGE",),
+                "prompts_list": ("STRING", {"forceInput": True}),
+                "image1": ("IMAGE",), "image2": ("IMAGE",), "image3": ("IMAGE",),
+                "image4": ("IMAGE",), "image5": ("IMAGE",), "image6": ("IMAGE",),
+                "image7": ("IMAGE",), "image8": ("IMAGE",),
             },
         }
 
-    RETURN_TYPES = ("IMAGE", "STRING", "STRING")
-    RETURN_NAMES = ("image", "status", "task_info")
+    RETURN_TYPES = ("IMAGE", "STRING")
+    RETURN_NAMES = ("images", "image_urls")
 
     @classmethod
     def IS_CHANGED(cls, **kwargs):
-        return float("NaN")
+        import hashlib, json
+        key = json.dumps({k: str(v) for k, v in kwargs.items()}, sort_keys=True, ensure_ascii=False)
+        return hashlib.md5(key.encode()).hexdigest()
 
-    def execute(self, prompt, aspect_ratio="1:1", image_size="2K", batch_count=1, seed=0, **kwargs):
-        mode = kwargs.get("模式", "默认")
-        images_in = []
-        first_image_tensor = None
-        for i in range(1, 11):
-            img = kwargs.get(f"image_{i}")
-            if img is not None:
-                if first_image_tensor is None:
-                    first_image_tensor = img
-                images_in.append(tensor_to_pil_image(img))
+    def process_batch(self, model_type=None, aspect_ratio=None, image_size=None, seed=None,
+                      prompts_list=None, image1=None, image2=None, image3=None, image4=None,
+                      image5=None, image6=None, image7=None, image8=None):
+        model_type   = _unpack(model_type) or "nano-banana-2-2605"
+        aspect_ratio = _unpack(aspect_ratio) or "1:1"
+        image_size   = _unpack(image_size) or "2K"
+        seed         = _unpack(seed)
+        image1 = _unpack(image1); image2 = _unpack(image2)
+        image3 = _unpack(image3); image4 = _unpack(image4)
+        image5 = _unpack(image5); image6 = _unpack(image6)
+        image7 = _unpack(image7); image8 = _unpack(image8)
 
-        model = _resolve_nano2_model(mode, has_images=bool(images_in))
-        tag = "I2I" if images_in else "T2I"
-        try:
-            api_key = synvow_auth.read_api_key()
-        except RuntimeError as e:
-            return _create_error_result(str(e), original_image=first_image_tensor)
+        api_key = synvow_auth.read_api_key()
+        headers = synvow_auth.make_api_headers(api_key)
+        api_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/image/edit"
+        poll_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/tasks"
 
-        if images_in and aspect_ratio == "auto":
-            aspect_ratio = find_closest_aspect_ratio(images_in[0].width, images_in[0].height)
+        imgs = [t for t in [image1, image2, image3, image4, image5, image6, image7, image8] if t is not None]
+        if aspect_ratio == "auto" and imgs:
+            pil0 = _tensor_to_pil(imgs[0])
+            aspect_ratio = _find_closest_aspect_ratio(pil0.width, pil0.height)
         elif aspect_ratio == "auto":
             aspect_ratio = "1:1"
+        is_img2img = len(imgs) > 0
 
-        if batch_count == 1:
-            try:
-                image_out, task_id = _run_generate(api_key, model, prompt,
-                                          images=images_in if images_in else None,
-                                          aspect_ratio=aspect_ratio, image_size=image_size, seed=seed)
-                status = f"SynVow Nano2 {tag} | {model} | success"
-                task_info = json.dumps({"status": "SUCCESS", "task_id": task_id, "model": model}, ensure_ascii=False)
-                return {"ui": {"string": [status]}, "result": (image_out, status, task_info)}
-            except RuntimeError as e:
-                return _create_error_result(str(e), original_image=first_image_tensor)
-            except Exception as e:
-                return _create_error_result(f"Nano2 {tag} failed: {e}", original_image=first_image_tensor)
+        prompts = prompts_list if isinstance(prompts_list, list) else ([prompts_list] if prompts_list else [""])
+        prompts = [p for p in prompts if p is not None]
+        tasks = [(p, imgs) for p in prompts]
+        total = len(tasks)
+        print(f"[NanoBanana TBatch] {total} 条 prompt, model={model_type}")
 
-        def _run_single(idx):
-            s = seed + idx if seed > 0 else 0
-            try:
-                tensor, task_id = _run_generate(api_key, model, prompt,
-                                       images=images_in if images_in else None,
-                                       aspect_ratio=aspect_ratio, image_size=image_size, seed=s)
-                return idx, tensor, task_id, None
-            except RuntimeError:
-                raise
-            except Exception as e:
-                return idx, None, "", f"Task {idx+1}: {e}"
+        image_urls = _run_tasks(tasks, model_type, aspect_ratio, image_size, is_img2img, api_key, headers, api_url, poll_url)
+        image_list = _download_urls_with_placeholder(image_urls)
 
-        results = [None] * batch_count
-        task_ids = []
-        errors = []
-        try:
-            with ThreadPoolExecutor(max_workers=batch_count) as pool:
-                futures = {pool.submit(_run_single, i): i for i in range(batch_count)}
-                for f in as_completed(futures):
-                    try:
-                        idx, tensor, task_id, err = f.result()
-                        if err:
-                            errors.append(err)
-                        else:
-                            results[idx] = tensor
-                            task_ids.append(task_id)
-                    except RuntimeError:
-                        raise
-                    except Exception as e:
-                        errors.append(str(e))
-        except RuntimeError as e:
-            return _create_error_result(str(e), original_image=first_image_tensor)
-
-        all_tensors = [t for t in results if t is not None]
-        if not all_tensors:
-            return _create_error_result(f"All failed: {'; '.join(errors)}", original_image=first_image_tensor)
-        image_out = torch.cat(all_tensors, dim=0)
-        status = f"SynVow Nano2 {tag} | {len(all_tensors)}/{batch_count}"
-        if errors:
-            status += f" | errors: {'; '.join(errors)}"
-        task_info = json.dumps({"status": "SUCCESS", "task_ids": task_ids, "model": model}, ensure_ascii=False)
-        return {"ui": {"string": [status]}, "result": (image_out, status, task_info)}
+        successful = sum(1 for u in image_urls if u)
+        image_urls_str = "\n".join(u for u in image_urls if u)
+        if not image_urls_str:
+            image_urls_str = f"[ERROR] 所有任务失败 model={model_type} aspectRatio={aspect_ratio} total={total}"
+        print(f"[NanoBanana TBatch] 完成: {successful}/{total}")
+        _send_refresh()
+        return (image_list, image_urls_str)
 
 
-# ---------------------------------------------------------------------------
-# NanoBanana Pro TI批量节点
-# ---------------------------------------------------------------------------
 
-class SynVowNanaBanana_TIBatch:
-    pass
-SynVowNanaBanana_TIBatch = None
+class SynVowNanoBanana_IBatch:
+    FUNCTION = "process_batch"
+    CATEGORY = "💫SynVow_api/api/图像"
+    INPUT_IS_LIST = True
+    OUTPUT_IS_LIST = (True, False)
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "images_list1": ("IMAGE",),
+                "model_type": (_MODEL_OPTIONS, {"default": "nano-banana-2-2605"}),
+                "aspect_ratio": (_ASPECT_RATIOS, {"default": "1:1"}),
+                "image_size": (["1K", "2K", "4K"], {"default": "2K"}),
+                "prompt": ("STRING", {"multiline": True, "default": ""}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
+            },
+            "optional": {
+                "images_list2": ("IMAGE",),
+                "images_list3": ("IMAGE",),
+                "images_list4": ("IMAGE",),
+                "images_list5": ("IMAGE",),
+            },
+        }
+
+    RETURN_TYPES = ("IMAGE", "STRING")
+    RETURN_NAMES = ("images", "image_urls")
+
+    @classmethod
+    def IS_CHANGED(cls, **kwargs):
+        import hashlib, json
+        key = json.dumps({k: str(v) for k, v in kwargs.items()}, sort_keys=True, ensure_ascii=False)
+        return hashlib.md5(key.encode()).hexdigest()
+
+    def process_batch(self, images_list1, model_type=None, aspect_ratio=None, image_size=None,
+                      prompt=None, seed=None,
+                      images_list2=None, images_list3=None, images_list4=None, images_list5=None):
+        model_type   = _unpack(model_type) or "nano-banana-2-2605"
+        aspect_ratio = _unpack(aspect_ratio) or "1:1"
+        image_size   = _unpack(image_size) or "2K"
+        prompt       = _unpack(prompt)
+        seed         = _unpack(seed)
+
+        api_key = synvow_auth.read_api_key()
+        headers = synvow_auth.make_api_headers(api_key)
+        api_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/image/edit"
+        poll_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/tasks"
+
+        p = str(prompt).strip() if prompt else ""
+        all_lists = [images_list1,
+                     images_list2 if images_list2 is not None else [],
+                     images_list3 if images_list3 is not None else [],
+                     images_list4 if images_list4 is not None else [],
+                     images_list5 if images_list5 is not None else []]
+        batch_size = max(len(lst) for lst in all_lists)
+
+        if aspect_ratio == "auto":
+            first_nonempty = next((lst for lst in all_lists if lst), None)
+            if first_nonempty:
+                pil0 = _tensor_to_pil(first_nonempty[0])
+                aspect_ratio = _find_closest_aspect_ratio(pil0.width, pil0.height)
+            else:
+                aspect_ratio = "1:1"
+
+        print(f"[NanoBanana IBatch] {batch_size} 组图, model={model_type}")
+
+        tasks = []
+        for i in range(batch_size):
+            imgs = []
+            for lst in all_lists:
+                if not lst:
+                    continue
+                imgs.append(lst[0] if len(lst) == 1 else lst[i])
+            tasks.append((p, imgs))
+
+        image_urls = _run_tasks(tasks, model_type, aspect_ratio, image_size, True, api_key, headers, api_url, poll_url)
+        image_list = _download_urls_with_placeholder(image_urls)
+
+        successful = sum(1 for u in image_urls if u)
+        image_urls_str = "\n".join(u for u in image_urls if u)
+        if not image_urls_str:
+            image_urls_str = f"[ERROR] 所有任务失败 model={model_type} aspectRatio={aspect_ratio} total={batch_size}"
+        print(f"[NanoBanana IBatch] 完成: {successful}/{batch_size}")
+        _send_refresh()
+        return (image_list, image_urls_str)
+
+
 
 class SynVowNanoBanana_TIBatch:
-    """NanoBanana Pro 图生图批量节点：多组图像+多条提示词并发处理"""
     FUNCTION = "process_batch"
-    CATEGORY = "\U0001f4abSynVow_api"
+    CATEGORY = "💫SynVow_api/api/图像"
     INPUT_IS_LIST = True
+    OUTPUT_IS_LIST = (True, False)
 
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
                 "images_list1": ("IMAGE",),
-                "模式": (MODE_OPTIONS, {"default": "默认"}),
-                "aspect_ratio": (["auto"] + list(PRO_ASPECT_RATIOS.keys()), {"default": "1:1"}),
+                "model_type": (_MODEL_OPTIONS, {"default": "nano-banana-2-2605"}),
+                "aspect_ratio": (_ASPECT_RATIOS, {"default": "1:1"}),
                 "image_size": (["1K", "2K", "4K"], {"default": "2K"}),
                 "prompt_order": (["sequential", "reverse", "random"], {"default": "sequential"}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
             "optional": {
                 "prompts_list": ("STRING", {"forceInput": True}),
-                "images_list2": ("IMAGE",), "images_list3": ("IMAGE",),
-                "images_list4": ("IMAGE",), "images_list5": ("IMAGE",),
-                "images_list6": ("IMAGE",), "images_list7": ("IMAGE",),
-                "images_list8": ("IMAGE",),
+                "images_list2": ("IMAGE",),
+                "images_list3": ("IMAGE",),
+                "images_list4": ("IMAGE",),
+                "images_list5": ("IMAGE",),
             },
-            "hidden": {"unique_id": "UNIQUE_ID"},
         }
 
-    RETURN_TYPES = ("IMAGE", "STRING", "STRING")
-    RETURN_NAMES = ("batch_images", "batch_info", "task_info")
+    RETURN_TYPES = ("IMAGE", "STRING")
+    RETURN_NAMES = ("images", "image_urls")
 
     @classmethod
     def IS_CHANGED(cls, **kwargs):
-        return float("NaN")
+        import hashlib, json
+        key = json.dumps({k: str(v) for k, v in kwargs.items()}, sort_keys=True, ensure_ascii=False)
+        return hashlib.md5(key.encode()).hexdigest()
 
-    def _process_single(self, pil_images, prompt, api_key, model, aspect_ratio, image_size, seed, session_id=None):
-        max_submit_retries = 3
-        result = None
-        for attempt in range(max_submit_retries):
-            try:
-                result = submit_image_task(api_key, model, prompt, images=pil_images,
-                                           aspect_ratio=aspect_ratio, image_size=image_size, seed=seed)
-                break
-            except RuntimeError:
-                raise
-            except Exception as e:
-                if attempt < max_submit_retries - 1:
-                    time.sleep(2)
+    def process_batch(self, images_list1, model_type=None, aspect_ratio=None, image_size=None,
+                      prompt_order=None, seed=None,
+                      prompts_list=None, images_list2=None, images_list3=None,
+                      images_list4=None, images_list5=None):
+        model_type   = _unpack(model_type) or "nano-banana-2-2605"
+        aspect_ratio = _unpack(aspect_ratio) or "1:1"
+        image_size   = _unpack(image_size) or "2K"
+        prompt_order = _unpack(prompt_order) or "sequential"
+        seed         = _unpack(seed)
+
+        api_key = synvow_auth.read_api_key()
+        headers = synvow_auth.make_api_headers(api_key)
+        api_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/image/edit"
+        poll_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/tasks"
+
+        all_lists = [images_list1,
+                     images_list2 if images_list2 is not None else [],
+                     images_list3 if images_list3 is not None else [],
+                     images_list4 if images_list4 is not None else [],
+                     images_list5 if images_list5 is not None else []]
+        batch_size = max(len(lst) for lst in all_lists)
+
+        if aspect_ratio == "auto":
+            first_nonempty = next((lst for lst in all_lists if lst), None)
+            if first_nonempty:
+                pil0 = _tensor_to_pil(first_nonempty[0])
+                aspect_ratio = _find_closest_aspect_ratio(pil0.width, pil0.height)
+            else:
+                aspect_ratio = "1:1"
+
+        prompts = [p for p in (prompts_list if isinstance(prompts_list, list) else ([prompts_list] if prompts_list else [])) if p is not None]
+        if not prompts:
+            prompts = [""]
+        prompts_count = len(prompts)
+        if prompt_order == "reverse":
+            prompts = prompts[::-1]
+        assigned_prompts = [
+            _random.choice(prompts) if prompt_order == "random" else prompts[i % prompts_count]
+            for i in range(batch_size)
+        ]
+
+        print(f"[NanoBanana TIBatch] {batch_size} 组图, {prompts_count} 条 prompt, order={prompt_order}, model={model_type}")
+
+        tasks = []
+        for i in range(batch_size):
+            imgs = []
+            for lst in all_lists:
+                if not lst:
                     continue
-                return {"success": False, "error": str(e), "task_id": ""}
-        if result is None:
-            return {"success": False, "error": "submit failed", "task_id": ""}
-        w, h = calc_size_from_ratio(aspect_ratio, image_size)
-        if result["type"] == "async":
-            task_id = result["task_id"]
-            result_data = poll_task_result(api_key, task_id, session_id=session_id, model=model, consumption_id=result.get("consumption_id"))
-            if result_data is None:
-                return {"success": False, "error": "polling timeout", "task_id": task_id}
-            return {"success": True, "images": download_image_from_result(result_data, w, h), "task_id": task_id}
-        else:
-            return {"success": True, "images": download_image_from_result(result["data"], w, h), "task_id": ""}
+                imgs.append(lst[0] if len(lst) == 1 else lst[i])
+            tasks.append((assigned_prompts[i], imgs))
 
-    def process_batch(self, prompts_list, images_list1, 模式, aspect_ratio, image_size,
-                      prompt_order, seed, images_list2=None, images_list3=None,
-                      images_list4=None, images_list5=None, images_list6=None,
-                      images_list7=None, images_list8=None, unique_id=None):
-        import json, random as _random
-        # 解包 INPUT_IS_LIST 标量
-        mode = 模式[0] if isinstance(模式, list) else 模式
-        aspect_ratio = aspect_ratio[0] if isinstance(aspect_ratio, list) else aspect_ratio
-        image_size = image_size[0] if isinstance(image_size, list) else image_size
-        prompt_order = prompt_order[0] if isinstance(prompt_order, list) else prompt_order
-        seed = seed[0] if isinstance(seed, list) else seed
-        if isinstance(unique_id, list):
-            unique_id = unique_id[0] if unique_id else None
+        image_urls = _run_tasks(tasks, model_type, aspect_ratio, image_size, True, api_key, headers, api_url, poll_url)
+        image_list = _download_urls_with_placeholder(image_urls)
 
-        try:
-            api_key = synvow_auth.read_api_key()
-        except RuntimeError as e:
-            w, h = calc_size_from_ratio(aspect_ratio, image_size)
-            black = _create_black_image_tensor(w, h)
-            return (black, json.dumps({"error": str(e)}, ensure_ascii=False), json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
-
-        model = _resolve_model(mode, has_images=True)
-        session_id = create_session(unique_id, "Pro_TIBatch")
-        if prompts_list is None:
-            prompts_list = [""]
-        prompts = prompts_list if isinstance(prompts_list, list) else [prompts_list]
-        prompts_count = len(prompts)
-
-        all_lists = [images_list1] + [lst or [] for lst in [images_list2, images_list3, images_list4,
-                                                              images_list5, images_list6, images_list7, images_list8]]
-        images_max_len = max((len(lst) for lst in all_lists), default=0)
-        batch_size = max(images_max_len, prompts_count)
-
-        if prompt_order == "reverse":
-            prompts = prompts[::-1]
-        assigned_prompts = [
-            _random.choice(prompts) if prompt_order == "random" else prompts[i % prompts_count]
-            for i in range(batch_size)
-        ]
-
-        # 处理 auto aspect_ratio
-        if aspect_ratio == "auto":
-            first_imgs = [lst for lst in all_lists if len(lst) > 0]
-            if first_imgs:
-                pil0 = tensor_to_pil_image(first_imgs[0][0])
-                aspect_ratio = find_closest_aspect_ratio(pil0.width, pil0.height)
-            else:
-                aspect_ratio = "1:1"
-
-        send_polling_status(unique_id, session_id, "polling", batch_size)
-
-        w, h = calc_size_from_ratio(aspect_ratio, image_size)
-        shared_pil_cache = {li: tensor_to_pil_image(lst[0]) for li, lst in enumerate(all_lists) if len(lst) == 1}
-        results = [None] * batch_size
-
-        try:
-            with ThreadPoolExecutor(max_workers=batch_size) as executor:
-                futures = {}
-                for i in range(batch_size):
-                    combined = []
-                    for li, lst in enumerate(all_lists):
-                        if not lst:
-                            continue
-                        if li in shared_pil_cache:
-                            combined.append(shared_pil_cache[li])
-                        elif i < len(lst):
-                            pil = tensor_to_pil_image(lst[i])
-                            if pil:
-                                combined.append(pil)
-                    futures[executor.submit(self._process_single, combined, assigned_prompts[i],
-                                            api_key, model, aspect_ratio, image_size, seed, session_id)] = i
-                for f in as_completed(futures):
-                    idx = futures[f]
-                    try:
-                        results[idx] = f.result()
-                    except RuntimeError:
-                        raise
-                    except Exception as e:
-                        results[idx] = {"success": False, "error": str(e)}
-        except RuntimeError as e:
-            send_polling_status(unique_id, session_id, "idle")
-            cleanup_session(session_id)
-            black = _create_black_image_tensor(w, h)
-            return (black, json.dumps({"error": str(e)}, ensure_ascii=False), json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
-        finally:
-            send_polling_status(unique_id, session_id, "idle")
-            cleanup_session(session_id)
-
-        all_images, ok, task_ids = [], 0, []
-        for r in results:
-            if r and r["success"]:
-                all_images.append(r["images"])
-                ok += 1
-            else:
-                all_images.append(_create_black_image_tensor(w, h))
-            if r and r.get("task_id"):
-                task_ids.append(r["task_id"])
-
-        print(f"[NanoBanana Pro 批量] 完成：{ok}/{batch_size} 成功，{batch_size - ok} 失败", flush=True)
-        batch_info = json.dumps({"total": batch_size, "successful": ok, "failed": batch_size - ok}, ensure_ascii=False)
-        task_info = json.dumps({"status": "SUCCESS", "task_ids": task_ids, "model": model}, ensure_ascii=False)
-        return (torch.cat(all_images, dim=0), batch_info, task_info)
-
-
-# ---------------------------------------------------------------------------
-# Nano2 TI批量节点
-# ---------------------------------------------------------------------------
-
-class SynVowNano2_TIBatch:
-    """Nano2 图生图批量节点：多组图像+多条提示词并发处理"""
-    FUNCTION = "process_batch"
-    CATEGORY = "\U0001f4abSynVow_api"
-    INPUT_IS_LIST = True
-
-    @classmethod
-    def INPUT_TYPES(cls):
-        return {
-            "required": {
-                "images_list1": ("IMAGE",),
-                "模式": (MODE_OPTIONS, {"default": "默认"}),
-                "aspect_ratio": (["auto"] + list(ASPECT_RATIOS.keys()), {"default": "1:1"}),
-                "image_size": (["1K", "2K", "4K"], {"default": "2K"}),
-                "prompt_order": (["sequential", "reverse", "random"], {"default": "sequential"}),
-                "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
-            },
-            "optional": {
-                "prompts_list": ("STRING", {"forceInput": True}),
-                "images_list2": ("IMAGE",), "images_list3": ("IMAGE",),
-                "images_list4": ("IMAGE",), "images_list5": ("IMAGE",),
-                "images_list6": ("IMAGE",), "images_list7": ("IMAGE",),
-                "images_list8": ("IMAGE",),
-            },
-            "hidden": {"unique_id": "UNIQUE_ID"},
-        }
-
-    RETURN_TYPES = ("IMAGE", "STRING", "STRING")
-    RETURN_NAMES = ("batch_images", "batch_info", "task_info")
-
-    @classmethod
-    def IS_CHANGED(cls, **kwargs):
-        return float("NaN")
-
-    def _process_single(self, pil_images, prompt, api_key, model, aspect_ratio, image_size, seed, session_id=None):
-        try:
-            result = submit_image_task(api_key, model, prompt, images=pil_images,
-                                       aspect_ratio=aspect_ratio, image_size=image_size, seed=seed)
-        except RuntimeError:
-            raise
-        except Exception as e:
-            return {"success": False, "error": str(e), "task_id": ""}
-        w, h = calc_size_from_ratio(aspect_ratio, image_size)
-        if result["type"] == "async":
-            task_id = result["task_id"]
-            result_data = poll_task_result(api_key, task_id, session_id=session_id, model=model, consumption_id=result.get("consumption_id"))
-            if result_data is None:
-                return {"success": False, "error": "polling timeout", "task_id": task_id}
-            return {"success": True, "images": download_image_from_result(result_data, w, h), "task_id": task_id}
-        else:
-            return {"success": True, "images": download_image_from_result(result["data"], w, h), "task_id": ""}
-
-    def process_batch(self, prompts_list, images_list1, 模式, aspect_ratio, image_size,
-                      prompt_order, seed, images_list2=None, images_list3=None,
-                      images_list4=None, images_list5=None, images_list6=None,
-                      images_list7=None, images_list8=None, unique_id=None):
-        import json, random as _random
-        mode = 模式[0] if isinstance(模式, list) else 模式
-        aspect_ratio = aspect_ratio[0] if isinstance(aspect_ratio, list) else aspect_ratio
-        image_size = image_size[0] if isinstance(image_size, list) else image_size
-        prompt_order = prompt_order[0] if isinstance(prompt_order, list) else prompt_order
-        seed = seed[0] if isinstance(seed, list) else seed
-        if isinstance(unique_id, list):
-            unique_id = unique_id[0] if unique_id else None
-
-        try:
-            api_key = synvow_auth.read_api_key()
-        except RuntimeError as e:
-            w, h = calc_size_from_ratio(aspect_ratio, image_size)
-            black = _create_black_image_tensor(w, h)
-            return (black, json.dumps({"error": str(e)}, ensure_ascii=False), json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
-
-        model = _resolve_nano2_model(mode, has_images=True)
-        session_id = create_session(unique_id, "Nano2_TIBatch")
-        prompts = prompts_list if isinstance(prompts_list, list) else [prompts_list]
-        prompts_count = len(prompts)
-
-        all_lists = [images_list1] + [lst or [] for lst in [images_list2, images_list3, images_list4,
-                                                              images_list5, images_list6, images_list7, images_list8]]
-        images_max_len = max((len(lst) for lst in all_lists), default=0)
-        batch_size = max(images_max_len, prompts_count)
-
-        if prompt_order == "reverse":
-            prompts = prompts[::-1]
-        assigned_prompts = [
-            _random.choice(prompts) if prompt_order == "random" else prompts[i % prompts_count]
-            for i in range(batch_size)
-        ]
-
-        if aspect_ratio == "auto":
-            first_imgs = [lst for lst in all_lists if len(lst) > 0]
-            if first_imgs:
-                pil0 = tensor_to_pil_image(first_imgs[0][0])
-                aspect_ratio = find_closest_aspect_ratio(pil0.width, pil0.height)
-            else:
-                aspect_ratio = "1:1"
-
-        send_polling_status(unique_id, session_id, "polling", batch_size)
-
-        w, h = calc_size_from_ratio(aspect_ratio, image_size)
-        shared_pil_cache = {li: tensor_to_pil_image(lst[0]) for li, lst in enumerate(all_lists) if len(lst) == 1}
-        results = [None] * batch_size
-
-        try:
-            with ThreadPoolExecutor(max_workers=batch_size) as executor:
-                futures = {}
-                for i in range(batch_size):
-                    combined = []
-                    for li, lst in enumerate(all_lists):
-                        if not lst:
-                            continue
-                        if li in shared_pil_cache:
-                            combined.append(shared_pil_cache[li])
-                        elif i < len(lst):
-                            pil = tensor_to_pil_image(lst[i])
-                            if pil:
-                                combined.append(pil)
-                    futures[executor.submit(self._process_single, combined, assigned_prompts[i],
-                                            api_key, model, aspect_ratio, image_size, seed, session_id)] = i
-                for f in as_completed(futures):
-                    idx = futures[f]
-                    try:
-                        results[idx] = f.result()
-                    except RuntimeError:
-                        raise
-                    except Exception as e:
-                        results[idx] = {"success": False, "error": str(e)}
-        except RuntimeError as e:
-            send_polling_status(unique_id, session_id, "idle")
-            cleanup_session(session_id)
-            black = _create_black_image_tensor(w, h)
-            return (black, json.dumps({"error": str(e)}, ensure_ascii=False), json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
-        finally:
-            send_polling_status(unique_id, session_id, "idle")
-            cleanup_session(session_id)
-
-        all_images, ok, task_ids = [], 0, []
-        for r in results:
-            if r and r["success"]:
-                all_images.append(r["images"])
-                ok += 1
-            else:
-                all_images.append(_create_black_image_tensor(w, h))
-            if r and r.get("task_id"):
-                task_ids.append(r["task_id"])
-
-        print(f"[Nano2 批量] 完成：{ok}/{batch_size} 成功，{batch_size - ok} 失败", flush=True)
-        batch_info = json.dumps({"total": batch_size, "successful": ok, "failed": batch_size - ok}, ensure_ascii=False)
-        task_info = json.dumps({"status": "SUCCESS", "task_ids": task_ids, "model": model}, ensure_ascii=False)
-        return (torch.cat(all_images, dim=0), batch_info, task_info)
-
-
-# ---------------------------------------------------------------------------
-# 黑图辅助（批量节点用）
-# ---------------------------------------------------------------------------
-
-def _create_black_image_tensor(w, h):
-    arr = np.zeros((1, h, w, 3), dtype=np.float32)
-    return torch.from_numpy(arr)
+        successful = sum(1 for u in image_urls if u)
+        image_urls_str = "\n".join(u for u in image_urls if u)
+        if not image_urls_str:
+            image_urls_str = f"[ERROR] 所有任务失败 model={model_type} aspectRatio={aspect_ratio} total={batch_size}"
+        print(f"[NanoBanana TIBatch] 完成: {successful}/{batch_size}")
+        _send_refresh()
+        return (image_list, image_urls_str)
 
 
 NODE_CLASS_MAPPINGS = {
     "SynVowNanoBanana": SynVowNanoBanana,
+    "SynVowNanoBanana_TBatch": SynVowNanoBanana_TBatch,
+    "SynVowNanoBanana_IBatch": SynVowNanoBanana_IBatch,
     "SynVowNanoBanana_TIBatch": SynVowNanoBanana_TIBatch,
-    "SynVowNano2": SynVowNano2,
-    "SynVowNano2_TIBatch": SynVowNano2_TIBatch,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "SynVowNanoBanana": "SynVow NanoBanana Pro图像生成",
-    "SynVowNanoBanana_TIBatch": "SynVow NanoBanana Pro 批量出图",
-    "SynVowNano2": "SynVow Nano2 图像生成",
-    "SynVowNano2_TIBatch": "SynVow Nano2 批量出图",
+    "SynVowNanoBanana": "SynVow NanoBanana",
+    "SynVowNanoBanana_TBatch": "SynVow NanoBanana (T_batch)",
+    "SynVowNanoBanana_IBatch": "SynVow NanoBanana (I_batch)",
+    "SynVowNanoBanana_TIBatch": "SynVow NanoBanana (T_I_batch)",
 }

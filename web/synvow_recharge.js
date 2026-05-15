@@ -1,10 +1,13 @@
 /**
  * SynVow 充值中心对话框
  */
-import { $el } from "./dom.js";
+import { $el, getToken, injectStyle, API_BASE } from "./dom.js";
+import { showLoginDialog } from "./synvow_login.js";
 
 let rechargeDialog = null;
 let pollTimer = null;
+let expireTimer = null;
+let expireSeconds = 120;
 let selectedAmount = null;
 let selectedPayment = "wechat";
 
@@ -16,8 +19,7 @@ export function showRechargeDialog() {
         rechargeDialog = null;
     }
 
-    const style = document.createElement('style');
-    style.textContent = `
+    injectStyle("sv-recharge-style", `
         .sv-recharge-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:10001; }
         .sv-recharge-dialog { background:linear-gradient(180deg,#1a2a3a,#0d1a24); border-radius:12px; padding:30px; width:480px; position:relative; }
         .sv-recharge-title { color:#2dd4bf; font-size:18px; font-weight:bold; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
@@ -47,10 +49,10 @@ export function showRechargeDialog() {
         .sv-alipay-icon { color:#1677ff; }
         .sv-qrcode-container { text-align:center; padding:20px; }
         .sv-qrcode-container img { width:200px; height:200px; background:white; padding:10px; border-radius:8px; }
+        .sv-qrcode-expire { position:absolute; top:32px; right:58px; color:#2dd4bf; font-size:13px; font-weight:bold; }
         .sv-qrcode-tip { color:#667788; font-size:14px; margin-top:12px; }
         .sv-qrcode-order { color:#556677; font-size:12px; margin-top:8px; }
-    `;
-    document.head.appendChild(style);
+    `);
 
     const lightningIcon = `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg>`;
     const wechatIcon = `<svg viewBox="0 0 1024 1024" fill="currentColor"><path d="M690.1 377.4c5.9 0 11.8.2 17.6.5-24.4-128.7-158.3-227.1-319.9-227.1C209 150.8 64 271.4 64 420.2c0 81.1 43.6 154.2 111.9 203.6 5.5 3.9 9.1 10.3 9.1 17.6 0 2.4-.5 4.6-1.1 6.9-5.5 20.3-14.2 52.8-14.6 54.3-.7 2.6-1.7 5.2-1.7 7.9 0 5.9 4.8 10.8 10.8 10.8 2.3 0 4.2-.9 6.2-2l70.9-40.9c5.3-3.1 11-5 17.2-5 3.2 0 6.4.5 9.5 1.4 33.1 9.5 68.8 14.8 105.7 14.8 6 0 11.9-.1 17.8-.4-7.1-21-10.9-43.1-10.9-66 0-135.8 132.2-245.8 295.3-245.8zm-194.3-86.5c23.8 0 43.2 19.3 43.2 43.1s-19.3 43.1-43.2 43.1c-23.8 0-43.2-19.3-43.2-43.1s19.4-43.1 43.2-43.1zm-215.9 86.2c-23.8 0-43.2-19.3-43.2-43.1s19.3-43.1 43.2-43.1 43.2 19.3 43.2 43.1-19.4 43.1-43.2 43.1zm586.8 415.6c56.9-41.2 93.2-102 93.2-169.7 0-124-108.1-224.8-241.4-224.8-133.4 0-241.4 100.8-241.4 224.8S585 847.1 718.3 847.1c30.8 0 60.6-4.4 88.1-12.3 2.6-.8 5.2-1.2 7.9-1.2 5.2 0 9.9 1.6 14.3 4.1l59.1 34c1.7 1 3.3 1.7 5.2 1.7a9 9 0 0 0 6.4-2.6 9 9 0 0 0 2.6-6.4c0-2.2-.9-4.4-1.4-6.6-.3-1.2-7.6-28.3-12.2-45.3-.5-1.9-.9-3.8-.9-5.7.1-5.9 3.1-11.2 7.6-14.5zM600.2 587.2c-19.9 0-36-16.1-36-35.9 0-19.8 16.1-35.9 36-35.9s36 16.1 36 35.9c0 19.8-16.2 35.9-36 35.9zm179.9 0c-19.9 0-36-16.1-36-35.9 0-19.8 16.1-35.9 36-35.9s36 16.1 36 35.9a36.08 36.08 0 0 1-36 35.9z"/></svg>`;
@@ -110,11 +112,8 @@ async function handleSubmit() {
         return;
     }
     
-    const token = localStorage.getItem("sv_token");
-    if (!token) {
-        alert("请先登录");
-        return;
-    }
+    const token = getToken();
+    if (!token) { showLoginDialog(); return; }
 
     const accountReady = await ensureAccountReady(token);
     if (!accountReady.ok) {
@@ -129,10 +128,7 @@ async function handleSubmit() {
             paymentType: "zpayz",
             payType: actualPayType
         };
-        console.log("[SynVow Recharge] 请求: https://service.synvow.com/api/v1/account/recharge");
-        console.log("[SynVow Recharge] Token:", token ? token.substring(0, 30) + '...' : '无');
-        console.log("[SynVow Recharge] 请求参数:", JSON.stringify(requestBody, null, 2));
-        const res = await fetch("/sv_api/account/recharge", {
+        const res = await fetch(`${API_BASE}/account/recharge`, {
             method: "POST",
             headers: { 
                 "Content-Type": "application/json",
@@ -141,11 +137,9 @@ async function handleSubmit() {
             body: JSON.stringify(requestBody)
         });
         const text = await res.text();
-        console.log("[SynVow Recharge] 响应原文:", text);
         let data;
         try {
             data = JSON.parse(text);
-            console.log("[SynVow Recharge] 响应数据:", JSON.stringify(data, null, 2));
         } catch (e) {
             alert("服务器响应错误");
             return;
@@ -188,7 +182,6 @@ async function ensureAccountReady(token) {
     };
 
     try {
-        // First pass: direct account lookup
         let res = await fetch("/sv_api/account/info", { headers });
         let data = await res.json();
         if (data.code === 200) {
@@ -198,7 +191,6 @@ async function ensureAccountReady(token) {
             return { ok: false, message: data.message || "获取账户信息失败" };
         }
 
-        // Retry path: some backends create/link account on this endpoint.
         await fetch("/sv_api/user/with-account", { headers });
 
         res = await fetch("/sv_api/account/info", { headers });
@@ -225,44 +217,76 @@ function showQrCode(imgSrc, orderNo) {
     dialog.innerHTML = `
         <button class="sv-recharge-close" id="sv-qr-close">×</button>
         <div class="sv-recharge-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> 扫码支付</div>
+        <div class="sv-qrcode-expire" id="sv-qrcode-expire">120s</div>
         <div class="sv-qrcode-container">
             <img src="${imgSrc}" alt="支付二维码">
             <div class="sv-qrcode-tip">请使用${selectedPayment === 'wechat' ? '微信' : '支付宝'}扫码支付</div>
             ${orderNo ? `<div class="sv-qrcode-order">订单号：${orderNo}</div>` : ''}
             </div>
     `;
-    document.getElementById('sv-qr-close').onclick = () => { stopPoll(); hideRechargeDialog(); };
+    document.getElementById('sv-qr-close').onclick = () => hideRechargeDialog();
+    startExpireTimer();
     startPoll();
 }
 
 let lastBalance = null;
 
-function getBalanceText() {
-    return document.getElementById('sv-main-balance')?.textContent?.trim() || '';
+async function fetchBalance(token) {
+    try {
+        const res = await fetch("/sv_api/account/info", {
+            headers: { "Authorization": `Bearer ${token}` }
+        });
+        const data = await res.json();
+        if (data.code === 200) {
+            return parseFloat(data.data?.balance ?? data.data?.amount ?? NaN);
+        }
+    } catch {}
+    return NaN;
 }
 
 function startPoll() {
     stopPoll();
-    lastBalance = getBalanceText();
+    const token = getToken();
+    if (!token) return;
+    fetchBalance(token).then(bal => { lastBalance = bal; });
     pollTimer = setInterval(async () => {
-        window.dispatchEvent(new CustomEvent("synvow_refresh_balance"));
-        // 等待余额元素更新后再对比（余额请求约需 500ms）
-        setTimeout(() => {
-            const newBalance = getBalanceText();
-            if (newBalance && newBalance !== lastBalance && !newBalance.includes('加载') && !newBalance.includes('失败')) {
-                stopPoll();
-                alert('支付成功，余额已更新！');
-                hideRechargeDialog();
-            }
-        }, 1500);
-    }, 3000);
+        const newBalance = await fetchBalance(token);
+        if (!isNaN(newBalance) && !isNaN(lastBalance) && newBalance > lastBalance) {
+            stopPoll();
+            window.synvowRefreshAccount?.();
+            alert('支付成功，余额已更新！');
+            hideRechargeDialog();
+        }
+    }, 2000);
 }
 
 function stopPoll() {
     if (pollTimer) { clearInterval(pollTimer); pollTimer = null; }
 }
 
+function startExpireTimer() {
+    stopExpireTimer();
+    expireSeconds = 120;
+    const el = document.getElementById("sv-qrcode-expire");
+    if (el) el.textContent = `${expireSeconds}s`;
+    expireTimer = setInterval(() => {
+        expireSeconds -= 1;
+        const el = document.getElementById("sv-qrcode-expire");
+        if (el) el.textContent = `${expireSeconds}s`;
+        if (expireSeconds > 0) return;
+        stopExpireTimer();
+        stopPoll();
+        alert("支付二维码已过期，请重新发起支付");
+        hideRechargeDialog();
+    }, 1000);
+}
+
+function stopExpireTimer() {
+    if (expireTimer) { clearInterval(expireTimer); expireTimer = null; }
+}
+
 export function hideRechargeDialog() {
     stopPoll();
+    stopExpireTimer();
     if (rechargeDialog) rechargeDialog.style.display = "none";
 }

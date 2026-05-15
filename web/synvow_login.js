@@ -226,38 +226,25 @@ function validateForgotForm() {
 }
 
 async function postJson(path, body) {
-    console.log(`[SynVow] 请求: https://service.synvow.com/api/v1${path}`);
-    console.log(`[SynVow] 请求参数:`, JSON.stringify(body, null, 2));
     const res = await fetch(`${API_BASE}${path}`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(body)
     });
-    const data = await res.json();
-    console.log(`[SynVow] 响应 ${path}:`, JSON.stringify(data, null, 2));
-    return data;
+    return res.json();
 }
 
 function saveAuth(data) {
-    // 兼容两种响应格式：
-    // 格式1（登录）: { token: "...", user: {...} }
-    // 格式2（注册）: { token: "...", id: ..., phone_number: ... }（用户信息直接在顶层）
-    const token = data.token;
-    const refreshToken = data.refresh_token;
-    const user = data.user || data;  // 如果没有 user 字段，整个 data 就是用户信息
-    
-    if (token) {
-        localStorage.setItem("sv_token", token);
-    }
-    if (refreshToken) {
-        localStorage.setItem("sv_refresh_token", refreshToken);
-    }
+    const token = data.token || data.access_token;
+    const refreshToken = data.refresh_token || data.refreshToken;
+    const user = data.user || data.user_info || data.profile || data;
+    const nickname = user?.nickname || user?.username || "已登录";
+    if (token) localStorage.setItem("sv_token", token);
+    if (refreshToken) localStorage.setItem("sv_refresh_token", refreshToken);
     localStorage.setItem("sv_user", JSON.stringify(user));
     if (token) {
         saveAuthToFile(token, refreshToken);
-        // 通知菜单更新用户按钮状态
-        const nickname = user?.nickname || user?.username || "已登录";
-        window.dispatchEvent(new CustomEvent("synvow_login_success", { detail: { nickname } }));
+        window.synvowRefreshAccount?.();
     }
 }
 
@@ -281,27 +268,15 @@ async function clearAuthFile() {
     }
 }
 
-function setLoginViewActive() {
-    const nodes = loginDialog?.querySelectorAll('.sv-view');
-    if (!nodes || !nodes.length) return;
-    nodes.forEach(v => v.classList.remove('active'));
-    nodes[0].classList.add('active');
-}
-
 async function handleLogin() {
     const phone = getVal("sv-username");
     const password = getVal("sv-password");
     if (!phone || !password) { showToast("请输入手机号和密码", 'error'); return; }
-    
     try {
         const data = await postJson("/auth/login", { phone_number: phone, password });
-        console.log('[SynVow] 登录响应:', data);
         if (data.code === 200) {
-            console.log('[SynVow] 登录成功, token:', data.data?.token);
-            console.log('[SynVow] 用户信息:', data.data?.user);
             saveAuth(data.data);
             hideLoginDialog();
-            await updateBalanceStatus();
         } else {
             showToast(data.message || "登录失败", 'error');
         }
@@ -310,73 +285,7 @@ async function handleLogin() {
     }
 }
 
-async function tryRefreshToken() {
-    const token = localStorage.getItem("sv_token");
-    const refreshToken = localStorage.getItem("sv_refresh_token");
-    if (!token && !refreshToken) return false;
-
-    try {
-        const res = await fetch(`${API_BASE}/auth/refresh`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ token: token || "", refresh_token: refreshToken || "" })
-        });
-        const data = await res.json();
-        if (data.code === 200 && data.data) {
-            const newAccess = data.data.access_token;
-            const newRefresh = data.data.refresh_token;
-            if (newAccess) {
-                localStorage.setItem("sv_token", newAccess);
-                if (newRefresh) localStorage.setItem("sv_refresh_token", newRefresh);
-                console.log("[SynVow] Token 自动刷新成功");
-                return true;
-            }
-        }
-    } catch (e) {
-        console.error("[SynVow] Token 刷新失败:", e);
-    }
-    return false;
-}
-
-async function updateBalanceStatus() {
-    const token = localStorage.getItem("sv_token");
-    if (!token) return;
-    
-    const statusBtn = document.getElementById("synvow-status");
-    try {
-        let res = await fetch(`${API_BASE}/account/balance`, {
-            headers: { "Authorization": `Bearer ${token}` }
-        });
-        let data = await res.json();
-
-        // token 过期，尝试自动刷新
-        if (data.code === 401) {
-            const refreshed = await tryRefreshToken();
-            if (refreshed) {
-                const newToken = localStorage.getItem("sv_token");
-                res = await fetch(`${API_BASE}/account/balance`, {
-                    headers: { "Authorization": `Bearer ${newToken}` }
-                });
-                data = await res.json();
-            }
-        }
-
-        if (statusBtn && data.code === 200) {
-            statusBtn.textContent = `余额 ${parseFloat(data.data.balance || 0).toFixed(2)}`;
-        } else if (statusBtn && data.code === 401) {
-            statusBtn.textContent = "登录过期";
-            localStorage.removeItem("sv_token");
-            localStorage.removeItem("sv_refresh_token");
-            localStorage.removeItem("sv_user");
-        } else if (statusBtn) {
-            statusBtn.textContent = "状态异常";
-        }
-    } catch (e) {
-        if (statusBtn) statusBtn.textContent = "连接失败";
-    }
-}
-
-export { updateBalanceStatus, clearAuthFile };
+export { clearAuthFile };
 
 let codeCountdown = 0;
 let codeTimer = null;
@@ -427,11 +336,9 @@ async function handleRegister() {
         const data = await postJson("/auth/register", { phone_number: phone, password: pwd, code: code });
         
         if (data.code === 200) {
-            // 注册成功后，如果响应里有 token 直接用，否则自动登录获取 token
             if (data.data && data.data.token) {
                 saveAuth(data.data);
             } else {
-                // 注册接口没返回 token，自动调用登录接口
                 const loginData = await postJson("/auth/login", { phone_number: phone, password: pwd });
                 if (loginData.code === 200 && loginData.data && loginData.data.token) {
                     saveAuth(loginData.data);
@@ -443,7 +350,6 @@ async function handleRegister() {
             }
             showToast("注册成功", 'success');
             hideLoginDialog();
-            await updateBalanceStatus();
         } else {
             showToast(data.message || "注册失败", 'error');
         }
@@ -464,7 +370,8 @@ async function handleResetPassword() {
         
         if (data.code === 200) {
             showToast("密码重置成功，请使用新密码登录", 'success');
-            setLoginViewActive();
+            const nodes = loginDialog?.querySelectorAll('.sv-view');
+            if (nodes?.length) { nodes.forEach(v => v.classList.remove('active')); nodes[0].classList.add('active'); }
         } else {
             showToast(data.message || "重置失败", 'error');
         }
@@ -522,9 +429,10 @@ async function hydrateUserProfile(token) {
     localStorage.setItem("sv_user", JSON.stringify({}));
 }
 
-async function finishWechatLoginWithToken(token) {
+async function finishWechatLoginWithToken(token, refreshToken = "") {
     localStorage.setItem("sv_token", token);
-    saveAuthToFile(token);
+    if (refreshToken) localStorage.setItem("sv_refresh_token", refreshToken);
+    saveAuthToFile(token, refreshToken);
     await hydrateUserProfile(token);
     const user = JSON.parse(localStorage.getItem("sv_user") || "{}");
     hideWechatDialog();
@@ -533,7 +441,7 @@ async function finishWechatLoginWithToken(token) {
     } else {
         hideLoginDialog();
         showToast("微信登录成功", "success");
-        await updateBalanceStatus();
+        window.synvowRefreshAccount?.();
     }
 }
 
@@ -601,7 +509,7 @@ export function showBindPhoneDialog() {
                 bindPhoneDialog = null;
                 hideLoginDialog();
                 showToast("手机号绑定成功", "success");
-                await updateBalanceStatus();
+                window.synvowRefreshAccount?.();
             } else {
                 showToast(data.message || "绑定失败", "error");
             }
@@ -636,8 +544,9 @@ async function handleWechatCodeLogin(loginInputId) {
 
     try {
         const data = await postJson("/auth/wechat/login", { code });
-        if (data.code === 200 && data.data?.token) {
-            await finishWechatLoginWithToken(data.data.token);
+        const token = data.data?.token || data.data?.access_token;
+        if (data.code === 200 && token) {
+            await finishWechatLoginWithToken(token, data.data?.refresh_token || data.data?.refreshToken || "");
         } else {
             showToast(data.message || "微信登录失败", "error");
         }
@@ -666,17 +575,17 @@ function startWechatStatePolling(state, statusNode) {
 
         try {
             const data = await postJson("/auth/qrcode/token", { state });
-            if (data?.code === 200 && data?.data?.token) {
+            const token = data?.data?.token || data?.data?.access_token;
+            if (data?.code === 200 && token) {
                 clearInterval(wechatPollTimer);
                 wechatPollTimer = null;
                 statusNode.textContent = "授权成功，正在登录...";
-                await finishWechatLoginWithToken(data.data.token);
+                await finishWechatLoginWithToken(token, data.data?.refresh_token || data.data?.refreshToken || "");
                 return;
             } else {
                 statusNode.textContent = `等待扫码授权... ${remaining}s`;
             }
         } catch (_) {
-            // ignore transient polling errors
         }
     }, 3000);
 }
@@ -690,7 +599,6 @@ function showWechatAuthDialog(loginUrl, state) {
     let currentState = state;
     const statusNode = $el("div.sv-wechat-status", { textContent: "" });
 
-    // 从 login_url 解析参数，重新拼接 iframe 内嵌二维码地址
     function buildIframeSrc(url) {
         try {
             const u = new URL(url);
@@ -754,15 +662,15 @@ function showWechatAuthDialog(loginUrl, state) {
 
     document.body.appendChild(wechatDialog);
 
-    // 监听 callback.html 通过 postMessage 发回的 token
     if (wechatMessageListener) window.removeEventListener('message', wechatMessageListener);
     wechatMessageListener = (e) => {
-        if (e.data?.type === 'sv_wechat_token' && e.data?.token) {
+        const token = e.data?.token || e.data?.access_token;
+        if (e.data?.type === 'sv_wechat_token' && token) {
             window.removeEventListener('message', wechatMessageListener);
             wechatMessageListener = null;
             if (wechatPollTimer) { clearInterval(wechatPollTimer); wechatPollTimer = null; }
             statusNode.textContent = "授权成功，正在登录...";
-            finishWechatLoginWithToken(e.data.token);
+            finishWechatLoginWithToken(token, e.data?.refresh_token || e.data?.refreshToken || "");
         }
     };
     window.addEventListener('message', wechatMessageListener);

@@ -92,3 +92,18 @@ function appendChildren(el, children) {
         }
     }
 }
+
+export const API_BASE = "/sv_api";
+
+export function getToken() {
+    const t = localStorage.getItem("sv_token");
+    return (t && t !== "undefined" && t !== "") ? t : null;
+}
+
+export function injectStyle(id, css) {
+    if (document.getElementById(id)) return;
+    const s = document.createElement("style");
+    s.id = id;
+    s.textContent = css;
+    document.head.appendChild(s);
+}

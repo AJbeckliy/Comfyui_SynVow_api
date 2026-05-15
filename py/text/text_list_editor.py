@@ -1,12 +1,9 @@
+import os
 import time
 import uuid
 import server
 from aiohttp import web
 from nodes import interrupt_processing
-try:
-    import execution as _execution
-except ImportError:
-    _execution = None
 
 pending_text_lists = {}
 
@@ -17,6 +14,7 @@ class TextListEditor:
         return {
             "required": {
                 "text_list": ("STRING", {"forceInput": True}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 999999}),
             },
             "hidden": {
                 "unique_id": "UNIQUE_ID",
@@ -28,10 +26,10 @@ class TextListEditor:
     INPUT_IS_LIST = True
     OUTPUT_IS_LIST = (True,)
     FUNCTION = "edit_text_list"
-    CATEGORY = "💫SynVow_api/tools"
+    CATEGORY = "💫SynVow_api/Text"
     OUTPUT_NODE = True
 
-    def edit_text_list(self, text_list, unique_id=None):
+    def edit_text_list(self, text_list, seed, unique_id=None):
         if isinstance(unique_id, list):
             unique_id = unique_id[0] if unique_id else None
 
@@ -75,11 +73,6 @@ class TextListEditor:
             if time.time() - start_time > timeout:
                 del pending_text_lists[session_id]
                 interrupt_processing()
-                return ([], )
-
-            if _execution is not None and getattr(_execution, "interrupt_processing_boolean", False):
-                if session_id in pending_text_lists:
-                    del pending_text_lists[session_id]
                 return ([], )
 
         edited_texts = pending_text_lists[session_id]["edited_texts"]
@@ -128,11 +121,12 @@ def add_routes(routes):
 
 
 try:
-    if server.PromptServer.instance is not None:
-        add_routes(server.PromptServer.instance.routes)
+    prompt_server = server.PromptServer.instance
+    if prompt_server is not None:
+        add_routes(prompt_server.routes)
 except Exception as e:
     print(f"Warning: Could not register TextListEditor routes: {e}")
 
 
 NODE_CLASS_MAPPINGS = {"SynVowApiTextListEditor": TextListEditor}
-NODE_DISPLAY_NAME_MAPPINGS = {"SynVowApiTextListEditor": "提示词文本编辑器"}
+NODE_DISPLAY_NAME_MAPPINGS = {"SynVowApiTextListEditor": "文本停留编辑器"}

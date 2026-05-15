@@ -107,15 +107,10 @@ If prompt_count is GREATER than 13:
 - Split the densest modules into extra screens in this priority: (5) Feature Matrix, (6) Proof, (9) Use Cases, (11) Trust.
 - Keep the overall narrative order.
 
-[SCREEN PROMPT FORMAT - OUTPUT AS INNER JSON STRING]
-Each screen (each array element) MUST be a JSON object serialized as a string with this structure:
+[SCREEN PROMPT FORMAT - PLAIN STRING]
+Each screen (each array element) MUST be a plain string. Do NOT wrap it in a JSON object. Do NOT include "prompt" or "consistency_id" keys.
 
-{"prompt":"...","consistency_id":"..."}
-
-The value of "prompt" MUST include:
-- A short screen role label IN THE SELECTED OUTPUT LANGUAGE ONLY.
-  - English output example: "Screen Role: Hero".
-  - Chinese output example: "屏幕定位：首屏卖点总览"。
+Each string MUST include:
 - Exactly 5 modules in THIS order (keep content concise):
 
 English in-prompt module template (use only when English is required):
@@ -155,8 +150,8 @@ When writing "Visual & Composition" / "画面主体与构图", prefer these refe
 - When a product image is provided, treat it as a reference for shape/material/color and keep the product appearance consistent across screens.
 
 [ANTI-TRANSLATION SENTENCE]
-- To keep the inner JSON valid, append this sentence at the END of the "prompt" FIELD CONTENT (inside the quotes), NOT after the JSON object.
-- If generating Chinese, append at the END of the "prompt" content (Chinese only):
+- Append this sentence at the END of each screen string.
+- If generating Chinese, append (Chinese only):
   请确保画面中的全部文字只使用中文，不要翻译成英文，也不要混入任何英文字符。
-- If generating English, append at the END of the "prompt" content (English only):
+- If generating English, append (English only):
   Keep all text in English only. Do not translate to Chinese. Do not mix any Chinese characters.

@@ -5,16 +5,13 @@
  */
 import { app } from "../../../scripts/app.js";
 
-// 节点名 → 模型 widget 名称 + 类别
 const NODE_MODEL_CONFIG = {
     "SynVowGeminiAPI":        { widget: "model_name", category: "chat" },
-    "SynVowGeminiPromptGen":  { widget: "model_name", category: "chat" },
     "SynVowNanoBanana_T2I":   { widget: "model_select", category: "image", hasPool: true },
     "SynVowNanoBanana_I2I":   { widget: "model_select", category: "image", hasPool: true },
     "SynVowNanoBanana_Batch": { widget: "model_select", category: "image", hasPool: true },
 };
 
-// pool_mode 显示名 → 后端 mode 参数
 const POOL_MODE_MAP = { "默认": "default", "优质": "stable" };
 
 async function fetchModelsByMode(mode, category) {
@@ -69,7 +66,6 @@ app.registerExtension({
     name: "SynVow.PoolFilter",
 
     async setup() {
-        // 全局模式切换
         window.addEventListener("synvow_mode_changed", async (e) => {
             await refreshAllNodes(e.detail.mode);
         });
@@ -83,7 +79,6 @@ app.registerExtension({
     async nodeCreated(node) {
         const cfg = NODE_MODEL_CONFIG[node.comfyClass];
         if (!cfg?.hasPool) return;
-        // 延迟绑定，等 widget 初始化完成
         setTimeout(() => bindPoolModeWidget(node, cfg), 100);
     },
 });

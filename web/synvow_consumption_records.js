@@ -1,164 +1,194 @@
 /**
  * SynVow 消费记录对话框
  */
-import { $el } from "./dom.js";
+import { $el, getToken, injectStyle, API_BASE } from "./dom.js";
+import { showLoginDialog } from "./synvow_login.js";
 
 let recordsDialog = null;
 let currentPage = 1;
-const API_BASE = "/sv_api";
 
-const STATUS_MAP = { 1: "成功" };
+function extractUrls(value) {
+    if (!value) return [];
+    if (typeof value === "string") {
+        if (/^https?:\/\//i.test(value)) return [value];
+        try { return extractUrls(JSON.parse(value)); } catch { return []; }
+    }
+    if (Array.isArray(value)) return value.flatMap(extractUrls);
+    if (typeof value === "object") {
+        const urls = [];
+        if (typeof value.url === "string" && /^https?:\/\//i.test(value.url)) urls.push(value.url);
+        if (typeof value.result_file === "string" && /^https?:\/\//i.test(value.result_file)) urls.push(value.result_file);
+        for (const key of ["data", "result", "results", "output", "sourceData", "task_result", "images", "videos", "audios"]) {
+            urls.push(...extractUrls(value[key]));
+        }
+        return [...new Set(urls)];
+    }
+    return [];
+}
 
 export function showConsumptionRecordsDialog() {
-    if (recordsDialog) {
-        recordsDialog.remove();
-        recordsDialog = null;
-    }
+    if (recordsDialog) { recordsDialog.remove(); recordsDialog = null; }
     currentPage = 1;
 
-    const style = document.createElement('style');
-    style.textContent = `
-        .sv-consumption-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:10001; }
-        .sv-consumption-dialog { background:linear-gradient(180deg,#1a2a3a,#0d1a24); border-radius:12px; padding:30px; width:650px; max-height:80vh; position:relative; display:flex; flex-direction:column; }
-        .sv-consumption-title { color:#2dd4bf; font-size:18px; font-weight:bold; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
-        .sv-consumption-close { position:absolute; top:16px; right:16px; background:none; border:none; color:#667788; font-size:24px; cursor:pointer; }
-        .sv-consumption-close:hover { color:white; }
-        .sv-consumption-table { width:100%; border-collapse:collapse; }
-        .sv-consumption-table th { background:#1e3a4a; color:#8899aa; font-size:12px; font-weight:normal; padding:12px 8px; text-align:left; }
-        .sv-consumption-table td { color:white; font-size:13px; padding:12px 8px; border-bottom:1px solid #334455; }
-        .sv-consumption-table tr:hover td { background:#1e3a4a; }
-        .sv-consumption-type { padding:4px 8px; border-radius:4px; font-size:12px; background:#3b82f620; color:#3b82f6; }
-        .sv-consumption-empty { text-align:center; color:#667788; padding:40px; }
-        .sv-consumption-loading { text-align:center; color:#667788; padding:40px; }
-        .sv-consumption-content { flex:1; overflow-y:auto; margin-bottom:16px; }
-        .sv-consumption-pagination { display:flex; justify-content:center; align-items:center; gap:12px; }
-        .sv-consumption-page-btn { background:#1e3a4a; border:1px solid #334455; border-radius:4px; padding:6px 12px; color:white; font-size:13px; cursor:pointer; }
-        .sv-consumption-page-btn:hover { border-color:#2dd4bf; }
-        .sv-consumption-page-btn:disabled { opacity:0.5; cursor:not-allowed; }
-        .sv-consumption-page-info { color:#8899aa; font-size:13px; }
-        .sv-consumption-amount { color:#ef4444; }
-        .sv-consumption-download { color:#2dd4bf; text-decoration:none; font-size:12px; padding:3px 8px; border:1px solid #2dd4bf40; border-radius:4px; cursor:pointer; background:none; }
-        .sv-consumption-download:hover { background:#2dd4bf20; }
-        .sv-consumption-no-res { color:#445566; font-size:12px; }
-    `;
-    document.head.appendChild(style);
+    injectStyle("sv-consumption-style", `
+        .sv-cr-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:10001; }
+        .sv-cr-dialog { background:linear-gradient(180deg,#1a2a3a,#0d1a24); border-radius:12px; padding:30px; width:680px; max-height:80vh; position:relative; display:flex; flex-direction:column; }
+        .sv-cr-title { color:#2dd4bf; font-size:18px; font-weight:bold; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+        .sv-cr-close { position:absolute; top:16px; right:16px; background:none; border:none; color:#667788; font-size:24px; cursor:pointer; }
+        .sv-cr-close:hover { color:white; }
+        .sv-cr-content { flex:1; overflow-y:auto; margin-bottom:16px; }
+        .sv-cr-table { width:100%; border-collapse:collapse; }
+        .sv-cr-table th { background:#1e3a4a; color:#8899aa; font-size:12px; font-weight:normal; padding:12px 8px; text-align:left; }
+        .sv-cr-table td { color:white; font-size:13px; padding:10px 8px; border-bottom:1px solid #334455; vertical-align:middle; }
+        .sv-cr-table tr:hover td { background:#1e3a4a; }
+        .sv-cr-table.loading { opacity:0.45; pointer-events:none; transition:opacity .15s; }
+        .sv-cr-badge { padding:3px 8px; border-radius:4px; font-size:12px; }
+        .sv-cr-success { background:#22c55e20; color:#22c55e; }
+        .sv-cr-fail    { background:#ef444420; color:#ef4444; }
+        .sv-cr-empty { text-align:center; color:#667788; padding:40px; }
+        .sv-cr-link { color:#2dd4bf; font-size:12px; padding:3px 8px; border:1px solid #2dd4bf40; border-radius:4px; cursor:pointer; background:none; text-decoration:none; }
+        .sv-cr-link:hover { background:#2dd4bf20; }
+        .sv-cr-none { color:#445566; font-size:12px; }
+        .sv-cr-pagination { display:flex; justify-content:center; align-items:center; gap:12px; }
+        .sv-cr-page-btn { background:#1e3a4a; border:1px solid #334455; border-radius:4px; padding:6px 12px; color:white; font-size:13px; cursor:pointer; }
+        .sv-cr-page-btn:hover { border-color:#2dd4bf; }
+        .sv-cr-page-btn:disabled { opacity:0.5; cursor:not-allowed; }
+        .sv-cr-page-info { color:#8899aa; font-size:13px; }
+        .sv-cr-preview-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.85); display:flex; justify-content:center; align-items:center; z-index:10010; }
+        .sv-cr-preview-box { position:relative; max-width:90vw; max-height:90vh; display:flex; align-items:center; justify-content:center; }
+        .sv-cr-preview-close { position:absolute; top:-36px; right:0; background:none; border:none; color:white; font-size:28px; cursor:pointer; }
+        .sv-cr-preview-media { max-width:85vw; max-height:85vh; border-radius:8px; }
+        .sv-cr-preview-nav { position:absolute; top:50%; transform:translateY(-50%); background:rgba(0,0,0,0.5); border:none; color:white; font-size:36px; cursor:pointer; border-radius:4px; padding:4px 10px; }
+        .sv-cr-preview-prev { left:-48px; }
+        .sv-cr-preview-next { right:-48px; }
+        .sv-cr-preview-count { position:absolute; bottom:-28px; left:50%; transform:translateX(-50%); color:#8899aa; font-size:13px; }
+    `);
 
-    const contentDiv = $el("div.sv-consumption-content", {}, [
-        $el("div.sv-consumption-loading", { textContent: "加载中..." })
+    const contentDiv = $el("div.sv-cr-content", {}, [
+        $el("div.sv-cr-empty", { textContent: "加载中..." })
     ]);
+    const prevBtn  = $el("button.sv-cr-page-btn", { textContent: "上一页", onclick: () => loadPage(currentPage - 1) });
+    const nextBtn  = $el("button.sv-cr-page-btn", { textContent: "下一页", onclick: () => loadPage(currentPage + 1) });
+    const pageInfo = $el("span.sv-cr-page-info");
 
-    const prevBtn = $el("button.sv-consumption-page-btn", { textContent: "上一页", onclick: () => loadPage(currentPage - 1) });
-    const nextBtn = $el("button.sv-consumption-page-btn", { textContent: "下一页", onclick: () => loadPage(currentPage + 1) });
-    const pageInfo = $el("span.sv-consumption-page-info", { textContent: "第 1 页" });
-
-    const pagination = $el("div.sv-consumption-pagination", {}, [prevBtn, pageInfo, nextBtn]);
-
-    recordsDialog = $el("div.sv-consumption-overlay", {
+    recordsDialog = $el("div.sv-cr-overlay", {
         onclick: (e) => { if (e.target === recordsDialog) hideConsumptionDialog(); }
     }, [
-        $el("div.sv-consumption-dialog", {}, [
-            $el("button.sv-consumption-close", { textContent: "×", onclick: hideConsumptionDialog }),
-            $el("div.sv-consumption-title", { innerHTML: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> 消费记录` }),
+        $el("div.sv-cr-dialog", {}, [
+            $el("button.sv-cr-close", { textContent: "×", onclick: hideConsumptionDialog }),
+            $el("div.sv-cr-title", { innerHTML: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> 消费记录` }),
             contentDiv,
-            pagination
+            $el("div.sv-cr-pagination", {}, [prevBtn, pageInfo, nextBtn])
         ])
     ]);
 
     document.body.appendChild(recordsDialog);
-
-    // 加载数据
     loadPage(1);
 
-    async function loadPage(page) {
-        page = parseInt(page) || 1;
-        if (page < 1) page = 1;
-        
-        const token = localStorage.getItem("sv_token");
-        if (!token) {
-            contentDiv.innerHTML = '<div class="sv-consumption-empty">请先登录</div>';
-            return;
-        }
+    let previewUrls = [], previewIdx = 0, previewEl = null;
 
-        contentDiv.innerHTML = '<div class="sv-consumption-loading">加载中...</div>';
+    function openPreview(urls, idx = 0) {
+        if (previewEl) previewEl.remove();
+        previewUrls = urls; previewIdx = idx;
+        previewEl = $el("div.sv-cr-preview-overlay", {
+            onclick: (e) => { if (e.target === previewEl) closePreview(); }
+        });
+        renderPreview();
+        document.body.appendChild(previewEl);
+    }
+    function closePreview() { if (previewEl) { previewEl.remove(); previewEl = null; } }
+    function renderPreview() {
+        if (!previewEl) return;
+        previewEl.innerHTML = "";
+        const url = previewUrls[previewIdx];
+        const ext = url.split("?")[0].split(".").pop().toLowerCase();
+        let media;
+        if (["png","jpg","jpeg","webp","gif","bmp","svg"].includes(ext)) {
+            media = $el("img.sv-cr-preview-media", { src: url });
+        } else if (["mp4","webm","mov","avi","mkv"].includes(ext)) {
+            media = $el("video.sv-cr-preview-media", { src: url, controls: true, autoplay: true });
+        } else if (["mp3","wav","ogg","flac","aac","m4a"].includes(ext)) {
+            media = $el("audio", { src: url, controls: true, autoplay: true });
+        } else {
+            media = Object.assign(document.createElement("a"), { href: url, target: "_blank", textContent: url, style: "color:#2dd4bf;word-break:break-all;" });
+        }
+        const box = $el("div.sv-cr-preview-box", {}, [
+            $el("button.sv-cr-preview-close", { textContent: "×", onclick: closePreview }),
+            media,
+        ]);
+        if (previewUrls.length > 1) {
+            box.appendChild($el("button.sv-cr-preview-nav.sv-cr-preview-prev", { textContent: "‹", onclick: (e) => { e.stopPropagation(); previewIdx = (previewIdx - 1 + previewUrls.length) % previewUrls.length; renderPreview(); } }));
+            box.appendChild($el("button.sv-cr-preview-nav.sv-cr-preview-next", { textContent: "›", onclick: (e) => { e.stopPropagation(); previewIdx = (previewIdx + 1) % previewUrls.length; renderPreview(); } }));
+            box.appendChild($el("div.sv-cr-preview-count", { textContent: `${previewIdx + 1}/${previewUrls.length}` }));
+        }
+        previewEl.appendChild(box);
+    }
+
+    async function loadPage(page) {
+        page = Math.max(1, parseInt(page) || 1);
+        const token = getToken();
+        if (!token) { showLoginDialog(); return; }
+
+        const isFirst = !contentDiv.querySelector("table");
+        if (!isFirst) {
+            const tbl = contentDiv.querySelector("table");
+            if (tbl) tbl.classList.add("loading");
+        }
         prevBtn.disabled = true;
         nextBtn.disabled = true;
 
         try {
-            const url = `${API_BASE}/account/consumption-records?page=${page}&per_page=10`;
-            console.log("[SynVow 消费记录] 请求: https://service.synvow.com/api/v1/account/consumption-records?page=" + page + "&per_page=10");
-            const res = await fetch(url, {
+            const res  = await fetch(`${API_BASE}/account/consumption-records?page=${page}&per_page=10`, {
                 headers: { "Authorization": `Bearer ${token}` }
             });
             const data = await res.json();
-            console.log("[SynVow 消费记录] 响应:", JSON.stringify(data, null, 2));
-
             if (data.code === 200 && data.data) {
-                const items = data.data.items || data.data.list || [];
-                const total = data.data.total || 0;
-                const total_pages = data.data.total_pages || data.data.totalPages || Math.ceil(total / 10) || 1;
-                const current_page = data.data.current_page || data.data.currentPage || page;
-                currentPage = current_page;
+                const d           = data.data;
+                const items       = d.list || [];
+                const total       = d.total || 0;
+                const totalPages  = d.total_pages ?? (Math.ceil(total / 10) || 1);
+                currentPage       = d.page ?? page;
 
-                if (!items || items.length === 0) {
-                    contentDiv.innerHTML = '<div class="sv-consumption-empty">暂无消费记录</div>';
+                if (items.length === 0) {
+                    contentDiv.innerHTML = '<div class="sv-cr-empty">暂无消费记录</div>';
                 } else {
-                    contentDiv.innerHTML = `
-                        <table class="sv-consumption-table">
-                            <thead>
-                                <tr>
-                                    <th>状态</th>
-                                    <th>模型</th>
-                                    <th>消费金额</th>
-                                    <th>资源</th>
-                                    <th>时间</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${items.map(item => {
-                                    const modelName = item.model_name || item.type || '-';
-                                    const statusOk = item.status === 1;
-                                    const statusBadge = `<span class="sv-consumption-type" style="background:${statusOk ? '#22c55e20' : '#ef444420'};color:${statusOk ? '#22c55e' : '#ef4444'}">${statusOk ? '成功' : '失败'}</span>`;
-                                    const time = new Date(item.created_at).toLocaleString('zh-CN');
-                                    let resUrl = item.url && String(item.url).startsWith('http') ? item.url : null;
-                                    if (!resUrl && item.source) {
-                                        try {
-                                            const src = typeof item.source === 'string' ? JSON.parse(item.source) : item.source;
-                                            const d1 = src.data || {};
-                                            const d2 = d1.data || {};
-                                            const d3 = d2.data || [];
-                                            const out = d1.output
-                                                || (Array.isArray(d3) && d3.length ? d3[0].url : null)
-                                                || (Array.isArray(d2) && d2.length ? d2[0].url : null)
-                                                || src.output || src.url || null;
-                                            if (out && String(out).startsWith('http')) resUrl = out;
-                                        } catch (e) {}
-                                    }
-                                    const resCell = resUrl
-                                        ? `<a class="sv-consumption-download" href="${resUrl}" target="_blank">打开</a>`
-                                        : `<span class="sv-consumption-no-res">无</span>`;
-                                    return `
-                                        <tr>
-                                            <td>${statusBadge}</td>
-                                            <td>${modelName}</td>
-                                            <td class="sv-consumption-amount" style="color:${statusOk ? '#ef4444' : '#22c55e'}">${statusOk ? '-' : '+'}¥${parseFloat(item.amount).toFixed(5)}</td>
-                                            <td>${resCell}</td>
-                                            <td>${time}</td>
-                                        </tr>
-                                    `;
-                                }).join('')}
-                            </tbody>
-                        </table>
-                    `;
+                    const tbody = $el("tbody");
+                    for (const item of items) {
+                        const ok  = item.status === 1;
+                        const urls = ok ? extractUrls(item.source) : [];
+                        const resCell = urls.length
+                            ? $el("a.sv-cr-link", { textContent: "打开", href: "#", onclick: (e) => { e.preventDefault(); openPreview(urls); } })
+                            : $el("span.sv-cr-none", { textContent: "无" });
+                        tbody.appendChild($el("tr", {}, [
+                            $el("td", { textContent: new Date(item.created_at).toLocaleString("zh-CN") }),
+                            $el("td", { textContent: item.model_name || "-" }),
+                            $el("td", {}, [$el("span.sv-cr-badge", { textContent: ok ? "成功" : "失败", className: `sv-cr-badge ${ok ? "sv-cr-success" : "sv-cr-fail"}` })]),
+                            $el("td", { textContent: `${ok ? "-" : "+"}¥${parseFloat(item.amount || 0).toFixed(6)}`, style: { color: ok ? "#ef4444" : "#22c55e" } }),
+                            $el("td", {}, [resCell]),
+                        ]));
+                    }
+                    const table = $el("table.sv-cr-table", {}, [
+                        $el("thead", {}, [$el("tr", {}, [
+                            $el("th", { textContent: "时间" }),
+                            $el("th", { textContent: "模型" }),
+                            $el("th", { textContent: "状态" }),
+                            $el("th", { textContent: "消费金额" }),
+                            $el("th", { textContent: "资源(2h)" }),
+                        ])]),
+                        tbody
+                    ]);
+                    contentDiv.innerHTML = "";
+                    contentDiv.appendChild(table);
                 }
 
-                pageInfo.textContent = `第 ${current_page} / ${total_pages} 页，共 ${total} 条`;
-                prevBtn.disabled = current_page <= 1;
-                nextBtn.disabled = current_page >= total_pages;
+                pageInfo.textContent = `第 ${currentPage} / ${totalPages} 页，共 ${total} 条`;
+                prevBtn.disabled = currentPage <= 1;
+                nextBtn.disabled = currentPage >= totalPages;
             } else {
-                contentDiv.innerHTML = `<div class="sv-consumption-empty">${data.message || '获取记录失败'}</div>`;
+                contentDiv.innerHTML = `<div class="sv-cr-empty">${data.message || "获取记录失败"}</div>`;
             }
-        } catch (e) {
-            contentDiv.innerHTML = '<div class="sv-consumption-empty">网络错误，请稍后重试</div>';
+        } catch {
+            contentDiv.innerHTML = '<div class="sv-cr-empty">网络错误，请稍后重试</div>';
         }
     }
 }

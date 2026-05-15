@@ -1,25 +1,21 @@
-"""
+﻿"""
 SynVow 参考图提示词优化 节点 V1.1
 """
 
-import base64
 import hashlib
-import io
 import json
 import pathlib
 import re
 
-import numpy as np
 import requests
 import urllib3
-from PIL import Image
 
 from . import synvow_auth
+from .media_common import upload_image as _upload_image, DIRECT_API_BASE as _DIRECT_API_BASE
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-_DIRECT_API_BASE = "https://service.synvow.com/api/v1"
-_CHAT_URL = f"{_DIRECT_API_BASE}/api/models/chat/completions"
+_CHAT_URL = f"{_DIRECT_API_BASE}/api/models/completions"
 
 _SYSTEM_PROMPT = (pathlib.Path(__file__).parent.parent / "prompts" / "reference_image_optimizer_system.txt").read_text(encoding="utf-8")
 
@@ -32,28 +28,17 @@ _REFERENCE_MODE_MAP = {
     "只参考版式": "layout_only",
 }
 
+_MODEL_OPTIONS = ["gpt-5.5-2605", "gpt-5.4-2605", "gemini-3.1-pro-2605", "gemini-3-pro-2605"]
 
 
-def _tensor_to_base64(tensor) -> str:
-    i = 255.0 * tensor[0].cpu().numpy()
-    img = Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
-    if img.width > 1024 or img.height > 1024:
-        img.thumbnail((1024, 1024), Image.Resampling.LANCZOS)
-    buf = io.BytesIO()
-    img.save(buf, format="JPEG", quality=85)
-    return base64.b64encode(buf.getvalue()).decode("utf-8")
-
-
-def _build_user_message(reference_image, user_prompt: str, reference_mode: str, target_aspect_ratio: str, subject_image=None) -> list:
+def _build_user_message(ref_url: str, user_prompt: str, reference_mode: str, target_aspect_ratio: str, subject_url: str = None) -> list:
     content = []
-    if subject_image is not None:
-        b64_subject = _tensor_to_base64(subject_image)
+    if subject_url is not None:
         content.append({"type": "text", "text": "以下是 subject_image（主体图）："})
-        content.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64_subject}"}})
-    b64_ref = _tensor_to_base64(reference_image)
+        content.append({"type": "image_url", "image_url": {"url": subject_url}})
     content.append({"type": "text", "text": "以下是 reference_image（参考图）："})
-    content.append({"type": "image_url", "image_url": {"url": f"data:image/jpeg;base64,{b64_ref}"}})
-    has_subject = "是" if subject_image is not None else "否"
+    content.append({"type": "image_url", "image_url": {"url": ref_url}})
+    has_subject = "是" if subject_url is not None else "否"
     content.append({
         "type": "text",
         "text": (
@@ -94,12 +79,8 @@ class PromptOptimizeBReferenceImage:
                     {"default": "auto"},
                 ),
                 "model": (
-                    ["gpt-5.4-mini", "gpt-5.5", "gemini-3.1-flash", "gemini-3.1-pro"],
-                    {"default": "gpt-5.4-mini"},
-                ),
-                "mode": (
-                    ["默认"],
-                    {"default": "默认"},
+                    _MODEL_OPTIONS,
+                    {"default": "gpt-5.5-2605"},
                 ),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
@@ -111,7 +92,7 @@ class PromptOptimizeBReferenceImage:
     RETURN_TYPES = ("STRING", "STRING")
     RETURN_NAMES = ("optimized_prompt", "reference_summary")
     FUNCTION = "optimize"
-    CATEGORY = "💫SynVow_api/tools"
+    CATEGORY = "💫SynVow_api/api/文本"
     DESCRIPTION = "图生图提示词控制器：可选主体图 + 必填参考图 + 用户需求 → 结构化生图提示词"
 
     @classmethod
@@ -120,30 +101,28 @@ class PromptOptimizeBReferenceImage:
         return hashlib.md5(key.encode()).hexdigest()
 
     def optimize(self, reference_image, user_prompt, reference_mode, target_aspect_ratio,
-                 model, mode, seed=0, subject_image=None):
+                 model, seed=0, subject_image=None):
         api_key = synvow_auth.read_api_key()
         headers = synvow_auth.make_api_headers(api_key)
 
         ref_mode_en = _REFERENCE_MODE_MAP.get(reference_mode, reference_mode)
         ratio_en = target_aspect_ratio
-        actual_model = f"{model}-{mode}"
+        actual_model = model or "gpt-5.5-2605"
 
         has_subject = subject_image is not None
-        print(f"[图生图 RefOptimizer] model={actual_model} mode={ref_mode_en} ratio={ratio_en} has_subject={has_subject}")
-
-        user_content = _build_user_message(reference_image, user_prompt, ref_mode_en, ratio_en, subject_image=subject_image)
+        ref_url = _upload_image(api_key, reference_image)
+        subject_url = _upload_image(api_key, subject_image) if has_subject else None
+        user_content = _build_user_message(ref_url, user_prompt, ref_mode_en, ratio_en, subject_url=subject_url)
 
         payload = {
             "model": actual_model,
+            "stream": False,
             "messages": [
                 {"role": "system", "content": _SYSTEM_PROMPT},
                 {"role": "user", "content": user_content},
             ],
-            "stream": False,
         }
-        if seed > 0:
-            payload["seed"] = seed
-
+        print(f"[ReferenceOptimizer] {actual_model} 模型正在生成...")
         res = requests.post(_CHAT_URL, headers=headers, json=payload, timeout=(30, 600), verify=False)
         try:
             res.raise_for_status()
@@ -154,15 +133,19 @@ class PromptOptimizeBReferenceImage:
         raw = synvow_auth.parse_chat_response(res.json())
         if not raw or not raw.strip():
             raise RuntimeError(f"模型未返回有效内容: {str(res.json())[:200]}")
+        print(f"[ReferenceOptimizer] {actual_model} 模型生成完毕。")
 
         raw = raw.strip()
-        print(f"[图生图 RefOptimizer] raw={raw[:300]}")
-
         optimized_prompt, reference_summary = _parse_output(raw)
 
         if not optimized_prompt:
             optimized_prompt = raw
 
+        try:
+            import server
+            server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
+        except Exception:
+            pass
         return (optimized_prompt, reference_summary)
 
 

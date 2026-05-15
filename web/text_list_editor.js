@@ -54,12 +54,6 @@ const collectEditedTexts = (node) => {
     return editedTexts;
 };
 
-const resetButtonName = (button, originalName) => {
-    button.name = originalName === "Continue" ? "Continued" : "Cancelled";
-    setTimeout(() => {
-        button.name = originalName;
-    }, 2000);
-};
 
 const sendRequest = async (endpoint, data) => {
     return api.fetchApi(endpoint, {
@@ -136,7 +130,6 @@ app.registerExtension({
                     });
 
                     if (response.ok) {
-                        resetButtonName(continueButton, "Continue");
                         app.graph.setDirtyCanvas(true);
                     } else {
                         alert('Confirm failed, please retry');
@@ -161,7 +154,6 @@ app.registerExtension({
                 }
 
                 await api.interrupt();
-                resetButtonName(cancelButton, "Cancel");
                 this.session_id = null;
                 app.graph.setDirtyCanvas(true);
             });

@@ -1,4 +1,4 @@
-"""
+﻿"""
 SynVow GPT-Image-2 Prompt Optimizer 节点 V1.5 — 双LLM Schema流程
 """
 
@@ -13,7 +13,7 @@ from . import synvow_auth
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 _DIRECT_API_BASE = "https://service.synvow.com/api/v1"
-_CHAT_URL = f"{_DIRECT_API_BASE}/api/models/chat/completions"
+_CHAT_URL = f"{_DIRECT_API_BASE}/api/models/completions"
 
 _SCHEMA_PARSER_PROMPT = (pathlib.Path(__file__).parent.parent / "prompts" / "gpt-image-2_schema_parser_v1.txt").read_text(encoding="utf-8")
 _RENDERER_PROMPT = (pathlib.Path(__file__).parent.parent / "prompts" / "gpt-image-2_prompt_renderer_v1.txt").read_text(encoding="utf-8")
@@ -54,20 +54,19 @@ def _chat(headers, model, system_prompt, user_message):
         ],
         "stream": False,
     }
+    print(f"[GPTImage2Optimizer] {model} 模型正在生成...")
     res = requests.post(_CHAT_URL, headers=headers, json=payload, timeout=(30, 600), verify=False)
     try:
         res.raise_for_status()
     except requests.exceptions.HTTPError as e:
         response_text = res.text[:2000] if res.text else "<empty response>"
-        print(f"[Prompt Optimizer V1.5] HTTP {res.status_code} url={res.url}")
-        print(f"[Prompt Optimizer V1.5] response={response_text}")
-        print(f"[Prompt Optimizer V1.5] request_model={model}")
         raise RuntimeError(
             f"SynVow API request failed: HTTP {res.status_code}; response={response_text}"
         ) from e
     raw = synvow_auth.parse_chat_response(res.json())
     if not raw or not raw.strip():
         raise RuntimeError(f"模型未返回有效内容: {str(res.json())[:200]}")
+    print(f"[GPTImage2Optimizer] {model} 模型生成完毕。")
     return raw.strip()
 
 
@@ -149,10 +148,6 @@ class GptImage2PromptOptimizer:
         return {
             "required": {
                 "user_prompt": ("STRING", {"multiline": True, "default": ""}),
-                "mode": (
-                    ["默认"],
-                    {"default": "默认"},
-                ),
                 "layout_type": (
                     ["自动判断", "纯画面", "图文混排海报", "电商主图", "社媒封面"],
                     {"default": "自动判断"},
@@ -162,8 +157,8 @@ class GptImage2PromptOptimizer:
                     {"default": "保留原文"},
                 ),
                 "model": (
-                    ["gpt-5.4-mini", "gpt-5.5", "gemini-3.1-flash", "gemini-3.1-pro"],
-                    {"default": "gpt-5.4-mini"},
+                    ["gpt-5.5-2605", "gpt-5.4-2605", "gemini-3.1-pro-2605", "gemini-3-pro-2605"],
+                    {"default": "gpt-5.5-2605"},
                 ),
                 "optimize_strength": (
                     ["标准", "增强"],
@@ -182,7 +177,7 @@ class GptImage2PromptOptimizer:
     RETURN_TYPES = ("STRING", "STRING")
     RETURN_NAMES = ("optimized_prompt", "debug_info")
     FUNCTION = "optimize"
-    CATEGORY = "💫SynVow_api/tools"
+    CATEGORY = "💫SynVow_api/api/文本"
     DESCRIPTION = "使用 LLM 优化 GPT-Image-2 图像生成提示词（V1.5 Schema 流程）"
 
     @classmethod
@@ -195,26 +190,18 @@ class GptImage2PromptOptimizer:
 
     _STRENGTH_MAP = {"light": "标准", "standard": "标准", "strong": "增强"}
 
-    def optimize(self, user_prompt, layout_type, model, optimize_strength, mode,
+    def optimize(self, user_prompt, layout_type, model, optimize_strength,
                  aspect_ratio="16:9", seed=0, text_policy="保留原文", exact_text=""):
         optimize_strength = self._STRENGTH_MAP.get(optimize_strength, optimize_strength)
         api_key = synvow_auth.read_api_key()
         headers = synvow_auth.make_api_headers(api_key)
         exact_text = exact_text or ""
-        actual_model = f"{model}-{mode}"
+        actual_model = model or "gpt-5.5-2605"
         text_policy = self._TEXT_POLICY_MAP.get(text_policy, text_policy)
 
-        print(f"[Prompt Optimizer V1.5] model={actual_model} layout={layout_type} strength={optimize_strength} ratio={aspect_ratio} text_policy={text_policy}")
-
         payload = build_input_payload(layout_type, optimize_strength, aspect_ratio, user_prompt, exact_text, text_policy)
-        print(f"[Prompt Optimizer V1.5] Step1 payload={json.dumps(payload, ensure_ascii=False)[:300]}")
-
         schema = generate_prompt_schema(headers, actual_model, payload)
-        print(f"[Prompt Optimizer V1.5] Step2 schema={json.dumps(schema, ensure_ascii=False)[:400]}")
-
         schema = normalize_schema(schema, aspect_ratio, exact_text, user_prompt, text_policy, optimize_strength, layout_type)
-        print(f"[Prompt Optimizer V1.5] Step3 normalized schema={json.dumps(schema, ensure_ascii=False)[:400]}")
-
         optimized = render_final_prompt(headers, actual_model, schema)
         if optimize_strength == "增强" and text_policy == "generate":
             optimized = optimized.replace("【限制条件】", "【创作自由】")
@@ -232,8 +219,6 @@ class GptImage2PromptOptimizer:
                 optimized,
                 flags=re.DOTALL,
             )
-        print(f"[Prompt Optimizer V1.5] Step4 result={optimized[:200]}")
-
         direction = ratio_to_direction(aspect_ratio)
         debug_info = (
             f"layout_type={layout_type}\n"
@@ -249,6 +234,11 @@ class GptImage2PromptOptimizer:
             f"renderer_input={json.dumps(schema, ensure_ascii=False)}\n"
             f"final_prompt={optimized}"
         )
+        try:
+            import server
+            server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
+        except Exception:
+            pass
         return (optimized, debug_info)
 
 

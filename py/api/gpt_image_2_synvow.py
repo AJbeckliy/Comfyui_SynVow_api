@@ -1,11 +1,10 @@
-"""
+﻿"""
 SynVow GPT-Image-2 节点 — 通过 SynVow /api/models/image/edit 接口生成/编辑图片
 """
 
-import base64 as _b64
 import concurrent.futures
 import io
-import random
+import random as _random
 import time
 
 import comfy.utils
@@ -80,34 +79,246 @@ _RATIO_TO_SIZE_4K = {
 
 _RATIO_MAPS = {"1K": _RATIO_TO_SIZE_1K, "2K": _RATIO_TO_SIZE_2K, "4K": _RATIO_TO_SIZE_4K}
 
+_MODEL_TYPE_OPTIONS = [
+    "gpt-image-2-1k-2605",
+    "gpt-image-2-4k-2605",
+]
+
+
+def _upload_image_for_backup(api_key, img_tensor):
+    arr = (img_tensor[0].cpu().numpy() * 255).clip(0, 255).astype(np.uint8)
+    buf = io.BytesIO()
+    Image.fromarray(arr).convert("RGB").save(buf, format="JPEG", quality=90)
+    buf.seek(0)
+    upload_url = f"{synvow_auth.DIRECT_API_BASE}/api/upload/images"
+    res = requests.post(
+        upload_url,
+        headers={"X-API-Key": api_key},
+        files=[("files", ("image.jpg", buf, "image/jpeg"))],
+        verify=False, timeout=60,
+    )
+    data = res.json()
+    if res.status_code != 200 or data.get("code") != 200:
+        raise RuntimeError(f"Image upload failed: {data}")
+    urls = data.get("data", {}).get("urls", [])
+    if not urls:
+        raise RuntimeError(f"Image upload returned no URL: {data}")
+    return urls[0]
+
+
+def _tensor_to_b64(img_tensor, max_side=1024):
+    arr = (img_tensor[0].cpu().numpy() * 255).clip(0, 255).astype(np.uint8)
+    pil = Image.fromarray(arr).convert("RGB")
+    w, h = pil.size
+    if max(w, h) > max_side:
+        scale = max_side / max(w, h)
+        pil = pil.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
+    buf = io.BytesIO()
+    pil.save(buf, format="PNG")
+    return "data:image/png;base64," + _b64.b64encode(buf.getvalue()).decode()
+
+
+def _blank_image(h=1024, w=1024):
+    return torch.zeros((1, h, w, 3), dtype=torch.float32)
+
+
+def _extract_urls(d):
+    if isinstance(d, list):
+        return [item["url"] for item in d if isinstance(item, dict) and item.get("url")]
+    if isinstance(d, dict):
+        if "url" in d and d["url"]:
+            return [d["url"]]
+        for key in ("results", "data", "sourceData", "images"):
+            if key in d:
+                result = _extract_urls(d[key])
+                if result:
+                    return result
+    return []
+
+
+def _build_payload(model, prompt, size, quality, is_img2img, img_tensors, api_key=None):
+    payload = {"model": model, "prompt": prompt, "replyType": "async"}
+    if size and size != "auto":
+        payload["aspectRatio"] = size
+    if quality and quality != "auto":
+        payload["quality"] = quality
+    if is_img2img and img_tensors and api_key:
+        img_urls = [_upload_image_for_backup(api_key, t) for t in img_tensors]
+        payload["images"] = img_urls
+    return payload
+
+
+def _submit_task(payload, headers, api_url):
+    img_count = len(payload.get("images", [])) + (1 if "image" in payload else 0)
+    print(f"[GPT-Image-2] 提交: model={payload.get('model')} aspectRatio={payload.get('aspectRatio')} quality={payload.get('quality')} images={img_count}")
+    res = requests.post(api_url, headers=headers, json=payload,
+                        params={"async": "true"}, timeout=60, verify=False)
+    res.raise_for_status()
+    _d = res.json() if isinstance(res.json(), dict) else {}
+    task_id = (
+        _d.get("task_id")
+        or (_d.get("data") or {}).get("task_id")
+        or ((_d.get("data") or {}).get("sourceData") or {}).get("task_id")
+    )
+    consumption_id = (
+        _d.get("consumption_id")
+        or (_d.get("data") or {}).get("consumption_id")
+        or None
+    )
+    if not task_id:
+        raise RuntimeError(f"提交失败，无 task_id: {str(_d)[:200]}")
+    print(f"[GPT-Image-2] task_id={task_id[:8]}...")
+    return task_id, consumption_id
+
+
+def _poll_task(task_id, consumption_id, headers, poll_url, model):
+    import comfy.model_management as mm
+    print(f"[GPT-Image-2] 轮询: {task_id[:8]}...")
+    poll_body = {"task_id": task_id, "model": model}
+    if consumption_id is not None:
+        poll_body["consumption_id"] = consumption_id
+    timeout_total = 1800
+    interval = 5
+    start_time = time.time()
+    while True:
+        mm.throw_exception_if_processing_interrupted()
+        time.sleep(interval)
+        mm.throw_exception_if_processing_interrupted()
+        elapsed = int(time.time() - start_time)
+        if elapsed >= timeout_total:
+            print(f"[GPT-Image-2] 超时: {task_id[:8]}... ({elapsed}s)")
+            return None
+        try:
+            poll_res = requests.post(poll_url, headers=headers, json=poll_body, timeout=30, verify=False)
+            poll_res.raise_for_status()
+            poll_json = poll_res.json()
+            data_field = poll_json.get("data", poll_json) if isinstance(poll_json, dict) else poll_json
+            status = data_field.get("status", "") if isinstance(data_field, dict) else ""
+            print(f"[GPT-Image-2] {task_id[:8]}... status={status} ({elapsed}s)")
+            if status in ("SUCCESS", "success", "succeeded", "completed", "done", "finished"):
+                return poll_json
+            elif status in ("FAILURE", "failed", "error", "EXCEPTION"):
+                msg = data_field.get("fail_reason", "任务失败")
+                print(f"[GPT-Image-2] 失败: {task_id[:8]}... {msg}")
+                return None
+        except Exception as e:
+            raise Exception(f"轮询请求失败: {e}")
+
+
+def _download_image(img_url):
+    for attempt in range(3):
+        try:
+            with requests.Session() as _s:
+                r = _s.get(img_url, timeout=120, verify=False)
+            r.raise_for_status()
+            img = Image.open(io.BytesIO(r.content)).convert("RGB")
+            arr = np.array(img).astype(np.float32) / 255.0
+            return torch.from_numpy(arr).unsqueeze(0)
+        except Exception as e:
+            print(f"[GPT-Image-2] 下载图片失败 (attempt {attempt+1}/3) {img_url}: {e}")
+            if attempt < 2:
+                time.sleep(3 * (attempt + 1))
+    return _blank_image()
+
+
+def _collect_image_tensors(image_urls):
+    downloaded = {i: _download_image(u) for i, u in enumerate(image_urls) if u}
+    ref_h, ref_w = 1024, 1024
+    for t in downloaded.values():
+        ref_h, ref_w = t.shape[1], t.shape[2]
+        break
+    tensors = [downloaded.get(i, _blank_image(ref_h, ref_w)) for i in range(len(image_urls))]
+    if not tensors:
+        return _blank_image()
+    h, w = tensors[0].shape[1], tensors[0].shape[2]
+    resized = []
+    for t in tensors:
+        if t.shape[1] != h or t.shape[2] != w:
+            pil = Image.fromarray((t[0].cpu().numpy() * 255).clip(0, 255).astype(np.uint8))
+            pil = pil.resize((w, h), Image.LANCZOS)
+            t = torch.from_numpy(np.array(pil).astype(np.float32) / 255.0).unsqueeze(0)
+        resized.append(t)
+    return torch.cat(resized, dim=0)
+
+
+def _download_urls_with_placeholder(image_urls):
+    downloaded = {i: _download_image(u) for i, u in enumerate(image_urls) if u}
+    ref_h, ref_w = 1024, 1024
+    for t in downloaded.values():
+        ref_h, ref_w = t.shape[1], t.shape[2]
+        break
+    return [downloaded.get(i, _blank_image(ref_h, ref_w)) for i in range(len(image_urls))]
+
+
+def _resolve_model(model_type):
+    model = model_type or "gpt-image-2-1k-2605"
+    is_img2img = False
+    return model, is_img2img
+
+
+def _unpack(v):
+    return v[0] if isinstance(v, list) else v
+
+
+def _run_tasks(tasks, model, size, quality, is_img2img, api_key, headers, api_url, poll_url):
+    total = len(tasks)
+    pbar = comfy.utils.ProgressBar(total)
+
+    submitted = []
+    for i, (p, imgs) in enumerate(tasks):
+        payload = _build_payload(model, p, size, quality, is_img2img, imgs, api_key=api_key)
+        try:
+            task_id, consumption_id = _submit_task(payload, headers, api_url)
+            submitted.append((task_id, consumption_id))
+            print(f"[GPT-Image-2] [{i+1}/{total}] 提交成功 task_id={task_id[:8]}...")
+        except Exception as e:
+            print(f"[GPT-Image-2] [{i+1}/{total}] 提交失败: {e}")
+            submitted.append(None)
+        if i < total - 1:
+            time.sleep(1)
+
+    def _poll_one(item):
+        if item is None:
+            pbar.update(1)
+            return None
+        task_id, consumption_id = item
+        result = _poll_task(task_id, consumption_id, headers, poll_url, model)
+        pbar.update(1)
+        return result
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=total) as executor:
+        poll_results = list(executor.map(_poll_one, submitted))
+
+    image_urls = []
+    for i, r in enumerate(poll_results):
+        if r is not None:
+            d = r.get("data", r) if isinstance(r, dict) else r
+            inner = d.get("data", d) if isinstance(d, dict) else d
+            urls = _extract_urls(inner) or _extract_urls(d) or _extract_urls(r)
+            image_urls.extend(urls)
+        else:
+            image_urls.append(None)
+    return image_urls
+
 
 class SynVowGptImage2:
-    """通过 SynVow 代理调用 GPT-Image-2，支持文生图和图生图（最多 8 张输入图）"""
-
-    _conversation_history = []
-    _last_image_urls = ""
 
     FUNCTION = "generate"
-    CATEGORY = "\U0001f4abSynVow_api"
-    OUTPUT_NODE = False
+    CATEGORY = "💫SynVow_api/api/图像"
     INPUT_IS_LIST = True
 
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "direction": (["文生图", "图生图"], {"default": "文生图"}),
-                "mode": (["默认", "优质"], {"default": "默认"}),
+                "model_type": (_MODEL_TYPE_OPTIONS, {"default": "gpt-image-2-1k-2605"}),
                 "quality": (["auto", "low", "medium", "high"], {"default": "auto"}),
                 "resolution": (["1K", "2K", "4K"], {"default": "1K"}),
                 "aspect_ratio": (list(_RATIO_TO_SIZE_1K.keys()), {"default": "1:1"}),
-                "count": ("INT", {"default": 1, "min": 1, "max": 4}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
             "optional": {
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
-                "prompts_list": ("STRING", {"forceInput": True}),
-                "images_list": ("IMAGE",),
                 "image1": ("IMAGE",),
                 "image2": ("IMAGE",),
                 "image3": ("IMAGE",),
@@ -119,8 +330,8 @@ class SynVowGptImage2:
             },
         }
 
-    RETURN_TYPES = ("IMAGE", "STRING", "STRING", "STRING")
-    RETURN_NAMES = ("images", "response", "image_urls", "chats")
+    RETURN_TYPES = ("IMAGE", "STRING")
+    RETURN_NAMES = ("images", "image_urls")
 
     @classmethod
     def IS_CHANGED(cls, **kwargs):
@@ -128,302 +339,70 @@ class SynVowGptImage2:
         key = json.dumps({k: str(v) for k, v in kwargs.items()}, sort_keys=True, ensure_ascii=False)
         return hashlib.md5(key.encode()).hexdigest()
 
-    def _format_history(self):
-        if not SynVowGptImage2._conversation_history:
-            return ""
-        out = ""
-        for entry in SynVowGptImage2._conversation_history:
-            out += f"**User**: {entry['user']}\n\n**AI**: {entry['ai']}\n\n---\n\n"
-        return out.strip()
-
-    def _blank_image(self):
-        return torch.zeros((1, 1024, 1024, 3), dtype=torch.float32)
-
-    def _submit(self, payload, headers, api_url):
-        """提交任务，返回 (task_id, consumption_id)，失败抛异常"""
-        img_count = len(payload.get("images", [])) + (1 if "image" in payload else 0)
-        print(f"[SynVow GPT-Image-2] 提交参数: model={payload.get('model')} size={payload.get('size')} quality={payload.get('quality')} images={img_count}")
-        res = requests.post(api_url, headers=headers, json=payload,
-                            params={"async": "true"}, timeout=60, verify=False)
-        res.raise_for_status()
-        _d = res.json() if isinstance(res.json(), dict) else {}
-        task_id = (
-            _d.get("task_id")
-            or (_d.get("data") or {}).get("task_id")
-            or ((_d.get("data") or {}).get("sourceData") or {}).get("task_id")
-        )
-        consumption_id = (
-            _d.get("consumption_id")
-            or (_d.get("data") or {}).get("consumption_id")
-            or None
-        )
-        if not task_id:
-            raise RuntimeError(f"响应中无 task_id: {str(_d)[:200]}")
-        print(f"[SynVow GPT-Image-2] 提交响应: task_id={task_id[:8]}... consumption_id={consumption_id}")
-        return task_id, consumption_id
-
-    def _poll(self, task_id, consumption_id, headers, poll_url, model):
-        """轮询单个任务，返回 poll_json 或 None"""
-        print(f"[SynVow GPT-Image-2] task_id={task_id[:8]}... 轮询中")
-        poll_body = {"task_id": task_id, "model": model}
-        if consumption_id is not None:
-            poll_body["consumption_id"] = consumption_id
-
-        import comfy.model_management as mm
-        timeout_total = 1800
-        interval = 5
-        start_time = time.time()
-        while True:
-            mm.throw_exception_if_processing_interrupted()
-            time.sleep(interval)
-            mm.throw_exception_if_processing_interrupted()
-            elapsed = int(time.time() - start_time)
-            if elapsed >= timeout_total:
-                print(f"[SynVow GPT-Image-2] ⏰ {task_id[:8]}... 超时 ({elapsed}s)")
-                return None
-            try:
-                poll_res = requests.post(poll_url, headers=headers, json=poll_body, timeout=30, verify=False)
-                poll_res.raise_for_status()
-                poll_json = poll_res.json()
-                data_field = poll_json.get("data", poll_json) if isinstance(poll_json, dict) else poll_json
-                status = data_field.get("status", "") if isinstance(data_field, dict) else ""
-                print(f"[SynVow GPT-Image-2] {task_id[:8]}... status={status} ({elapsed}s)")
-                if status in ("SUCCESS", "success", "completed", "done", "finished"):
-                    print(f"[SynVow GPT-Image-2] ✅ {task_id[:8]}... 完成 ({elapsed}s)")
-                    return poll_json
-                elif status in ("FAILURE", "failed", "error", "EXCEPTION"):
-                    msg = data_field.get("fail_reason", "任务失败")
-                    print(f"[SynVow GPT-Image-2] ❌ {task_id[:8]}... {msg} ({elapsed}s)")
-                    return None
-            except Exception as e:
-                print(f"[SynVow GPT-Image-2] ⚠️ {task_id[:8]}... 轮询异常 ({elapsed}s): {e}")
-                raise Exception(f"轮询请求失败: {e}")
-
-    def _tensor_to_b64(self, img_tensor, max_side=1024):
-        arr = (img_tensor[0].cpu().numpy() * 255).clip(0, 255).astype(np.uint8)
-        pil = Image.fromarray(arr).convert("RGB")
-        w, h = pil.size
-        if max(w, h) > max_side:
-            scale = max_side / max(w, h)
-            pil = pil.resize((int(w * scale), int(h * scale)), Image.LANCZOS)
-        buf = io.BytesIO()
-        pil.save(buf, format="PNG")
-        return "data:image/png;base64," + _b64.b64encode(buf.getvalue()).decode()
-
-    def _build_payload(self, model, prompt, size, quality, seed, is_img2img, img_tensors):
-        payload = {"model": model, "prompt": prompt}
-        if size and size != "auto":
-            payload["size"] = size
-        if quality and quality != "auto":
-            payload["quality"] = quality
-        if is_img2img and img_tensors:
-            b64_list = [self._tensor_to_b64(t) for t in img_tensors]
-            payload["image"] = b64_list[0]
-            if len(b64_list) > 1:
-                payload["images"] = b64_list[1:]
-        return payload
-
-    def generate(self, direction, mode, quality, resolution, aspect_ratio, count, seed,
-                 prompt=None, prompts_list=None, images_list=None,
+    def generate(self, model_type=None, quality=None, resolution=None,
+                 aspect_ratio=None, seed=None, prompt=None,
                  image1=None, image2=None, image3=None, image4=None,
                  image5=None, image6=None, image7=None, image8=None):
-        # INPUT_IS_LIST=True: 所有参数均为列表，拆包标量参数
-        direction = direction[0] if isinstance(direction, list) else direction
-        mode = mode[0] if isinstance(mode, list) else mode
-        quality = quality[0] if isinstance(quality, list) else quality
-        resolution = resolution[0] if isinstance(resolution, list) else resolution
-        aspect_ratio = aspect_ratio[0] if isinstance(aspect_ratio, list) else aspect_ratio
-        count = count[0] if isinstance(count, list) else count
-        seed = seed[0] if isinstance(seed, list) else seed
-        image1 = image1[0] if isinstance(image1, list) else image1
-        image2 = image2[0] if isinstance(image2, list) else image2
-        image3 = image3[0] if isinstance(image3, list) else image3
-        image4 = image4[0] if isinstance(image4, list) else image4
-        image5 = image5[0] if isinstance(image5, list) else image5
-        image6 = image6[0] if isinstance(image6, list) else image6
-        image7 = image7[0] if isinstance(image7, list) else image7
-        image8 = image8[0] if isinstance(image8, list) else image8
-        prompt = prompt[0] if isinstance(prompt, list) else prompt
-        # prompts_list/images_list 保持列表形式
+        model_type   = _unpack(model_type) or "gpt-image-2-1k-2605"
+        quality      = _unpack(quality)
+        resolution   = _unpack(resolution) or "1K"
+        aspect_ratio = _unpack(aspect_ratio)
+        seed         = _unpack(seed)
+        prompt       = _unpack(prompt)
+        image1 = _unpack(image1); image2 = _unpack(image2)
+        image3 = _unpack(image3); image4 = _unpack(image4)
+        image5 = _unpack(image5); image6 = _unpack(image6)
+        image7 = _unpack(image7); image8 = _unpack(image8)
 
-        try:
-            api_key = synvow_auth.read_api_key()
-        except RuntimeError as e:
-            msg = str(e)
-            print(f"[SynVow GPT-Image-2] {msg}")
-            return (self._blank_image(), msg, "", self._format_history())
+        api_key = synvow_auth.read_api_key()
 
-        timestamp = time.strftime("%Y-%m-%d %H:%M:%S", time.localtime())
-        DIRECT_API_BASE = "https://service.synvow.com/api/v1"
-        LOCAL_BASE = synvow_auth.get_proxy_base()
         headers = synvow_auth.make_api_headers(api_key)
-        model = f"gpt-image-2-{direction}-{mode}"
-        is_img2img = direction == "图生图"
-        ratio_map = _RATIO_MAPS.get(resolution, _RATIO_TO_SIZE_1K)
+        model, is_img2img = _resolve_model(model_type)
+        eff_resolution = "1K" if model_type == "gpt-image-2-1k-2605" else resolution
+        ratio_map = _RATIO_MAPS.get(eff_resolution, _RATIO_TO_SIZE_1K)
         size = ratio_map.get(aspect_ratio, "auto")
-        api_url = f"{LOCAL_BASE}/api/models/image/edit"
-        poll_url = f"{DIRECT_API_BASE}/api/models/tasks"
+        api_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/image/edit"
+        poll_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/tasks"
 
-        def _extract_urls(d):
-            if isinstance(d, list):
-                return [item["url"] for item in d if isinstance(item, dict) and item.get("url")]
-            if isinstance(d, dict):
-                if "url" in d and d["url"]:
-                    return [d["url"]]
-                for key in ("data", "sourceData", "images"):
-                    if key in d:
-                        result = _extract_urls(d[key])
-                        if result:
-                            return result
-            return []
+        imgs = [t for t in [image1, image2, image3, image4, image5, image6, image7, image8] if t is not None]
+        is_img2img = len(imgs) > 0
 
-        # ── 准备提示词列表 ──
-        # prompts_list 优先（多任务）；否则用 prompt 单条；都没有则空
-        if prompts_list is not None:
-            prompts = prompts_list if isinstance(prompts_list, list) else [prompts_list]
-        elif prompt is not None and str(prompt).strip():
-            prompts = [str(prompt).strip()]
-        else:
-            prompts = [""]
+        p = str(prompt).strip() if prompt else ""
+        tasks = [(p, imgs)]
 
-        # ── 准备图片列表 ──
-        if images_list is not None:
-            if isinstance(images_list, (list, tuple)):
-                img_batch = [[t] for t in images_list]
-            else:
-                img_batch = [[images_list[i:i+1]] for i in range(images_list.shape[0])]
-        else:
-            single_imgs = [t for t in [image1, image2, image3, image4, image5, image6, image7, image8] if t is not None]
-            # single_imgs 是参考图列表，每个任务都用同一组参考图
-            img_batch = [single_imgs] * max(len(prompts), 1) if single_imgs else []
-
-        if is_img2img and not img_batch:
-            return (self._blank_image(), "图生图模式需要至少一张输入图", "", self._format_history())
-
-        # 每条提示词 × count 展开任务列表
-        base_count = max(len(prompts), len(img_batch)) if img_batch else len(prompts)
-        tasks = []
-        for i in range(base_count):
-            p = prompts[i % len(prompts)]
-            imgs = img_batch[i % len(img_batch)] if img_batch else []
-            for _ in range(count):
-                tasks.append((p, imgs))
-
-        total = len(tasks)
-        print(f"[SynVow GPT-Image-2] {total} 个任务 (prompts={len(prompts)}, count={count}), model={model}")
-
-        pbar = comfy.utils.ProgressBar(total)
-
-        # 串行提交，每条间隔 1s
-        submitted = []
-        for i, (p, imgs) in enumerate(tasks):
-            payload = self._build_payload(model, p, size, quality, seed, is_img2img, imgs)
-            try:
-                task_id, consumption_id = self._submit(payload, headers, api_url)
-                submitted.append((task_id, consumption_id))
-                print(f"[SynVow GPT-Image-2] [{i+1}/{total}] 提交成功 task_id={task_id[:8]}...")
-            except Exception as e:
-                print(f"[SynVow GPT-Image-2] [{i+1}/{total}] 提交失败: {e}")
-                submitted.append(None)
-            if i < total - 1:
-                time.sleep(1)
-
-        # 并发轮询
-        def _poll_one(item):
-            if item is None:
-                pbar.update(1)
-                return None
-            task_id, consumption_id = item
-            result = self._poll(task_id, consumption_id, headers, poll_url, model)
-            pbar.update(1)
-            return result
-
-        with concurrent.futures.ThreadPoolExecutor(max_workers=total) as executor:
-            results = list(executor.map(_poll_one, submitted))
-
-        image_urls = []
-        for i, r in enumerate(results):
-            if r is not None:
-                # 对齐 TS 版：先剥 data.data，再回退到整体
-                d = r.get("data", r) if isinstance(r, dict) else r
-                inner = d.get("data", d) if isinstance(d, dict) else d
-                urls = _extract_urls(inner) or _extract_urls(d) or _extract_urls(r)
-                print(f"[SynVow GPT-Image-2] task[{i}] 提取到 {len(urls)} 个URL")
-                if not urls:
-                    print(f"[SynVow GPT-Image-2] task[{i}] 原始响应: {str(r)[:300]}")
-                image_urls.extend(urls)
-            else:
-                print(f"[SynVow GPT-Image-2] task[{i}] 失败，黑图占位")
-                image_urls.append(None)
-
+        image_urls = _run_tasks(tasks, model, size, quality, is_img2img, api_key, headers, api_url, poll_url)
         image_urls_str = "\n".join(u for u in image_urls if u)
-        if image_urls_str:
-            SynVowGptImage2._last_image_urls = image_urls_str
+        if not image_urls_str:
+            image_urls_str = f"[ERROR] 生成失败 model={model} aspectRatio={size}"
 
-        technical_response = f"**Model**: {model}\n**Size**: {size}\n**Time**: {timestamp}"
-        SynVowGptImage2._conversation_history.append({"user": prompts[0], "ai": technical_response})
-        chat_history = self._format_history()
-
-        if image_urls:
-            tensors = []
-            for img_url in image_urls:
-                if img_url is None:
-                    tensors.append(self._blank_image())
-                    continue
-                for _attempt in range(3):
-                    try:
-                        with requests.Session() as _s:
-                            r = _s.get(img_url, timeout=120, verify=False)
-                        r.raise_for_status()
-                        img = Image.open(io.BytesIO(r.content)).convert("RGB")
-                        arr = np.array(img).astype(np.float32) / 255.0
-                        tensors.append(torch.from_numpy(arr).unsqueeze(0))
-                        break
-                    except Exception as e:
-                        print(f"[SynVow GPT-Image-2] 下载图片失败 (attempt {_attempt+1}/3) {img_url}: {e}")
-                        if _attempt < 2:
-                            time.sleep(3 * (_attempt + 1))
-                        else:
-                            tensors.append(self._blank_image())
-            if tensors:
-                # 统一 resize 到第一张图的尺寸再 cat
-                h, w = tensors[0].shape[1], tensors[0].shape[2]
-                resized = []
-                for t in tensors:
-                    if t.shape[1] != h or t.shape[2] != w:
-                        pil = Image.fromarray((t[0].cpu().numpy() * 255).clip(0, 255).astype(np.uint8))
-                        pil = pil.resize((w, h), Image.LANCZOS)
-                        t = torch.from_numpy(np.array(pil).astype(np.float32) / 255.0).unsqueeze(0)
-                    resized.append(t)
-                return (torch.cat(resized, dim=0), technical_response, image_urls_str, chat_history)
-
-        first_input = next((t for t in [image1, image2, image3, image4, image5, image6, image7, image8] if t is not None), None)
-        if first_input is not None:
-            return (first_input, technical_response, image_urls_str, chat_history)
-        return (self._blank_image(), technical_response, image_urls_str, chat_history)
+        out_tensor = _collect_image_tensors(image_urls)
+        try:
+            import server
+            server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
+        except Exception:
+            pass
+        return (out_tensor, image_urls_str)
 
 
-class SynVowGptImage2All(SynVowGptImage2):
-    """gpt-image-2-all-默认，无 quality/resolution 参数"""
+class SynVowGptImage2_TBatch:
 
-    FUNCTION = "generate_all"
-    CATEGORY = "\U0001f4abSynVow_api"
-    OUTPUT_NODE = False
+    FUNCTION = "process_batch"
+    CATEGORY = "💫SynVow_api/api/图像"
     INPUT_IS_LIST = True
+    OUTPUT_IS_LIST = (True, False)
 
     @classmethod
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "direction": (["文生图", "图生图"], {"default": "文生图"}),
+                "model_type": (_MODEL_TYPE_OPTIONS, {"default": "gpt-image-2-1k-2605"}),
+                "quality": (["auto", "low", "medium", "high"], {"default": "auto"}),
+                "resolution": (["1K", "2K", "4K"], {"default": "1K"}),
                 "aspect_ratio": (list(_RATIO_TO_SIZE_1K.keys()), {"default": "1:1"}),
-                "count": ("INT", {"default": 1, "min": 1, "max": 4}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
             "optional": {
-                "prompt": ("STRING", {"multiline": True, "default": ""}),
                 "prompts_list": ("STRING", {"forceInput": True}),
-                "images_list": ("IMAGE",),
                 "image1": ("IMAGE",),
                 "image2": ("IMAGE",),
                 "image3": ("IMAGE",),
@@ -435,8 +414,8 @@ class SynVowGptImage2All(SynVowGptImage2):
             },
         }
 
-    RETURN_TYPES = ("IMAGE", "STRING", "STRING", "STRING")
-    RETURN_NAMES = ("images", "response", "image_urls", "chats")
+    RETURN_TYPES = ("IMAGE", "STRING")
+    RETURN_NAMES = ("images", "image_urls")
 
     @classmethod
     def IS_CHANGED(cls, **kwargs):
@@ -444,45 +423,259 @@ class SynVowGptImage2All(SynVowGptImage2):
         key = json.dumps({k: str(v) for k, v in kwargs.items()}, sort_keys=True, ensure_ascii=False)
         return hashlib.md5(key.encode()).hexdigest()
 
-    def generate_all(self, direction, aspect_ratio, count, seed,
-                     prompt=None, prompts_list=None, images_list=None,
-                     image1=None, image2=None, image3=None, image4=None,
-                     image5=None, image6=None, image7=None, image8=None):
-        return self.generate(
-            direction=direction,
-            mode=["默认"],
-            quality=["auto"],
-            resolution=["1K"],
-            aspect_ratio=aspect_ratio,
-            count=count,
-            seed=seed,
-            prompt=prompt,
-            prompts_list=prompts_list,
-            images_list=images_list,
-            image1=image1, image2=image2, image3=image3, image4=image4,
-            image5=image5, image6=image6, image7=image7, image8=image8,
-        )
+    def process_batch(self, model_type=None, quality=None,
+                      resolution=None, aspect_ratio=None, seed=None, prompts_list=None,
+                      image1=None, image2=None, image3=None, image4=None,
+                      image5=None, image6=None, image7=None, image8=None):
+        model_type   = _unpack(model_type) or "gpt-image-2-1k-2605"
+        quality      = _unpack(quality)
+        resolution   = _unpack(resolution) or "1K"
+        aspect_ratio = _unpack(aspect_ratio)
+        seed         = _unpack(seed)
+        image1 = _unpack(image1); image2 = _unpack(image2)
+        image3 = _unpack(image3); image4 = _unpack(image4)
+        image5 = _unpack(image5); image6 = _unpack(image6)
+        image7 = _unpack(image7); image8 = _unpack(image8)
 
-    def _build_payload(self, model, prompt, size, quality, seed, is_img2img, img_tensors):
-        # model 由父类拼为 gpt-image-2-{direction}-默认，替换前缀得到 gpt-image-2-all-{direction}-默认
-        all_model = model.replace("gpt-image-2-", "gpt-image-2-all-", 1)
-        payload = {"model": all_model, "prompt": prompt}
-        if size and size != "auto":
-            payload["size"] = size
-        if is_img2img and img_tensors:
-            b64_list = [self._tensor_to_b64(t) for t in img_tensors]
-            payload["image"] = b64_list[0]
-            if len(b64_list) > 1:
-                payload["images"] = b64_list[1:]
-        return payload
+        api_key = synvow_auth.read_api_key()
+
+        headers = synvow_auth.make_api_headers(api_key)
+        model, _ = _resolve_model(model_type)
+        eff_resolution = "1K" if model_type == "gpt-image-2-1k-2605" else resolution
+        ratio_map = _RATIO_MAPS.get(eff_resolution, _RATIO_TO_SIZE_1K)
+        size = ratio_map.get(aspect_ratio, "auto")
+        api_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/image/edit"
+        poll_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/tasks"
+
+        imgs = [t for t in [image1, image2, image3, image4, image5, image6, image7, image8] if t is not None]
+        is_img2img = len(imgs) > 0
+        prompts = prompts_list if isinstance(prompts_list, list) else ([prompts_list] if prompts_list else [""])
+        prompts = [p for p in prompts if p is not None]
+
+        tasks = [(p, imgs) for p in prompts]
+        total = len(tasks)
+        print(f"[GPT-Image-2 TBatch] {total} 条 prompt, model={model}")
+
+        image_urls = _run_tasks(tasks, model, size, quality, is_img2img, api_key, headers, api_url, poll_url)
+        image_list = _download_urls_with_placeholder(image_urls)
+
+        successful = sum(1 for u in image_urls if u)
+        image_urls_str = "\n".join(u for u in image_urls if u)
+        if not image_urls_str:
+            image_urls_str = f"[ERROR] 所有任务失败 model={model} aspectRatio={size} total={total}"
+        print(f"[GPT-Image-2 TBatch] 完成: {successful}/{total}")
+        try:
+            import server
+            server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
+        except Exception:
+            pass
+        return (image_list, image_urls_str)
+
+
+class SynVowGptImage2_IBatch:
+    FUNCTION = "process_batch"
+    CATEGORY = "💫SynVow_api/api/图像"
+    INPUT_IS_LIST = True
+    OUTPUT_IS_LIST = (True, False)
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "images_list1": ("IMAGE",),
+                "model_type": (_MODEL_TYPE_OPTIONS, {"default": "gpt-image-2-1k-2605"}),
+                "quality": (["auto", "low", "medium", "high"], {"default": "auto"}),
+                "resolution": (["1K", "2K", "4K"], {"default": "1K"}),
+                "aspect_ratio": (list(_RATIO_TO_SIZE_1K.keys()), {"default": "1:1"}),
+                "prompt": ("STRING", {"multiline": True, "default": ""}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
+            },
+            "optional": {
+                "images_list2": ("IMAGE",),
+                "images_list3": ("IMAGE",),
+                "images_list4": ("IMAGE",),
+                "images_list5": ("IMAGE",),
+            },
+        }
+
+    RETURN_TYPES = ("IMAGE", "STRING")
+    RETURN_NAMES = ("images", "image_urls")
+
+    @classmethod
+    def IS_CHANGED(cls, **kwargs):
+        import hashlib, json
+        key = json.dumps({k: str(v) for k, v in kwargs.items()}, sort_keys=True, ensure_ascii=False)
+        return hashlib.md5(key.encode()).hexdigest()
+
+    def process_batch(self, images_list1, model_type=None,
+                      quality=None, resolution=None, aspect_ratio=None, prompt=None, seed=None,
+                      images_list2=None, images_list3=None, images_list4=None, images_list5=None):
+        model_type   = _unpack(model_type) or "gpt-image-2-1k-2605"
+        quality      = _unpack(quality)
+        resolution   = _unpack(resolution) or "1K"
+        aspect_ratio = _unpack(aspect_ratio)
+        prompt       = _unpack(prompt)
+        seed         = _unpack(seed)
+
+        api_key = synvow_auth.read_api_key()
+
+        headers = synvow_auth.make_api_headers(api_key)
+        model, _ = _resolve_model(model_type)
+        is_img2img = True
+        eff_resolution = "1K" if model_type == "gpt-image-2-1k-2605" else resolution
+        ratio_map = _RATIO_MAPS.get(eff_resolution, _RATIO_TO_SIZE_1K)
+        size = ratio_map.get(aspect_ratio, "auto")
+        api_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/image/edit"
+        poll_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/tasks"
+
+        p = str(prompt).strip() if prompt else ""
+        all_lists = [images_list1,
+                     images_list2 if images_list2 is not None else [],
+                     images_list3 if images_list3 is not None else [],
+                     images_list4 if images_list4 is not None else [],
+                     images_list5 if images_list5 is not None else []]
+        batch_size = max(len(lst) for lst in all_lists)
+        print(f"[GPT-Image-2 IBatch] {batch_size} 组图, model={model}")
+
+        tasks = []
+        for i in range(batch_size):
+            imgs = []
+            for lst in all_lists:
+                if not lst:
+                    continue
+                imgs.append(lst[0] if len(lst) == 1 else lst[i])
+            tasks.append((p, imgs))
+
+        image_urls = _run_tasks(tasks, model, size, quality, is_img2img, api_key, headers, api_url, poll_url)
+        image_list = _download_urls_with_placeholder(image_urls)
+
+        successful = sum(1 for u in image_urls if u)
+        image_urls_str = "\n".join(u for u in image_urls if u)
+        if not image_urls_str:
+            image_urls_str = f"[ERROR] 所有任务失败 model={model} aspectRatio={size} total={batch_size}"
+        print(f"[GPT-Image-2 IBatch] 完成: {successful}/{batch_size}")
+        try:
+            import server
+            server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
+        except Exception:
+            pass
+        return (image_list, image_urls_str)
+
+
+class SynVowGptImage2_TIBatch:
+
+    FUNCTION = "process_batch"
+    CATEGORY = "💫SynVow_api/api/图像"
+    INPUT_IS_LIST = True
+    OUTPUT_IS_LIST = (True, False)
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "images_list1": ("IMAGE",),
+                "model_type": (_MODEL_TYPE_OPTIONS, {"default": "gpt-image-2-1k-2605"}),
+                "quality": (["auto", "low", "medium", "high"], {"default": "auto"}),
+                "resolution": (["1K", "2K", "4K"], {"default": "1K"}),
+                "aspect_ratio": (list(_RATIO_TO_SIZE_1K.keys()), {"default": "1:1"}),
+                "prompt_order": (["sequential", "reverse", "random"], {"default": "sequential"}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
+            },
+            "optional": {
+                "images_list2": ("IMAGE",),
+                "images_list3": ("IMAGE",),
+                "images_list4": ("IMAGE",),
+                "images_list5": ("IMAGE",),
+                "prompts_list": ("STRING", {"forceInput": True}),
+            },
+        }
+
+    RETURN_TYPES = ("IMAGE", "STRING")
+    RETURN_NAMES = ("images", "image_urls")
+
+    @classmethod
+    def IS_CHANGED(cls, **kwargs):
+        import hashlib, json
+        key = json.dumps({k: str(v) for k, v in kwargs.items()}, sort_keys=True, ensure_ascii=False)
+        return hashlib.md5(key.encode()).hexdigest()
+
+    def process_batch(self, images_list1, model_type=None, quality=None,
+                      resolution=None, aspect_ratio=None, prompt_order=None, seed=None,
+                      images_list2=None, images_list3=None, images_list4=None, images_list5=None,
+                      prompts_list=None):
+        model_type   = _unpack(model_type) or "gpt-image-2-1k-2605"
+        quality      = _unpack(quality)
+        resolution   = _unpack(resolution) or "1K"
+        aspect_ratio = _unpack(aspect_ratio)
+        prompt_order = _unpack(prompt_order) or "sequential"
+        seed         = _unpack(seed)
+
+        api_key = synvow_auth.read_api_key()
+
+        headers = synvow_auth.make_api_headers(api_key)
+        model, _ = _resolve_model(model_type)
+        is_img2img = True
+        eff_resolution = "1K" if model_type == "gpt-image-2-1k-2605" else resolution
+        ratio_map = _RATIO_MAPS.get(eff_resolution, _RATIO_TO_SIZE_1K)
+        size = ratio_map.get(aspect_ratio, "auto")
+        api_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/image/edit"
+        poll_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/tasks"
+
+        all_lists = [images_list1,
+                     images_list2 if images_list2 is not None else [],
+                     images_list3 if images_list3 is not None else [],
+                     images_list4 if images_list4 is not None else [],
+                     images_list5 if images_list5 is not None else []]
+        batch_size = max(len(lst) for lst in all_lists)
+
+        prompts = [p for p in (prompts_list if isinstance(prompts_list, list) else ([prompts_list] if prompts_list else [])) if p is not None]
+        if not prompts:
+            prompts = [""]
+        prompts_count = len(prompts)
+        if prompt_order == "reverse":
+            prompts = prompts[::-1]
+        assigned_prompts = [
+            _random.choice(prompts) if prompt_order == "random" else prompts[i % prompts_count]
+            for i in range(batch_size)
+        ]
+
+        print(f"[GPT-Image-2 TIBatch] {batch_size} 组图, {prompts_count} 条 prompt, order={prompt_order}, model={model}")
+
+        tasks = []
+        for i in range(batch_size):
+            imgs = []
+            for lst in all_lists:
+                if not lst:
+                    continue
+                imgs.append(lst[0] if len(lst) == 1 else lst[i])
+            tasks.append((assigned_prompts[i], imgs))
+
+        image_urls = _run_tasks(tasks, model, size, quality, is_img2img, api_key, headers, api_url, poll_url)
+        image_list = _download_urls_with_placeholder(image_urls)
+
+        successful = sum(1 for u in image_urls if u)
+        image_urls_str = "\n".join(u for u in image_urls if u)
+        if not image_urls_str:
+            image_urls_str = f"[ERROR] 所有任务失败 model={model} aspectRatio={size} total={batch_size}"
+        print(f"[GPT-Image-2 TIBatch] 完成: {successful}/{batch_size}")
+        try:
+            import server
+            server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
+        except Exception:
+            pass
+        return (image_list, image_urls_str)
 
 
 NODE_CLASS_MAPPINGS = {
     "SynVowGptImage2": SynVowGptImage2,
-    "SynVowGptImage2All": SynVowGptImage2All,
+    "SynVowGptImage2_TBatch": SynVowGptImage2_TBatch,
+    "SynVowGptImage2_IBatch": SynVowGptImage2_IBatch,
+    "SynVowGptImage2_TIBatch": SynVowGptImage2_TIBatch,
 }
 
 NODE_DISPLAY_NAME_MAPPINGS = {
     "SynVowGptImage2": "SynVow GPT-Image-2",
-    "SynVowGptImage2All": "SynVow GPT-Image-2-all",
+    "SynVowGptImage2_TBatch": "SynVow GPT-Image-2 (T_batch)",
+    "SynVowGptImage2_IBatch": "SynVow GPT-Image-2 (I_batch)",
+    "SynVowGptImage2_TIBatch": "SynVow GPT-Image-2 (T_I_batch)",
 }

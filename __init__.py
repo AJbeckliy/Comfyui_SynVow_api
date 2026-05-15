@@ -76,6 +76,7 @@ _JWT_ROUTES = [
     ("GET",  "/sv_api/user/with-account",           "/user/with-account",           False),
     ("GET",  "/sv_api/api-key",                     "/api-key",                     False),
     ("GET",  "/sv_api/models",                      "/models",                      False),
+    ("GET",  "/sv_api/models/public-list",          "/models/public-list",          False),
 ]
 
 _APIKEY_ROUTES = [
@@ -176,6 +177,19 @@ def _get_auth_file_path():
     return os.path.join(folder_paths.get_user_directory(), "synvow_auth.json")
 
 
+def _clear_auth_file():
+    path = _get_auth_file_path()
+    os.makedirs(os.path.dirname(path), exist_ok=True)
+    with open(path, "w", encoding="utf-8") as f:
+        json.dump({
+            "token": "",
+            "refresh_token": "",
+            "api_key": "",
+            "updated_at": datetime.now(timezone.utc).isoformat(),
+            "expires_at": 0
+        }, f, ensure_ascii=False, indent=2)
+
+
 @server.PromptServer.instance.routes.post("/sv_api/auth/refresh")
 async def _sv_refresh_token(request):
     """刷新 token 并更新本地文件"""
@@ -184,6 +198,7 @@ async def _sv_refresh_token(request):
         token = body.get("token", "")
         refresh_token = body.get("refresh_token", "")
         if not token and not refresh_token:
+            _clear_auth_file()
             return web.json_response({"code": 400, "message": "token or refresh_token is required"})
 
         auth_token = refresh_token or token
@@ -195,6 +210,7 @@ async def _sv_refresh_token(request):
                 try:
                     result = json.loads(text)
                 except json.JSONDecodeError:
+                    _clear_auth_file()
                     return web.json_response({"code": resp.status, "message": text[:200]})
 
                 if result.get("code") == 200 and result.get("data"):
@@ -214,10 +230,13 @@ async def _sv_refresh_token(request):
                         with open(path, "w", encoding="utf-8") as f:
                             json.dump(auth_data, f, ensure_ascii=False, indent=2)
                         print("[SV] Token refreshed & saved")
+                else:
+                    _clear_auth_file()
 
                 return web.json_response(result)
     except Exception as e:
         print(f"[SV] refresh ERR: {e}")
+        _clear_auth_file()
         return web.json_response({"code": 500, "message": str(e)})
 
 
@@ -228,6 +247,7 @@ async def _sv_save_token(request):
         body = await request.json()
         token = body.get("token", "")
         if not token:
+            _clear_auth_file()
             return web.json_response({"code": 400, "message": "token is required"})
 
         auth_headers = {"Authorization": f"Bearer {token}", "Content-Type": "application/json"}
@@ -251,9 +271,11 @@ async def _sv_save_token(request):
                         data = result.get("data", result) if isinstance(result, dict) else result
                         api_key = data.get("key") or data.get("api_key") if isinstance(data, dict) else data
                     else:
+                        _clear_auth_file()
                         return web.json_response({"code": 500, "message": "生成 API Key 失败"})
 
         if not api_key:
+            _clear_auth_file()
             return web.json_response({"code": 500, "message": "未能获取到有效的 API Key"})
 
         path = _get_auth_file_path()
@@ -272,6 +294,7 @@ async def _sv_save_token(request):
         return web.json_response({"code": 200, "message": "ok"})
     except Exception as e:
         print(f"[SV] save-token ERR: {e}")
+        _clear_auth_file()
         return web.json_response({"code": 500, "message": str(e)})
 
 
@@ -279,11 +302,7 @@ async def _sv_save_token(request):
 async def _sv_clear_token(request):
     """清空本地认证文件"""
     try:
-        path = _get_auth_file_path()
-        os.makedirs(os.path.dirname(path), exist_ok=True)
-        with open(path, "w", encoding="utf-8") as f:
-            json.dump({"token": "", "api_key": "", "updated_at": datetime.now(timezone.utc).isoformat()},
-                      f, ensure_ascii=False, indent=2)
+        _clear_auth_file()
         return web.json_response({"code": 200, "message": "ok"})
     except Exception as e:
         return web.json_response({"code": 500, "message": str(e)})
@@ -319,38 +338,22 @@ NODE_DISPLAY_NAME_MAPPINGS = {}
 
 import glob
 import importlib
-import importlib.util
 
-_py_api_dir = os.path.join(os.path.dirname(__file__), "py", "api")
-for _f in glob.glob(os.path.join(_py_api_dir, "*.py")):
-    _name = os.path.splitext(os.path.basename(_f))[0]
-    if _name == "__init__":
+_py_dir = os.path.join(os.path.dirname(__file__), "py")
+_py_files = glob.glob(os.path.join(_py_dir, "**", "*.py"), recursive=True)
+
+for _f in _py_files:
+    _relative_path = os.path.relpath(_f, _py_dir)
+    _module_name = os.path.splitext(_relative_path)[0].replace(os.sep, ".")
+    if _module_name == "__init__" or _module_name.endswith(".__init__"):
         continue
     try:
-        _mod = importlib.import_module(f".py.api.{_name}", package=__package__)
+        _mod = importlib.import_module(f".py.{_module_name}", package=__package__)
         if hasattr(_mod, "NODE_CLASS_MAPPINGS"):
             NODE_CLASS_MAPPINGS.update(_mod.NODE_CLASS_MAPPINGS)
         if hasattr(_mod, "NODE_DISPLAY_NAME_MAPPINGS"):
             NODE_DISPLAY_NAME_MAPPINGS.update(_mod.NODE_DISPLAY_NAME_MAPPINGS)
     except Exception as e:
-        print(f"[SV] Failed to import {_name}: {e}")
-
-_py_tools_dir = os.path.join(os.path.dirname(__file__), "py", "tools")
-print(f"[SV] Scanning tools dir: {_py_tools_dir}, files: {glob.glob(os.path.join(_py_tools_dir, '*.py'))}")
-_tools_before = set(NODE_CLASS_MAPPINGS.keys())
-for _f in glob.glob(os.path.join(_py_tools_dir, "*.py")):
-    _name = os.path.splitext(os.path.basename(_f))[0]
-    if _name == "__init__":
-        continue
-    try:
-        _mod = importlib.import_module(f".py.tools.{_name}", package=__package__)
-        if hasattr(_mod, "NODE_CLASS_MAPPINGS"):
-            NODE_CLASS_MAPPINGS.update(_mod.NODE_CLASS_MAPPINGS)
-        if hasattr(_mod, "NODE_DISPLAY_NAME_MAPPINGS"):
-            NODE_DISPLAY_NAME_MAPPINGS.update(_mod.NODE_DISPLAY_NAME_MAPPINGS)
-    except Exception as e:
-        print(f"[SV] Failed to import tools.{_name}: {e}")
-
-print(f"[SV] Tools nodes added: {set(NODE_CLASS_MAPPINGS.keys()) - _tools_before}")
+        print(f"[SV] Failed to import {_module_name}: {e}")
 
 __all__ = ["NODE_CLASS_MAPPINGS", "NODE_DISPLAY_NAME_MAPPINGS", "WEB_DIRECTORY"]

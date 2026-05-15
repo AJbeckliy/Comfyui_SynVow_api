@@ -5,22 +5,17 @@
 import { app } from "../../../scripts/app.js";
 
 const SYNVOW_NODE_TYPES = new Set([
-    "SynVowGrokVideo",
-    "SynVowGrokVideoBatch",
-    "SynVowVeo31Video",
-    "SynVowVeo31VideoBatch",
-    "SynVowSora2Video",
-    "SynVowSora2Video_Pro",
-    "SynVowSora2Video_TBatch",
-    "SynVowSora2Video_ProBatch",
     "SynVowSeedance2Video",
     "SynVowSeedance2VideoBatch",
     "SynVowGptImage2",
+    "SynVowGptImage2_TBatch",
+    "SynVowGptImage2_IBatch",
+    "SynVowGptImage2_TIBatch",
     "SynVowGptImage2All",
     "SynVowNanoBanana",
+    "SynVowNanoBanana_TBatch",
+    "SynVowNanoBanana_IBatch",
     "SynVowNanoBanana_TIBatch",
-    "SynVowNano2",
-    "SynVowNano2_TIBatch",
 ]);
 
 function addCancelWidget(node) {
