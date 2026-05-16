@@ -35,6 +35,7 @@ def _load_system_prompt():
 
 class EcommercePromptGenerator:
     def _parse_response_to_prompts_list(self, response_text):
+        import re
         cleaned = (response_text or "").strip()
         for prefix in ("```json", "```"):
             if cleaned.startswith(prefix):
@@ -48,6 +49,9 @@ class EcommercePromptGenerator:
                 return [str(item) for item in result]
         except Exception:
             pass
+        parts = [p.strip() for p in re.split(r"\n\s*\n\s*\n+", response_text) if p.strip()]
+        if len(parts) > 1:
+            return parts
         return [response_text]
 
     @classmethod
@@ -94,7 +98,7 @@ class EcommercePromptGenerator:
                     {"default": "自动检测 (Auto)"}
                 ),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
-                "prompt_count": ("INT", {"default": 5, "min": 1, "max": 10, "forceInput": False})
+                "prompt_count": ("INT", {"default": 5, "min": 1, "max": 20, "forceInput": False})
             },
             "optional": {
                 "product_image_1": ("IMAGE",),
@@ -136,7 +140,7 @@ class EcommercePromptGenerator:
                 print(f"[EcommercePrompt] image upload error: {e}")
         return urls
 
-    def call_llm_vision(self, api_key, model, user_prompt, image_urls=None):
+    def call_llm_vision(self, api_key, model, system_prompt, user_prompt, image_urls=None, seed=None):
         from . import synvow_auth
         headers = synvow_auth.make_api_headers(api_key)
         url = f"{_DIRECT_API_BASE}/api/models/completions"
@@ -151,8 +155,15 @@ class EcommercePromptGenerator:
         payload = {
             "model": model,
             "stream": False,
-            "messages": [{"role": "user", "content": user_content}],
+            "messages": [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": user_content},
+            ],
+            "max_tokens": 4096,
+            "temperature": 0.7,
         }
+        if seed is not None:
+            payload["seed"] = seed % 2147483647
         print(f"[EcommercePrompt] {model} 模型正在生成...")
         res = requests.post(url, headers=headers, json=payload, timeout=600, verify=False)
         if res.status_code != 200:
@@ -221,7 +232,7 @@ class EcommercePromptGenerator:
             image_section = f"\n[图片分组说明 - 严格区分，禁止混用]{product_block}{ref_block}\n"
 
         base_user_req = f"""
-请为以下产品设计 {target_count} 屏详情页提示词：
+请为以下产品设计 {{COUNT}} 屏详情页提示词：
 1. 产品类型: {product_type}
 2. 核心卖点: {selling_points}
 3. 设计风格: {design_style}
@@ -230,22 +241,38 @@ class EcommercePromptGenerator:
 {image_section}
 重要：每个元素是纯字符串，不要包装成 JSON 对象，不要出现 prompt、consistency_id 等字段名，不要输出任何解释文字。
 
-请严格输出 JSON 字符串列表 (List[str])，列表长度必须严格等于 {target_count}。
+请严格输出 JSON 字符串列表 (List[str])，列表长度必须严格等于 {{COUNT}}。
 每个元素对应一屏，字符串内部允许换行。不要输出 Markdown、不要代码块、不要额外解释。
 """
 
-        try:
-            result = self.call_llm_vision(api_key, model_name, base_user_req, image_urls or None)
-        except Exception as e:
-            return ([f"[GENERATION_FAILED] {e}"], str(e))
+        max_per_call = 6
+        collected = []
+        call_idx = 0
+        last_error = None
+        while len(collected) < target_count and call_idx < 30:
+            remaining = target_count - len(collected)
+            request_n = min(remaining, max_per_call)
+            user_req = base_user_req.replace("{COUNT}", str(request_n))
+            if collected:
+                user_req += f"\n\n补充要求：这是续写生成。请生成新的 {request_n} 屏，不要重复之前的内容与角度。"
+            print(f"[EcommercePrompt] 生成第 {len(collected)+1}~{len(collected)+request_n} 屏 ({len(collected)}/{target_count})")
+            try:
+                result = self.call_llm_vision(api_key, model_name, system_instruction, user_req, image_urls or None, seed + call_idx)
+            except Exception as e:
+                last_error = str(e)
+                break
+            batch = self._parse_response_to_prompts_list(result)
+            collected.extend(batch)
+            call_idx += 1
+        if not collected:
+            err = last_error or "未知错误"
+            return ([f"[GENERATION_FAILED] {err}"], err)
 
-        response = result
-        collected = self._parse_response_to_prompts_list(response)
-
+        collected = collected[:target_count]
         debug_payload = {
             "model": model_name,
             "image_count": len(image_urls),
-            "raw_response": response,
+            "collected_count": len(collected),
         }
         return (collected, json.dumps(debug_payload, ensure_ascii=False))
 
