@@ -21,7 +21,11 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 _MODEL_OPTIONS = [
     "nano-banana-2-2605",
+    "nano-banana-2-稳定",
+    "nano-banana-2-官方",
     "nano-banana-pro-2605",
+    "nano-banana-pro-稳定",
+    "nano-banana-pro-官方",
 ]
 
 
@@ -61,11 +65,20 @@ def _blank_image(h=1024, w=1024):
 
 def _extract_urls(d):
     if isinstance(d, list):
-        return [item["url"] for item in d if isinstance(item, dict) and item.get("url")]
+        urls = []
+        for item in d:
+            if isinstance(item, dict) and item.get("url"):
+                url = item["url"]
+                if isinstance(url, list):
+                    urls.extend(u for u in url if u)
+                else:
+                    urls.append(url)
+        return urls
     if isinstance(d, dict):
         if "url" in d and d["url"]:
-            return [d["url"]]
-        for key in ("results", "data", "sourceData", "images"):
+            url = d["url"]
+            return list(url) if isinstance(url, list) else [url]
+        for key in ("result", "results", "data", "sourceData", "images"):
             if key in d:
                 result = _extract_urls(d[key])
                 if result:
@@ -73,35 +86,57 @@ def _extract_urls(d):
     return []
 
 
+_NEW_MODELS = {
+    "nano-banana-2-稳定", "nano-banana-2-官方",
+    "nano-banana-pro-稳定", "nano-banana-pro-官方",
+}
+
+
+_API_URL = f"{synvow_auth.DIRECT_API_BASE}/api/models/image/edit"
+_POLL_URL = f"{synvow_auth.DIRECT_API_BASE}/api/models/tasks"
+
+
 def _build_payload(model, prompt, aspect_ratio, image_size, is_img2img, img_tensors, api_key=None):
-    payload = {"model": model, "prompt": prompt, "replyType": "async"}
-    if aspect_ratio and aspect_ratio != "auto":
-        payload["aspectRatio"] = aspect_ratio
-    if image_size:
-        payload["imageSize"] = image_size
-    if is_img2img and img_tensors and api_key:
-        img_urls = [_upload_image(api_key, t) for t in img_tensors]
-        payload["images"] = img_urls
+    payload = {"model": model, "prompt": prompt}
+    if model in _NEW_MODELS:
+        if aspect_ratio and aspect_ratio != "auto":
+            payload["size"] = aspect_ratio
+        if image_size:
+            payload["resolution"] = image_size
+        if is_img2img and img_tensors and api_key:
+            payload["image_urls"] = [_upload_image(api_key, t) for t in img_tensors]
+    else:
+        payload["replyType"] = "async"
+        if aspect_ratio and aspect_ratio != "auto":
+            payload["aspectRatio"] = aspect_ratio
+        if image_size:
+            payload["imageSize"] = image_size
+        if is_img2img and img_tensors and api_key:
+            payload["images"] = [_upload_image(api_key, t) for t in img_tensors]
     return payload
 
 
 def _submit_task(payload, headers, api_url):
-    img_count = len(payload.get("images", []))
-    print(f"[NanoBanana] 提交: model={payload.get('model')} aspectRatio={payload.get('aspectRatio')} images={img_count}")
+    model = payload.get('model')
+    img_key = "image_urls" if "image_urls" in payload else "images"
+    img_count = len(payload.get(img_key, []))
+    print(f"[NanoBanana] 提交: model={model} images={img_count}")
     res = requests.post(api_url, headers=headers, json=payload,
                         params={"async": "true"}, timeout=60, verify=False)
     res.raise_for_status()
     _d = res.json() if isinstance(res.json(), dict) else {}
+    _data = _d.get("data")
+    _data_item = (_data[0] if isinstance(_data, list) and _data else None) or (_data if isinstance(_data, dict) else {})
+    _source_data = _data_item.get("sourceData") or {}
+    _source_inner = _source_data.get("data")
+    _source_item = (_source_inner[0] if isinstance(_source_inner, list) and _source_inner else {})
     task_id = (
         _d.get("task_id")
-        or (_d.get("data") or {}).get("task_id")
-        or ((_d.get("data") or {}).get("sourceData") or {}).get("task_id")
+        or _data_item.get("task_id")
+        or _source_item.get("task_id")
+        or _source_data.get("task_id")
     )
-    consumption_id = (
-        _d.get("consumption_id")
-        or (_d.get("data") or {}).get("consumption_id")
-        or None
-    )
+    consumption_id = _d.get("consumption_id") or _data_item.get("consumption_id")
     if not task_id:
         raise RuntimeError(f"提交失败，无 task_id: {str(_d)[:200]}")
     print(f"[NanoBanana] task_id={task_id[:8]}...")
@@ -110,7 +145,6 @@ def _submit_task(payload, headers, api_url):
 
 def _poll_task(task_id, consumption_id, headers, poll_url, model):
     import comfy.model_management as mm
-    print(f"[NanoBanana] 轮询: {task_id[:8]}...")
     poll_body = {"task_id": task_id, "model": model}
     if consumption_id is not None:
         poll_body["consumption_id"] = consumption_id
@@ -243,6 +277,12 @@ def _send_refresh():
         pass
 
 
+def _is_changed(**kwargs):
+    import hashlib, json
+    key = json.dumps({k: str(v) for k, v in kwargs.items()}, sort_keys=True, ensure_ascii=False)
+    return hashlib.md5(key.encode()).hexdigest()
+
+
 class SynVowNanoBanana:
     FUNCTION = "generate"
     CATEGORY = "💫SynVow_api/api/图像"
@@ -266,13 +306,9 @@ class SynVowNanoBanana:
         }
 
     RETURN_TYPES = ("IMAGE", "STRING")
-    RETURN_NAMES = ("images", "image_urls")
+    RETURN_NAMES = ("images", "status")
 
-    @classmethod
-    def IS_CHANGED(cls, **kwargs):
-        import hashlib, json
-        key = json.dumps({k: str(v) for k, v in kwargs.items()}, sort_keys=True, ensure_ascii=False)
-        return hashlib.md5(key.encode()).hexdigest()
+    IS_CHANGED = staticmethod(_is_changed)
 
     def generate(self, model_type=None, aspect_ratio=None, image_size=None, seed=None,
                  prompt=None, image1=None, image2=None, image3=None, image4=None,
@@ -289,8 +325,6 @@ class SynVowNanoBanana:
 
         api_key = synvow_auth.read_api_key()
         headers = synvow_auth.make_api_headers(api_key)
-        api_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/image/edit"
-        poll_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/tasks"
 
         imgs = [t for t in [image1, image2, image3, image4, image5, image6, image7, image8] if t is not None]
         if aspect_ratio == "auto" and imgs:
@@ -303,14 +337,16 @@ class SynVowNanoBanana:
         p = str(prompt).strip() if prompt else ""
         tasks = [(p, imgs)]
 
-        image_urls = _run_tasks(tasks, model_type, aspect_ratio, image_size, is_img2img, api_key, headers, api_url, poll_url)
-        image_urls_str = "\n".join(u for u in image_urls if u)
-        if not image_urls_str:
-            image_urls_str = f"[ERROR] 生成失败 model={model_type} aspectRatio={aspect_ratio}"
+        image_urls = _run_tasks(tasks, model_type, aspect_ratio, image_size, is_img2img, api_key, headers, _API_URL, _POLL_URL)
+        successful = sum(1 for u in image_urls if u)
+        if successful:
+            status_str = f"已完成 model={model_type} aspectRatio={aspect_ratio} size={image_size}"
+        else:
+            status_str = f"[ERROR] 生成失败 model={model_type} aspectRatio={aspect_ratio}"
 
         out_tensor = _collect_tensors(image_urls)
         _send_refresh()
-        return (out_tensor, image_urls_str)
+        return (out_tensor, status_str)
 
 
 
@@ -338,13 +374,9 @@ class SynVowNanoBanana_TBatch:
         }
 
     RETURN_TYPES = ("IMAGE", "STRING")
-    RETURN_NAMES = ("images", "image_urls")
+    RETURN_NAMES = ("images", "status")
 
-    @classmethod
-    def IS_CHANGED(cls, **kwargs):
-        import hashlib, json
-        key = json.dumps({k: str(v) for k, v in kwargs.items()}, sort_keys=True, ensure_ascii=False)
-        return hashlib.md5(key.encode()).hexdigest()
+    IS_CHANGED = staticmethod(_is_changed)
 
     def process_batch(self, model_type=None, aspect_ratio=None, image_size=None, seed=None,
                       prompts_list=None, image1=None, image2=None, image3=None, image4=None,
@@ -360,8 +392,6 @@ class SynVowNanoBanana_TBatch:
 
         api_key = synvow_auth.read_api_key()
         headers = synvow_auth.make_api_headers(api_key)
-        api_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/image/edit"
-        poll_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/tasks"
 
         imgs = [t for t in [image1, image2, image3, image4, image5, image6, image7, image8] if t is not None]
         if aspect_ratio == "auto" and imgs:
@@ -377,16 +407,14 @@ class SynVowNanoBanana_TBatch:
         total = len(tasks)
         print(f"[NanoBanana TBatch] {total} 条 prompt, model={model_type}")
 
-        image_urls = _run_tasks(tasks, model_type, aspect_ratio, image_size, is_img2img, api_key, headers, api_url, poll_url)
+        image_urls = _run_tasks(tasks, model_type, aspect_ratio, image_size, is_img2img, api_key, headers, _API_URL, _POLL_URL)
         image_list = _download_urls_with_placeholder(image_urls)
 
         successful = sum(1 for u in image_urls if u)
-        image_urls_str = "\n".join(u for u in image_urls if u)
-        if not image_urls_str:
-            image_urls_str = f"[ERROR] 所有任务失败 model={model_type} aspectRatio={aspect_ratio} total={total}"
+        status_str = f"已完成 {successful}/{total} model={model_type} aspectRatio={aspect_ratio} size={image_size}" if successful else f"[ERROR] 所有任务失败 model={model_type} total={total}"
         print(f"[NanoBanana TBatch] 完成: {successful}/{total}")
         _send_refresh()
-        return (image_list, image_urls_str)
+        return (image_list, status_str)
 
 
 
@@ -416,13 +444,9 @@ class SynVowNanoBanana_IBatch:
         }
 
     RETURN_TYPES = ("IMAGE", "STRING")
-    RETURN_NAMES = ("images", "image_urls")
+    RETURN_NAMES = ("images", "status")
 
-    @classmethod
-    def IS_CHANGED(cls, **kwargs):
-        import hashlib, json
-        key = json.dumps({k: str(v) for k, v in kwargs.items()}, sort_keys=True, ensure_ascii=False)
-        return hashlib.md5(key.encode()).hexdigest()
+    IS_CHANGED = staticmethod(_is_changed)
 
     def process_batch(self, images_list1, model_type=None, aspect_ratio=None, image_size=None,
                       prompt=None, seed=None,
@@ -435,8 +459,6 @@ class SynVowNanoBanana_IBatch:
 
         api_key = synvow_auth.read_api_key()
         headers = synvow_auth.make_api_headers(api_key)
-        api_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/image/edit"
-        poll_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/tasks"
 
         p = str(prompt).strip() if prompt else ""
         all_lists = [images_list1,
@@ -465,16 +487,14 @@ class SynVowNanoBanana_IBatch:
                 imgs.append(lst[0] if len(lst) == 1 else lst[i])
             tasks.append((p, imgs))
 
-        image_urls = _run_tasks(tasks, model_type, aspect_ratio, image_size, True, api_key, headers, api_url, poll_url)
+        image_urls = _run_tasks(tasks, model_type, aspect_ratio, image_size, True, api_key, headers, _API_URL, _POLL_URL)
         image_list = _download_urls_with_placeholder(image_urls)
 
         successful = sum(1 for u in image_urls if u)
-        image_urls_str = "\n".join(u for u in image_urls if u)
-        if not image_urls_str:
-            image_urls_str = f"[ERROR] 所有任务失败 model={model_type} aspectRatio={aspect_ratio} total={batch_size}"
+        status_str = f"已完成 {successful}/{batch_size} model={model_type} aspectRatio={aspect_ratio} size={image_size}" if successful else f"[ERROR] 所有任务失败 model={model_type} total={batch_size}"
         print(f"[NanoBanana IBatch] 完成: {successful}/{batch_size}")
         _send_refresh()
-        return (image_list, image_urls_str)
+        return (image_list, status_str)
 
 
 
@@ -507,11 +527,7 @@ class SynVowNanoBanana_TIBatch:
     RETURN_TYPES = ("IMAGE", "STRING")
     RETURN_NAMES = ("images", "image_urls")
 
-    @classmethod
-    def IS_CHANGED(cls, **kwargs):
-        import hashlib, json
-        key = json.dumps({k: str(v) for k, v in kwargs.items()}, sort_keys=True, ensure_ascii=False)
-        return hashlib.md5(key.encode()).hexdigest()
+    IS_CHANGED = staticmethod(_is_changed)
 
     def process_batch(self, images_list1, model_type=None, aspect_ratio=None, image_size=None,
                       prompt_order=None, seed=None,
@@ -525,8 +541,6 @@ class SynVowNanoBanana_TIBatch:
 
         api_key = synvow_auth.read_api_key()
         headers = synvow_auth.make_api_headers(api_key)
-        api_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/image/edit"
-        poll_url = f"{synvow_auth.DIRECT_API_BASE}/api/models/tasks"
 
         all_lists = [images_list1,
                      images_list2 if images_list2 is not None else [],
@@ -565,16 +579,14 @@ class SynVowNanoBanana_TIBatch:
                 imgs.append(lst[0] if len(lst) == 1 else lst[i])
             tasks.append((assigned_prompts[i], imgs))
 
-        image_urls = _run_tasks(tasks, model_type, aspect_ratio, image_size, True, api_key, headers, api_url, poll_url)
+        image_urls = _run_tasks(tasks, model_type, aspect_ratio, image_size, True, api_key, headers, _API_URL, _POLL_URL)
         image_list = _download_urls_with_placeholder(image_urls)
 
         successful = sum(1 for u in image_urls if u)
-        image_urls_str = "\n".join(u for u in image_urls if u)
-        if not image_urls_str:
-            image_urls_str = f"[ERROR] 所有任务失败 model={model_type} aspectRatio={aspect_ratio} total={batch_size}"
+        status_str = f"已完成 {successful}/{batch_size} model={model_type} aspectRatio={aspect_ratio} size={image_size}" if successful else f"[ERROR] 所有任务失败 model={model_type} total={batch_size}"
         print(f"[NanoBanana TIBatch] 完成: {successful}/{batch_size}")
         _send_refresh()
-        return (image_list, image_urls_str)
+        return (image_list, status_str)
 
 
 NODE_CLASS_MAPPINGS = {

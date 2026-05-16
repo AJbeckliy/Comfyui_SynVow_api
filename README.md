@@ -6,6 +6,10 @@ ComfyUI custom nodes for SynVow integration.
 
 ## Changelog
 
+### 2026-05-17
+- Added model `gpt-image-2-稳定` (GPT-Image-2 nodes)
+- Added models `nano-banana-2-稳定`, `nano-banana-2-官方`, `nano-banana-pro-稳定`, `nano-banana-pro-官方` (NanoBanana nodes)
+
 ### 2026-05-15
 - **Refactored all nodes; previous nodes are deprecated**
 - **Added `字符串范围提取器`** (`💫SynVow_api/Text`)

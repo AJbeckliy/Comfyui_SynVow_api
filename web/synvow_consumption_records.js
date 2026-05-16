@@ -17,6 +17,7 @@ function extractUrls(value) {
     if (typeof value === "object") {
         const urls = [];
         if (typeof value.url === "string" && /^https?:\/\//i.test(value.url)) urls.push(value.url);
+        if (Array.isArray(value.url)) urls.push(...value.url.filter(u => typeof u === "string" && /^https?:\/\//i.test(u)));
         if (typeof value.result_file === "string" && /^https?:\/\//i.test(value.result_file)) urls.push(value.result_file);
         for (const key of ["data", "result", "results", "output", "sourceData", "task_result", "images", "videos", "audios"]) {
             urls.push(...extractUrls(value[key]));
@@ -38,8 +39,8 @@ export function showConsumptionRecordsDialog() {
         .sv-cr-close:hover { color:white; }
         .sv-cr-content { flex:1; overflow-y:auto; margin-bottom:16px; }
         .sv-cr-table { width:100%; border-collapse:collapse; }
-        .sv-cr-table th { background:#1e3a4a; color:#8899aa; font-size:12px; font-weight:normal; padding:12px 8px; text-align:left; }
-        .sv-cr-table td { color:white; font-size:13px; padding:10px 8px; border-bottom:1px solid #334455; vertical-align:middle; }
+        .sv-cr-table th { background:#1e3a4a; color:#8899aa; font-size:12px; font-weight:normal; padding:12px 8px; text-align:center; }
+        .sv-cr-table td { color:white; font-size:13px; padding:10px 8px; border-bottom:1px solid #334455; vertical-align:middle; text-align:center; }
         .sv-cr-table tr:hover td { background:#1e3a4a; }
         .sv-cr-table.loading { opacity:0.45; pointer-events:none; transition:opacity .15s; }
         .sv-cr-badge { padding:3px 8px; border-radius:4px; font-size:12px; }
@@ -154,7 +155,7 @@ export function showConsumptionRecordsDialog() {
                 } else {
                     const tbody = $el("tbody");
                     for (const item of items) {
-                        const ok  = item.status === 1;
+                        const ok  = item.status === 1 && parseFloat(item.amount || 0) !== 0;
                         const urls = ok ? extractUrls(item.source) : [];
                         const resCell = urls.length
                             ? $el("a.sv-cr-link", { textContent: "打开", href: "#", onclick: (e) => { e.preventDefault(); openPreview(urls); } })

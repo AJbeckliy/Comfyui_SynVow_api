@@ -6,6 +6,10 @@ ComfyUI 用于 SynVow 集成的自定义节点。
 
 ## 更新日志
 
+### 2026-05-17
+- 新增模型 `gpt-image-2-稳定`（GPT-Image-2 系列节点）
+- 新增模型 `nano-banana-2-稳定`、`nano-banana-2-官方`、`nano-banana-pro-稳定`、`nano-banana-pro-官方`（NanoBanana 系列节点）
+
 ### 2026-05-15
 - **仓库内所有节点进行重构，原有节点已废弃**
 - **新增 `字符串范围提取器` 节点**（`💫SynVow_api/Text` 分类）
