@@ -16,6 +16,9 @@ ComfyUI 用于 SynVow 集成的自定义节点。
 - **新增 `运行索引计数器` 节点**（`💫SynVow_api/Utils` 分类）
   - 每次运行自动自增输出当前索引，点击运行时自动归零
 - **`图像列表组合器`** 支持列表输入，自动展开 batch 和列表为单张顺序输出
+- **新增 `SynVow Gemini 提示词生成 (T_batch)` 节点**（`💫SynVow_api/api/文本` 分类）
+  - 接收 `prompts_list` 文本列表，对每条 prompt 并发调用 Gemini，输出结果列表
+- **新增模型 `gemini-3.1-flash-2605`**（Gemini 节点、电商提示词生成节点）
 
 ### 2026-05-17
 - 新增模型 `gpt-image-2-稳定`（GPT-Image-2 系列节点）

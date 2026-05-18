@@ -9,7 +9,7 @@ import requests as _requests
 from . import synvow_auth
 from .media_common import upload_image as _upload_image, DIRECT_API_BASE
 
-GEMINI_MODEL_OPTIONS = ["gemini-3.1-pro-2605", "gemini-3-pro-2605"]
+GEMINI_MODEL_OPTIONS = ["gemini-3.1-pro-2605", "gemini-3.1-flash-2605", "gemini-3-pro-2605"]
 
 
 class SynVowGeminiAPI:
@@ -114,9 +114,85 @@ class SynVowGeminiAPI:
         return (outputs,)
 
 
+class SynVowGeminiAPI_TBatch:
+    FUNCTION = "process_batch"
+    CATEGORY = "💫SynVow_api/api/文本"
+    INPUT_IS_LIST = True
+    OUTPUT_IS_LIST = (True,)
+
+    @classmethod
+    def INPUT_TYPES(cls):
+        return {
+            "required": {
+                "模型": (GEMINI_MODEL_OPTIONS, {"default": "gemini-3.1-pro-2605"}),
+                "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
+            },
+            "optional": {
+                "prompts_list": ("STRING", {"forceInput": True}),
+                "image_1": ("IMAGE",), "image_2": ("IMAGE",), "image_3": ("IMAGE",),
+                "image_4": ("IMAGE",), "image_5": ("IMAGE",), "image_6": ("IMAGE",),
+                "image_7": ("IMAGE",), "image_8": ("IMAGE",), "image_9": ("IMAGE",),
+                "image_10": ("IMAGE",),
+            },
+        }
+
+    RETURN_TYPES = ("STRING",)
+    RETURN_NAMES = ("outputs",)
+
+    @classmethod
+    def IS_CHANGED(cls, **kwargs):
+        import hashlib, json
+        return hashlib.md5(json.dumps(kwargs, default=str).encode()).hexdigest()
+
+    def process_batch(self, 模型=None, seed=None, prompts_list=None,
+                      image_1=None, image_2=None, image_3=None, image_4=None,
+                      image_5=None, image_6=None, image_7=None, image_8=None,
+                      image_9=None, image_10=None):
+        def _u(v, d=None):
+            return v[0] if isinstance(v, list) and v else (v if v is not None else d)
+
+        model_name = _u(模型) or "gemini-3.1-pro-2605"
+        seed_val = _u(seed, 0)
+        api_key = synvow_auth.read_api_key()
+
+        imgs = [_u(t) for t in [image_1, image_2, image_3, image_4, image_5,
+                                 image_6, image_7, image_8, image_9, image_10]
+                if _u(t) is not None]
+
+        raw = prompts_list if isinstance(prompts_list, list) else ([prompts_list] if prompts_list else [""])
+        prompts = [str(p).strip() for p in raw if p is not None and str(p).strip()]
+        if not prompts:
+            prompts = [""]
+
+        print(f"[SynVow Gemini TBatch] {len(prompts)} 条 prompt, model={model_name}")
+        outputs = [None] * len(prompts)
+        single = SynVowGeminiAPI()
+
+        with concurrent.futures.ThreadPoolExecutor(max_workers=max(len(prompts), 1)) as executor:
+            future_map = {
+                executor.submit(single._request_single, imgs, model_name, p, seed_val, api_key): i
+                for i, p in enumerate(prompts)
+            }
+            for future in concurrent.futures.as_completed(future_map):
+                idx = future_map[future]
+                try:
+                    outputs[idx] = future.result()
+                except Exception as e:
+                    outputs[idx] = str(e)
+
+        try:
+            import server
+            server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
+        except Exception:
+            pass
+        return (outputs,)
+
+
 NODE_CLASS_MAPPINGS = {
     "SynVowGeminiAPI": SynVowGeminiAPI,
+    "SynVowGeminiAPI_TBatch": SynVowGeminiAPI_TBatch,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
     "SynVowGeminiAPI": "SynVow Gemini 提示词生成",
+    "SynVowGeminiAPI_TBatch": "SynVow Gemini 提示词生成 (T_batch)",
 }

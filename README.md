@@ -16,6 +16,9 @@ ComfyUI custom nodes for SynVow integration.
 - **Added `运行索引计数器` node** (`💫SynVow_api/Utils`)
   - Auto-increments output index on each run; resets to zero when workflow is queued
 - **`图像列表组合器`** now supports list inputs; automatically flattens batch and list inputs into ordered single-image output
+- **Added `SynVow Gemini 提示词生成 (T_batch)` node** (`💫SynVow_api/api/文本`)
+  - Accepts `prompts_list`, concurrently calls Gemini for each prompt, outputs result list
+- **Added model `gemini-3.1-flash-2605`** (Gemini nodes, Ecommerce Prompt Generator)
 
 ### 2026-05-17
 - Added model `gpt-image-2-稳定` (GPT-Image-2 nodes)

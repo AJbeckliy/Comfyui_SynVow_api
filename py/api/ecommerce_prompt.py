@@ -10,7 +10,7 @@ from .media_common import upload_image as _upload_image, DIRECT_API_BASE as _DIR
 _CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 _PROMPTS_DIR = os.path.join(_CURRENT_DIR, "..", "prompts")
 
-_MODEL_OPTIONS = ["gemini-3.1-pro-2605", "gemini-3-pro-2605"]
+_MODEL_OPTIONS = ["gemini-3.1-pro-2605", "gemini-3.1-flash-2605", "gemini-3-pro-2605"]
 
 
 def _load_prompt(filename):
