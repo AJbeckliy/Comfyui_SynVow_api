@@ -13,6 +13,9 @@ ComfyUI custom nodes for SynVow integration.
   - Validates that 2–5 image list groups have equal counts; raises an error if mismatched
 - **Ecommerce Prompt Generator** added `prompts_count` output, returning the actual number of prompts generated
 - **Text List Editor** removed unused `seed` parameter
+- **Added `运行索引计数器` node** (`💫SynVow_api/Utils`)
+  - Auto-increments output index on each run; resets to zero when workflow is queued
+- **`图像列表组合器`** now supports list inputs; automatically flattens batch and list inputs into ordered single-image output
 
 ### 2026-05-17
 - Added model `gpt-image-2-稳定` (GPT-Image-2 nodes)
