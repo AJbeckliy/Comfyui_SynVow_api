@@ -6,6 +6,14 @@ ComfyUI custom nodes for SynVow integration.
 
 ## Changelog
 
+### 2026-05-18
+- **Added `SynVow 阿里云OSS上传` node** (`💫SynVow_api/OSS`)
+  - Uploads a single image to Aliyun OSS and returns a public access URL
+- **Added `图像列表数量校验` node** (`💫SynVow_api/Image`)
+  - Validates that 2–5 image list groups have equal counts; raises an error if mismatched
+- **Ecommerce Prompt Generator** added `prompts_count` output, returning the actual number of prompts generated
+- **Text List Editor** removed unused `seed` parameter
+
 ### 2026-05-17
 - Added model `gpt-image-2-稳定` (GPT-Image-2 nodes)
 - Added models `nano-banana-2-稳定`, `nano-banana-2-官方`, `nano-banana-pro-稳定`, `nano-banana-pro-官方` (NanoBanana nodes)

@@ -116,9 +116,9 @@ class EcommercePromptGenerator:
             }
         }
 
-    RETURN_TYPES = ("STRING", "STRING")
-    RETURN_NAMES = ("prompts_list", "debug_info")
-    OUTPUT_IS_LIST = (True, False)
+    RETURN_TYPES = ("STRING", "INT", "STRING")
+    RETURN_NAMES = ("prompts_list", "prompts_count", "debug_info")
+    OUTPUT_IS_LIST = (True, False, False)
 
     FUNCTION = "generate_prompts_with_vision"
     CATEGORY = "💫SynVow_api/api/文本"
@@ -266,7 +266,12 @@ class EcommercePromptGenerator:
             call_idx += 1
         if not collected:
             err = last_error or "未知错误"
-            return ([f"[GENERATION_FAILED] {err}"], err)
+            try:
+                import server
+                server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
+            except Exception:
+                pass
+            return ([f"[GENERATION_FAILED] {err}"], 0, err)
 
         collected = collected[:target_count]
         debug_payload = {
@@ -274,7 +279,12 @@ class EcommercePromptGenerator:
             "image_count": len(image_urls),
             "collected_count": len(collected),
         }
-        return (collected, json.dumps(debug_payload, ensure_ascii=False))
+        try:
+            import server
+            server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
+        except Exception:
+            pass
+        return (collected, len(collected), json.dumps(debug_payload, ensure_ascii=False))
 
 
 

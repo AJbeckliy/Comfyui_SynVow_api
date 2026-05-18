@@ -6,6 +6,14 @@ ComfyUI 用于 SynVow 集成的自定义节点。
 
 ## 更新日志
 
+### 2026-05-18
+- **新增 `SynVow 阿里云OSS上传` 节点**（`💫SynVow_api/OSS` 分类）
+  - 将单张图像上传至阿里云 OSS，输出公网访问 URL
+- **新增 `图像列表数量校验` 节点**（`💫SynVow_api/Image` 分类）
+  - 校验 2~5 组图像列表数量是否一致，不一致则报错阻断流程
+- **电商详情页提示词生成器** 新增 `prompts_count` 输出端，输出实际生成的提示词条数
+- **文本停留编辑器** 删除无用 `seed` 参数
+
 ### 2026-05-17
 - 新增模型 `gpt-image-2-稳定`（GPT-Image-2 系列节点）
 - 新增模型 `nano-banana-2-稳定`、`nano-banana-2-官方`、`nano-banana-pro-稳定`、`nano-banana-pro-官方`（NanoBanana 系列节点）

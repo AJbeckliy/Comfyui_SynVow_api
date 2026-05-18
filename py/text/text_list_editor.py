@@ -14,7 +14,6 @@ class TextListEditor:
         return {
             "required": {
                 "text_list": ("STRING", {"forceInput": True}),
-                "seed": ("INT", {"default": 0, "min": 0, "max": 999999}),
             },
             "hidden": {
                 "unique_id": "UNIQUE_ID",
@@ -29,7 +28,7 @@ class TextListEditor:
     CATEGORY = "💫SynVow_api/Text"
     OUTPUT_NODE = True
 
-    def edit_text_list(self, text_list, seed, unique_id=None):
+    def edit_text_list(self, text_list, unique_id=None):
         if isinstance(unique_id, list):
             unique_id = unique_id[0] if unique_id else None
 

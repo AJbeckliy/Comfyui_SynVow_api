@@ -195,9 +195,19 @@ class SynVowSeedance2Video:
                 "status": "SUCCESS", "task_id": task_id,
                 "model": model, "video_url": url, "video_path": path,
             }, ensure_ascii=False)
+            try:
+                import server
+                server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
+            except Exception:
+                pass
             return (path, url, info)
         except Exception as e:
             print(f"[Seedance2] Error: {e}")
+            try:
+                import server
+                server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
+            except Exception:
+                pass
             return ("", "", json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
 
 
@@ -301,6 +311,11 @@ class SynVowSeedance2VideoBatch:
                 ok += 1
         info = json.dumps({"total": len(prompts), "successful": ok, "failed": len(prompts) - ok}, ensure_ascii=False)
         print(f"[Seedance2 Batch] 完成: {ok}/{len(prompts)} 成功")
+        try:
+            import server
+            server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
+        except Exception:
+            pass
         return (paths, urls, info)
 
 
