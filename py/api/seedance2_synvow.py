@@ -18,8 +18,8 @@ SEEDANCE2_POLL_URL = f"{DIRECT_API_BASE}/api/models/tasks"
 
 MODEL_OPTIONS = ["seedance2.0"]
 RATIO_OPTIONS = ["adaptive", "16:9", "9:16", "4:3", "3:4", "1:1", "21:9"]
-DURATION_OPTIONS = ["5", "10", "15"]
-RESOLUTION_OPTIONS = ["720p", "480p", "1080p"]
+DURATION_OPTIONS = ["15"]
+RESOLUTION_OPTIONS = ["720p"]
 
 _RESOLUTION_TO_MODEL = {
     "480p": "seedance_2_480p",

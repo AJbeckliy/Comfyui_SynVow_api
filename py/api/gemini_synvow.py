@@ -9,7 +9,7 @@ import requests as _requests
 from . import synvow_auth
 from .media_common import upload_image as _upload_image, DIRECT_API_BASE
 
-GEMINI_MODEL_OPTIONS = ["gemini-3.1-pro-2605", "gemini-3.1-flash-2605", "gemini-3-pro-2605"]
+GEMINI_MODEL_OPTIONS = ["gemini-3.1-pro-2605", "gemini-3.1-flash-2605", "gemini-3.5-flash-2605", "gemini-3-pro-2605"]
 
 
 class SynVowGeminiAPI:

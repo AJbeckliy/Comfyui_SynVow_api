@@ -9,6 +9,8 @@ ComfyUI 用于 SynVow 集成的自定义节点。
 ### 2026-05-20
 - **新增 `短视频解析` 节点**（`💫SynVow_api/api/视频` 分类）
   - 输入抖音分享链接或含链接的文本，自动提取 URL，调用 API 返回无水印直链并下载至本地
+- **新增模型 `gemini-3.5-flash-2605`**（Gemini 节点、电商提示词生成器、GPT-Image-2 提示词优化器）
+- **GPT-Image-2 提示词优化器** 补入模型 `gemini-3.1-flash-2605`
 
 ### 2026-05-18
 - **新增 `SynVow 阿里云OSS上传` 节点**（`💫SynVow_api/OSS` 分类）
