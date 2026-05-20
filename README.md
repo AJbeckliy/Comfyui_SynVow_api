@@ -11,6 +11,7 @@ ComfyUI custom nodes for SynVow integration.
   - Accepts Douyin share link or text containing a URL; extracts URL, calls API to get watermark-free direct link, and downloads locally
 - **Added model `gemini-3.5-flash-2605`** (Gemini nodes, Ecommerce Prompt Generator, GPT-Image-2 Prompt Optimizer)
 - **GPT-Image-2 Prompt Optimizer** added model `gemini-3.1-flash-2605`
+- **Reference Image Prompt Optimizer** added models `gemini-3.1-flash-2605`, `gemini-3.5-flash-2605`
 
 ### 2026-05-18
 - **Added `SynVow 阿里云OSS上传` node** (`💫SynVow_api/OSS`)

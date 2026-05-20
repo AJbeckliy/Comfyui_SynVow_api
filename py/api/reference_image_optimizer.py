@@ -28,7 +28,7 @@ _REFERENCE_MODE_MAP = {
     "只参考版式": "layout_only",
 }
 
-_MODEL_OPTIONS = ["gpt-5.5-2605", "gpt-5.4-2605", "gemini-3.1-pro-2605", "gemini-3-pro-2605"]
+_MODEL_OPTIONS = ["gpt-5.5-2605", "gpt-5.4-2605", "gemini-3.1-pro-2605", "gemini-3.1-flash-2605", "gemini-3.5-flash-2605", "gemini-3-pro-2605"]
 
 
 def _build_user_message(ref_url: str, user_prompt: str, reference_mode: str, target_aspect_ratio: str, subject_url: str = None) -> list:
