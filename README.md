@@ -6,6 +6,10 @@ ComfyUI custom nodes for SynVow integration.
 
 ## Changelog
 
+### 2026-05-20
+- **Added `短视频解析` node** (`💫SynVow_api/api/视频`)
+  - Accepts Douyin share link or text containing a URL; extracts URL, calls API to get watermark-free direct link, and downloads locally
+
 ### 2026-05-18
 - **Added `SynVow 阿里云OSS上传` node** (`💫SynVow_api/OSS`)
   - Uploads a single image to Aliyun OSS and returns a public access URL
