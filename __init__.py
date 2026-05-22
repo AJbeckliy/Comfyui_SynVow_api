@@ -258,18 +258,22 @@ async def _sv_save_token(request):
             async with sess.get(f"{API_BASE}/api-key", headers=auth_headers) as resp:
                 if resp.status == 200:
                     result = await resp.json()
-                    keys = result.get("data", result) if isinstance(result, dict) else result
+                    raw = result.get("data", result) if isinstance(result, dict) else result
+                    if isinstance(raw, dict):
+                        keys = raw.get("list", raw.get("data", []))
+                    else:
+                        keys = raw
                     if isinstance(keys, list):
-                        api_key = next((k.get("key") or k.get("api_key")
-                                        for k in keys if isinstance(k, dict) and k.get("name") == "comfyui_auto"), None)
+                        api_key = next((k.get("api_key") or k.get("key")
+                                        for k in keys if isinstance(k, dict) and k.get("is_active")), None)
 
             # 没有则创建
             if not api_key:
-                async with sess.post(f"{API_BASE}/api-key", json={"name": "comfyui_auto"}, headers=auth_headers) as resp:
+                async with sess.post(f"{API_BASE}/api-key", json={"description": "comfyui_auto"}, headers=auth_headers) as resp:
                     if resp.status in (200, 201):
                         result = await resp.json()
                         data = result.get("data", result) if isinstance(result, dict) else result
-                        api_key = data.get("key") or data.get("api_key") if isinstance(data, dict) else data
+                        api_key = data.get("api_key") or data.get("key") if isinstance(data, dict) else data
                     else:
                         _clear_auth_file()
                         return web.json_response({"code": 500, "message": "生成 API Key 失败"})
@@ -290,7 +294,6 @@ async def _sv_save_token(request):
                 "expires_at": _time.time() + 7 * 24 * 3600
             }, f, ensure_ascii=False, indent=2)
 
-        print(f"[SV] Token & API Key saved → {path}")
         return web.json_response({"code": 200, "message": "ok"})
     except Exception as e:
         print(f"[SV] save-token ERR: {e}")

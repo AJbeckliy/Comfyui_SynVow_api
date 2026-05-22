@@ -380,8 +380,15 @@ function showChangePasswordDialog() {
             });
             const data = await res.json();
             if (data.code === 200) {
-                alert('密码修改成功');
+                alert('密码修改成功，请重新登录');
                 closeModal();
+                localStorage.removeItem('sv_token');
+                localStorage.removeItem('sv_refresh_token');
+                localStorage.removeItem('sv_user');
+                clearAuthFile();
+                hideProfileDialog();
+                window.synvowRefreshAccount?.();
+                showLoginDialog();
             } else {
                 alert(data.message || '修改失败');
             }
