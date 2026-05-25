@@ -213,7 +213,8 @@ def _poll_task(task_id, consumption_id, headers, poll_url, model):
                 print(f"[GPT-Image-2] 失败: {task_id[:8]}... {msg}")
                 return None
         except Exception as e:
-            raise Exception(f"轮询请求失败: {e}")
+            print(f"[GPT-Image-2] 轮询异常: {task_id[:8]}... {e}，跳过")
+            return None
 
 
 def _download_image(img_url):

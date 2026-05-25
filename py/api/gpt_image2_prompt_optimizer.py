@@ -73,11 +73,13 @@ def _chat(headers, model, system_prompt, user_message):
 def generate_prompt_schema(headers, model, payload: dict) -> dict:
     user_message = json.dumps(payload, ensure_ascii=False)
     raw = _chat(headers, model, _SCHEMA_PARSER_PROMPT, user_message)
-    raw_clean = raw.strip().lstrip("```json").lstrip("```").rstrip("```").strip()
+    raw_clean = re.sub(r"^```(?:json)?\s*", "", raw.strip(), flags=re.IGNORECASE)
+    raw_clean = re.sub(r"\s*```$", "", raw_clean).strip()
     try:
         return json.loads(raw_clean)
-    except json.JSONDecodeError as e:
-        raise RuntimeError(f"schema 解析失败，模型输出非 JSON: {raw[:300]}") from e
+    except json.JSONDecodeError:
+        print(f"[GPTImage2Optimizer] schema 解析失败，模型输出非 JSON，原样返回")
+        return {"_raw": raw_clean}
 
 
 _BANNED_TEXT_PHRASES = [
