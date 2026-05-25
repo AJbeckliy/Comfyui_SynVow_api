@@ -18,13 +18,11 @@ SEEDANCE2_POLL_URL = f"{DIRECT_API_BASE}/api/models/tasks"
 
 MODEL_OPTIONS = ["seedance2.0"]
 RATIO_OPTIONS = ["adaptive", "16:9", "9:16", "4:3", "3:4", "1:1", "21:9"]
-DURATION_OPTIONS = ["15"]
+DURATION_OPTIONS = ["5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15"]
 RESOLUTION_OPTIONS = ["720p"]
 
 _RESOLUTION_TO_MODEL = {
-    "480p": "seedance_2_480p",
     "720p": "seedance_2_720p",
-    "1080p": "seedance_2_1080p",
 }
 
 
@@ -149,7 +147,7 @@ class SynVowSeedance2Video:
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
                 "模型": (MODEL_OPTIONS, {"default": "seedance2.0"}),
                 "ratio": (RATIO_OPTIONS, {"default": "adaptive"}),
-                "duration": (DURATION_OPTIONS, {"default": "5"}),
+                "duration": (DURATION_OPTIONS, {"default": "10"}),
                 "resolution": (RESOLUTION_OPTIONS, {"default": "720p"}),
             },
             "optional": {
@@ -223,7 +221,7 @@ class SynVowSeedance2VideoBatch:
                 "prompts_list": ("STRING", {"forceInput": True}),
                 "模型": (MODEL_OPTIONS, {"default": "seedance2.0"}),
                 "ratio": (RATIO_OPTIONS, {"default": "adaptive"}),
-                "duration": (DURATION_OPTIONS, {"default": "5"}),
+                "duration": (DURATION_OPTIONS, {"default": "10"}),
                 "resolution": (RESOLUTION_OPTIONS, {"default": "720p"}),
             },
             "optional": {
