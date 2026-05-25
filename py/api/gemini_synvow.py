@@ -22,6 +22,7 @@ class SynVowGeminiAPI:
         return {
             "required": {
                 "模型": (GEMINI_MODEL_OPTIONS, {"default": "gemini-3.1-pro-2605"}),
+                "system_prompt": ("STRING", {"multiline": True, "default": ""}),
                 "user_prompt": ("STRING", {"multiline": True, "default": ""}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
@@ -43,24 +44,31 @@ class SynVowGeminiAPI:
     RETURN_NAMES = ("output",)
 
     @classmethod
-    def IS_CHANGED(cls, 模型, user_prompt, seed, **kwargs):
+    def IS_CHANGED(cls, 模型, system_prompt, user_prompt, seed, **kwargs):
         import hashlib
-        key = f"{模型}|{user_prompt}|{seed}"
+        key = f"{模型}|{system_prompt}|{user_prompt}|{seed}"
         return hashlib.md5(key.encode()).hexdigest()
 
-    def _request_single(self, img_tensors, model_name, user_prompt, seed, api_key):
+    def _request_single(self, img_tensors, model_name, user_prompt, seed, api_key, system_prompt=""):
         """img_tensors: 单个 tensor 或 tensor 列表，多张图合并进一条消息；空列表=纯文本"""
         try:
             if not isinstance(img_tensors, (list, tuple)):
                 img_tensors = [img_tensors]
 
+            if system_prompt.strip() and user_prompt.strip():
+                full_prompt = f"[system prompts]\n{system_prompt}\n\n[user prompts]\n{user_prompt}"
+            elif system_prompt.strip():
+                full_prompt = f"[system prompts]\n{system_prompt}"
+            else:
+                full_prompt = f"[user prompts]\n{user_prompt}"
+
             if img_tensors:
-                user_content = [{"type": "text", "text": user_prompt}]
+                user_content = [{"type": "text", "text": full_prompt}]
                 for t in img_tensors:
                     url = _upload_image(api_key, t)
                     user_content.append({"type": "image_url", "image_url": {"url": url}})
             else:
-                user_content = user_prompt
+                user_content = full_prompt
 
             request_body = {
                 "model": model_name,
@@ -79,7 +87,7 @@ class SynVowGeminiAPI:
         except Exception as e:
             return str(e)
 
-    def generate(self, 模型, user_prompt, seed,
+    def generate(self, 模型, system_prompt, user_prompt, seed,
                  image_1=None, image_2=None, image_3=None, image_4=None,
                  image_5=None, image_6=None, image_7=None, image_8=None,
                  image_9=None, image_10=None):
@@ -96,7 +104,7 @@ class SynVowGeminiAPI:
 
         with concurrent.futures.ThreadPoolExecutor(max_workers=max(len(task_inputs), 1)) as executor:
             future_map = {
-                executor.submit(self._request_single, imgs, model_name, user_prompt, seed, api_key): i
+                executor.submit(self._request_single, imgs, model_name, user_prompt, seed, api_key, system_prompt): i
                 for i, imgs in enumerate(task_inputs)
             }
             for future in concurrent.futures.as_completed(future_map):
