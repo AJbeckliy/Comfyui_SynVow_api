@@ -162,7 +162,7 @@ def _submit_task(payload, headers, api_url):
     img_count = len(payload.get(img_key, []))
     print(f"[GPT-Image-2] 提交: model={model} images={img_count}")
     res = requests.post(api_url, headers=headers, json=payload,
-                        params={"async": "true"}, timeout=60, verify=False)
+                        params={"async": "true"}, timeout=120, verify=False)
     res.raise_for_status()
     _d = res.json() if isinstance(res.json(), dict) else {}
     _data = _d.get("data")
