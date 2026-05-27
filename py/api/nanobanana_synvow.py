@@ -63,27 +63,28 @@ def _blank_image(h=1024, w=1024):
     return torch.zeros((1, h, w, 3), dtype=torch.float32)
 
 
-def _extract_urls(d):
-    if isinstance(d, list):
-        urls = []
-        for item in d:
-            if isinstance(item, dict) and item.get("url"):
-                url = item["url"]
-                if isinstance(url, list):
-                    urls.extend(u for u in url if u)
-                else:
-                    urls.append(url)
+def _extract_urls(r):
+    urls = []
+    if not isinstance(r, dict):
         return urls
-    if isinstance(d, dict):
-        if "url" in d and d["url"]:
-            url = d["url"]
-            return list(url) if isinstance(url, list) else [url]
-        for key in ("result", "results", "data", "sourceData", "images"):
-            if key in d:
-                result = _extract_urls(d[key])
-                if result:
-                    return result
-    return []
+    # 路径1: 旧模型 r["results"][{"url": str}]
+    for item in r.get("results", []):
+        if isinstance(item, dict) and item.get("url"):
+            urls.append(item["url"])
+    if urls:
+        return urls
+    # 路径2: 新模型 r["data"]["result"]["images"][{"url": str|list}]
+    try:
+        images = r["data"]["result"]["images"]
+        for item in images:
+            url = item.get("url")
+            if isinstance(url, list):
+                urls.extend(u for u in url if u)
+            elif url:
+                urls.append(url)
+    except (KeyError, TypeError):
+        pass
+    return urls
 
 
 _NEW_MODELS = {
@@ -257,12 +258,7 @@ def _run_tasks(tasks, model, aspect_ratio, image_size, is_img2img, api_key, head
     image_urls = []
     for i, r in enumerate(poll_results):
         if r is not None:
-            d = r.get("data", r) if isinstance(r, dict) else r
-            inner = d.get("data", d) if isinstance(d, dict) else d
-            urls = _extract_urls(inner) or _extract_urls(d) or _extract_urls(r)
-            print(f"[NanoBanana] task[{i}] 提取到 {len(urls)} 个URL")
-            if not urls:
-                print(f"[NanoBanana] task[{i}] 原始响应: {str(r)[:300]}")
+            urls = _extract_urls(r)
             image_urls.extend(urls)
         else:
             print(f"[NanoBanana] task[{i}] 失败，黑图占位")
