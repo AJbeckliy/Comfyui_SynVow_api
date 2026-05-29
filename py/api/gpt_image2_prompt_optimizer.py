@@ -85,7 +85,7 @@ class GptImage2PromptOptimizer:
                     {"default": "保留原文"},
                 ),
                 "model": (
-                    ["gpt-5.5-2606", "gpt-5.4-2606", "gpt-5.5-2605", "gpt-5.4-2605", "gemini-3.1-pro-2605", "gemini-3.1-flash-2605", "gemini-3.5-flash-2605", "gemini-3-pro-2605"],
+                    ["gpt-5.5-2606", "gpt-5.4-2606", "gemini-3.1-flash-2606", "gemini-3.5-flash-2606", "gemini-3.1-pro-2606", "gemini-3-pro-2606", "gpt-5.5-2605", "gpt-5.4-2605", "gemini-3.1-pro-2605", "gemini-3.1-flash-2605", "gemini-3.5-flash-2605", "gemini-3-pro-2605"],
                     {"default": "gpt-5.5-2606"},
                 ),
                 "optimize_strength": (

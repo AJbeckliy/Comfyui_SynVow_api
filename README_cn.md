@@ -9,6 +9,8 @@ ComfyUI 用于 SynVow 集成的自定义节点。
 ### 2026-05-29
 - **新增模型 `gpt-5.5-2606`、`gpt-5.4-2606`**（SynVow GPT 提示词生成、GPT-Image-2 文生图提示词控制器、图生图提示词控制器）
   - 默认模型更新为 `gpt-5.5-2606`
+- **新增模型 `gemini-3.1-flash-2606`、`gemini-3.5-flash-2606`、`gemini-3.1-pro-2606`、`gemini-3-pro-2606`**（SynVow Gemini 提示词生成、🛒 电商详情页提示词生成器、GPT-Image-2 文生图提示词控制器、图生图提示词控制器）
+  - Gemini 节点及电商详情页提示词生成器默认模型更新为 `gemini-3.1-flash-2606`
 
 ### 2026-05-20
 - **新增 `短视频解析` 节点**（`💫SynVow_api/api/视频` 分类）

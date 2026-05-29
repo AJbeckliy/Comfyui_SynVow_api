@@ -9,7 +9,7 @@ import requests as _requests
 from . import synvow_auth
 from .media_common import upload_image as _upload_image, DIRECT_API_BASE
 
-GEMINI_MODEL_OPTIONS = ["gemini-3.1-pro-2605", "gemini-3.1-flash-2605", "gemini-3.5-flash-2605", "gemini-3-pro-2605"]
+GEMINI_MODEL_OPTIONS = ["gemini-3.1-flash-2606", "gemini-3.5-flash-2606", "gemini-3.1-pro-2606", "gemini-3-pro-2606", "gemini-3.1-pro-2605", "gemini-3.1-flash-2605", "gemini-3.5-flash-2605", "gemini-3-pro-2605"]
 
 
 class SynVowGeminiAPI:
@@ -21,7 +21,7 @@ class SynVowGeminiAPI:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "模型": (GEMINI_MODEL_OPTIONS, {"default": "gemini-3.1-pro-2605"}),
+                "模型": (GEMINI_MODEL_OPTIONS, {"default": "gemini-3.1-flash-2606"}),
                 "system_prompt": ("STRING", {"multiline": True, "default": ""}),
                 "user_prompt": ("STRING", {"multiline": True, "default": ""}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
@@ -92,7 +92,7 @@ class SynVowGeminiAPI:
                  image_5=None, image_6=None, image_7=None, image_8=None,
                  image_9=None, image_10=None):
         api_key = synvow_auth.read_api_key()
-        model_name = 模型 or "gemini-3.1-pro-2605"
+        model_name = 模型 or "gemini-3.1-flash-2606"
 
         single_imgs = [img for img in [image_1, image_2, image_3, image_4, image_5,
                                        image_6, image_7, image_8, image_9, image_10]
@@ -132,7 +132,7 @@ class SynVowGeminiAPI_TBatch:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "模型": (GEMINI_MODEL_OPTIONS, {"default": "gemini-3.1-pro-2605"}),
+                "模型": (GEMINI_MODEL_OPTIONS, {"default": "gemini-3.1-flash-2606"}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
             "optional": {
@@ -159,7 +159,7 @@ class SynVowGeminiAPI_TBatch:
         def _u(v, d=None):
             return v[0] if isinstance(v, list) and v else (v if v is not None else d)
 
-        model_name = _u(模型) or "gemini-3.1-pro-2605"
+        model_name = _u(模型) or "gemini-3.1-flash-2606"
         seed_val = _u(seed, 0)
         api_key = synvow_auth.read_api_key()
 
