@@ -85,8 +85,8 @@ class GptImage2PromptOptimizer:
                     {"default": "保留原文"},
                 ),
                 "model": (
-                    ["gpt-5.5-2605", "gpt-5.4-2605", "gemini-3.1-pro-2605", "gemini-3.1-flash-2605", "gemini-3.5-flash-2605", "gemini-3-pro-2605"],
-                    {"default": "gpt-5.5-2605"},
+                    ["gpt-5.5-2606", "gpt-5.4-2606", "gpt-5.5-2605", "gpt-5.4-2605", "gemini-3.1-pro-2605", "gemini-3.1-flash-2605", "gemini-3.5-flash-2605", "gemini-3-pro-2605"],
+                    {"default": "gpt-5.5-2606"},
                 ),
                 "optimize_strength": (
                     ["标准", "增强"],
@@ -124,7 +124,7 @@ class GptImage2PromptOptimizer:
         api_key = synvow_auth.read_api_key()
         headers = synvow_auth.make_api_headers(api_key)
         exact_text = exact_text or ""
-        actual_model = model or "gpt-5.5-2605"
+        actual_model = model or "gpt-5.5-2606"
         text_policy_en = self._TEXT_POLICY_MAP.get(text_policy, text_policy)
 
         payload = build_input_payload(layout_type, optimize_strength, aspect_ratio, user_prompt, exact_text, text_policy_en)

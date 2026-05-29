@@ -6,6 +6,10 @@ ComfyUI custom nodes for SynVow integration.
 
 ## Changelog
 
+### 2026-05-29
+- **Added models `gpt-5.5-2606`, `gpt-5.4-2606`** (SynVow GPT 提示词生成, GPT-Image-2 文生图提示词控制器, 图生图提示词控制器)
+  - New default model: `gpt-5.5-2606`
+
 ### 2026-05-20
 - **Added `短视频解析` node** (`💫SynVow_api/api/视频`)
   - Accepts Douyin share link or text containing a URL; extracts URL, calls API to get watermark-free direct link, and downloads locally

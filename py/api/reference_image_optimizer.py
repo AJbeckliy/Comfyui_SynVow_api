@@ -28,7 +28,7 @@ _REFERENCE_MODE_MAP = {
     "只参考版式": "layout_only",
 }
 
-_MODEL_OPTIONS = ["gpt-5.5-2605", "gpt-5.4-2605", "gemini-3.1-pro-2605", "gemini-3.1-flash-2605", "gemini-3.5-flash-2605", "gemini-3-pro-2605"]
+_MODEL_OPTIONS = ["gpt-5.5-2606", "gpt-5.4-2606", "gpt-5.5-2605", "gpt-5.4-2605", "gemini-3.1-pro-2605", "gemini-3.1-flash-2605", "gemini-3.5-flash-2605", "gemini-3-pro-2605"]
 
 
 def _build_user_message(ref_url: str, user_prompt: str, reference_mode: str, target_aspect_ratio: str, subject_url: str = None) -> list:
@@ -80,7 +80,7 @@ class PromptOptimizeBReferenceImage:
                 ),
                 "model": (
                     _MODEL_OPTIONS,
-                    {"default": "gpt-5.5-2605"},
+                    {"default": "gpt-5.5-2606"},
                 ),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
@@ -107,7 +107,7 @@ class PromptOptimizeBReferenceImage:
 
         ref_mode_en = _REFERENCE_MODE_MAP.get(reference_mode, reference_mode)
         ratio_en = target_aspect_ratio
-        actual_model = model or "gpt-5.5-2605"
+        actual_model = model or "gpt-5.5-2606"
 
         has_subject = subject_image is not None
         ref_url = _upload_image(api_key, reference_image)
