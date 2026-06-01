@@ -1,0 +1,211 @@
+{
+  "id": "6b2797e6-2716-4a62-beed-d05e212cf3b9",
+  "revision": 0,
+  "last_node_id": 4,
+  "last_link_id": 3,
+  "nodes": [
+    {
+      "id": 4,
+      "type": "ShowText|pysssss",
+      "pos": [
+        2529.2636341923917,
+        3082.544973527779
+      ],
+      "size": [
+        269.9661066537892,
+        132.04596432487097
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": [
+        "已完成 model=抖音解析-qsy"
+      ]
+    },
+    {
+      "id": 2,
+      "type": "ShowText|pysssss",
+      "pos": [
+        2831.309686136295,
+        3078.4897189268145
+      ],
+      "size": [
+        285.1155301287704,
+        124.07258354856458
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 1
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": [
+        "https://v26-reading.douyin.com/37e7b567361ce57ffb7285f09c86f00b/6a1d431d/video/tos/cn/tos-cn-ve-15c000-ce/oEf5EhDovBEFYzSQiIZ18FABJbEwopsIDA9eE9/?a=1967&ch=0&cr=0&dr=0&cd=0%7C0%7C0%7C0&cv=1&br=2498&bt=2498&cs=0&ds=4&ft=WThMx4EMffPdqK~-I1VNvAq-antLjrKwcv9uRkaSkYoaejVhWL6&mime_type=video_mp4&qs=0&rc=PGg7NTo7ZWk5aTk4Ojk1ZkBpajdqc3g5cjM0OTMzbGkzNUAyMS5iLWMxNjQxNTMwNC8yYSNobS4zMmRzL3NhLS1kLTVzcw%3D%3D&btag=c0000e00028000&dy_q=1780298802&feature_id=37f92ebd2877ae8e7eba995d406c5150&l=20260601152642BC6B53ABD8BF0B2044E1"
+      ]
+    },
+    {
+      "id": 3,
+      "type": "SynVowApiVideoPreview",
+      "pos": [
+        3138.7529233942896,
+        3075.243129930301
+      ],
+      "size": [
+        340.6799670588356,
+        312.35320380553503
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video_path",
+          "type": "STRING",
+          "link": 2
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "2e1e10fafa840289cd4dbd241f693103f968c3bb",
+        "Node name for S&R": "SynVowApiVideoPreview"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 1,
+      "type": "SynVowVideoParser",
+      "pos": [
+        2094.5771049244104,
+        3086.2070585383453
+      ],
+      "size": [
+        400,
+        200
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "video_url",
+          "type": "STRING",
+          "links": [
+            1
+          ]
+        },
+        {
+          "name": "video_path",
+          "type": "STRING",
+          "links": [
+            2
+          ]
+        },
+        {
+          "name": "status",
+          "type": "STRING",
+          "links": [
+            3
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "2e1e10fafa840289cd4dbd241f693103f968c3bb",
+        "Node name for S&R": "SynVowVideoParser"
+      },
+      "widgets_values": [
+        "抖音解析-qsy",
+        "4.33 I@i.Pk 02/03 MjP:/ :0pm 逆风管家 # 蛋仔派对 # 蛋仔奇思妙想计划 # 逃出惊魂夜 # 蛋仔派对心动魔法季  https://v.douyin.com/QTekU8d4JjI/ 复制此链接，打开Dou音搜索，直接观看视频！",
+        ""
+      ]
+    }
+  ],
+  "links": [
+    [
+      1,
+      1,
+      0,
+      2,
+      0,
+      "STRING"
+    ],
+    [
+      2,
+      1,
+      1,
+      3,
+      0,
+      "STRING"
+    ],
+    [
+      3,
+      1,
+      2,
+      4,
+      0,
+      "STRING"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 1.2541731394186366,
+      "offset": [
+        -1918.4214639354057,
+        -2823.0572946874
+      ]
+    },
+    "frontendVersion": "1.44.19",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}

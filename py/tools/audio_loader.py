@@ -3,6 +3,8 @@ import hashlib
 import torch
 import folder_paths
 
+from .media_crop import maybe_crop_media
+
 
 def _load_audio(filepath):
     import av
@@ -36,6 +38,8 @@ class AudioLoader:
         return {
             "required": {
                 "audio": (files, {}),
+                "起始秒": ("FLOAT", {"default": 0.0, "min": 0.0, "step": 0.1}),
+                "裁剪秒数": ("FLOAT", {"default": 0.0, "min": 0.0, "step": 0.1}),
             }
         }
 
@@ -44,12 +48,13 @@ class AudioLoader:
     OUTPUT_NODE = True
 
     @classmethod
-    def IS_CHANGED(cls, audio):
+    def IS_CHANGED(cls, audio, 起始秒, 裁剪秒数):
         audio_path = folder_paths.get_annotated_filepath(audio)
         if os.path.isfile(audio_path):
             m = hashlib.sha256()
             with open(audio_path, "rb") as f:
                 m.update(f.read())
+            m.update(f"{起始秒:.6f}|{裁剪秒数:.6f}".encode())
             return m.digest().hex()
         return float("NaN")
 
@@ -59,21 +64,23 @@ class AudioLoader:
             return f"音频文件不存在: {audio}"
         return True
 
-    def load_audio(self, audio):
+    def load_audio(self, audio, 起始秒, 裁剪秒数):
         audio_path = folder_paths.get_annotated_filepath(audio)
 
         if not os.path.isfile(audio_path):
             empty = {"waveform": torch.zeros(1, 1, 1), "sample_rate": 44100}
             return {"ui": {"audio": []}, "result": (empty, "")}
 
+        effective_path = maybe_crop_media(audio_path, 起始秒, 裁剪秒数)
         try:
-            waveform, sample_rate = _load_audio(audio_path)
+            waveform, sample_rate = _load_audio(effective_path)
             audio_data = {"waveform": waveform.unsqueeze(0), "sample_rate": sample_rate}
         except Exception:
             audio_data = {"waveform": torch.zeros(1, 1, 1), "sample_rate": 44100}
+            effective_path = audio_path
 
         audio_ui = [{"filename": audio, "subfolder": "", "type": "input"}]
-        return {"ui": {"audio": audio_ui}, "result": (audio_data, audio_path)}
+        return {"ui": {"audio": audio_ui}, "result": (audio_data, effective_path)}
 
 
 NODE_CLASS_MAPPINGS = {

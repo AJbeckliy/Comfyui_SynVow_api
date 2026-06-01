@@ -6,6 +6,9 @@ ComfyUI custom nodes for SynVow integration.
 
 ## Changelog
 
+### 2026-06-01
+- **Added models `nano-banana-2-低价`, `nano-banana-pro-低价`** (NanoBanana nodes: single, T_batch, I_batch, TI_batch)
+
 ### 2026-05-29
 - **Added models `gpt-5.5-2606`, `gpt-5.4-2606`** (SynVow GPT 提示词生成, GPT-Image-2 文生图提示词控制器, 图生图提示词控制器)
   - New default model: `gpt-5.5-2606`

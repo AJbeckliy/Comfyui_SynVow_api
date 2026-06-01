@@ -20,9 +20,11 @@ from .media_common import upload_image as _upload_image
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 _MODEL_OPTIONS = [
+    "nano-banana-2-低价",
     "nano-banana-2-2605",
     "nano-banana-2-稳定",
     "nano-banana-2-官方",
+    "nano-banana-pro-低价",
     "nano-banana-pro-2605",
     "nano-banana-pro-稳定",
     "nano-banana-pro-官方",
@@ -84,12 +86,26 @@ def _extract_urls(r):
                 urls.append(url)
     except (KeyError, TypeError):
         pass
+    if urls:
+        return urls
+    # 路径3: 低价模型 r["result"]["url"] (单个字符串)
+    result = r.get("result")
+    if isinstance(result, dict):
+        url = result.get("url")
+        if isinstance(url, str) and url:
+            urls.append(url)
+        elif isinstance(url, list):
+            urls.extend(u for u in url if u)
     return urls
 
 
 _NEW_MODELS = {
     "nano-banana-2-稳定", "nano-banana-2-官方",
     "nano-banana-pro-稳定", "nano-banana-pro-官方",
+}
+
+_LOWPRICE_MODELS = {
+    "nano-banana-2-低价", "nano-banana-pro-低价",
 }
 
 
@@ -99,7 +115,14 @@ _POLL_URL = f"{synvow_auth.DIRECT_API_BASE}/api/models/tasks"
 
 def _build_payload(model, prompt, aspect_ratio, image_size, is_img2img, img_tensors, api_key=None):
     payload = {"model": model, "prompt": prompt}
-    if model in _NEW_MODELS:
+    if model in _LOWPRICE_MODELS:
+        if aspect_ratio and aspect_ratio != "auto":
+            payload["ratio"] = aspect_ratio
+        if image_size:
+            payload["resolution"] = image_size
+        if is_img2img and img_tensors and api_key:
+            payload["files"] = [{"url": _upload_image(api_key, t), "type": "image"} for t in img_tensors]
+    elif model in _NEW_MODELS:
         if aspect_ratio and aspect_ratio != "auto":
             payload["size"] = aspect_ratio
         if image_size:
@@ -119,8 +142,7 @@ def _build_payload(model, prompt, aspect_ratio, image_size, is_img2img, img_tens
 
 def _submit_task(payload, headers, api_url):
     model = payload.get('model')
-    img_key = "image_urls" if "image_urls" in payload else "images"
-    img_count = len(payload.get(img_key, []))
+    img_count = len(payload.get("image_urls") or payload.get("files") or payload.get("images") or [])
     print(f"[NanoBanana] 提交: model={model} images={img_count}")
     res = requests.post(api_url, headers=headers, json=payload,
                         params={"async": "true"}, timeout=120, verify=False)
@@ -481,7 +503,10 @@ class SynVowNanoBanana_IBatch:
             for lst in all_lists:
                 if not lst:
                     continue
-                imgs.append(lst[0] if len(lst) == 1 else lst[i])
+                if len(lst) == 1:
+                    imgs.append(lst[0])
+                elif i < len(lst):
+                    imgs.append(lst[i])
             tasks.append((p, imgs))
 
         image_urls = _run_tasks(tasks, model_type, aspect_ratio, image_size, True, api_key, headers, _API_URL, _POLL_URL)
@@ -513,11 +538,11 @@ class SynVowNanoBanana_TIBatch:
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
             "optional": {
-                "prompts_list": ("STRING", {"forceInput": True}),
                 "images_list2": ("IMAGE",),
                 "images_list3": ("IMAGE",),
                 "images_list4": ("IMAGE",),
-                "images_list5": ("IMAGE",),
+                "images_list5": ("IMAGE",),                
+                "prompts_list": ("STRING", {"forceInput": True}),
             },
         }
 
@@ -573,7 +598,10 @@ class SynVowNanoBanana_TIBatch:
             for lst in all_lists:
                 if not lst:
                     continue
-                imgs.append(lst[0] if len(lst) == 1 else lst[i])
+                if len(lst) == 1:
+                    imgs.append(lst[0])
+                elif i < len(lst):
+                    imgs.append(lst[i])
             tasks.append((assigned_prompts[i], imgs))
 
         image_urls = _run_tasks(tasks, model_type, aspect_ratio, image_size, True, api_key, headers, _API_URL, _POLL_URL)

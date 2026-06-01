@@ -107,3 +107,106 @@ export function injectStyle(id, css) {
     s.textContent = css;
     document.head.appendChild(s);
 }
+
+export async function postJson(path, body, token) {
+    const headers = { "Content-Type": "application/json" };
+    if (token) headers["Authorization"] = `Bearer ${token}`;
+    const res = await fetch(`${API_BASE}${path}`, {
+        method: "POST",
+        headers,
+        body: JSON.stringify(body)
+    });
+    return res.json();
+}
+
+export function splitFilePath(path) {
+    const idx = path.lastIndexOf("/");
+    return idx === -1 ? ["", path] : [path.substring(0, idx), path.substring(idx + 1)];
+}
+
+/**
+ * 上传媒体文件到 ComfyUI input 目录，更新 combo widget，并回调播放器。
+ * 复用于音频与视频加载节点。
+ */
+export async function uploadMediaFile(api, app, comboWidget, file, onResolved) {
+    const body = new FormData();
+    body.append("image", file);
+    const resp = await api.fetchApi("/upload/image", { method: "POST", body });
+    if (resp.status !== 200) {
+        console.error("Upload failed:", resp.status, resp.statusText);
+        return false;
+    }
+    const data = await resp.json();
+    let name = data.name;
+    if (data.subfolder) name = data.subfolder + "/" + name;
+    if (!comboWidget.options.values.includes(name)) {
+        comboWidget.options.values.push(name);
+    }
+    comboWidget.value = name;
+    comboWidget.callback?.(name);
+    const [subfolder, filename] = splitFilePath(name);
+    const url = api.apiURL(`/view?filename=${encodeURIComponent(filename)}&type=input&subfolder=${subfolder}&${app.getRandParam().substring(1)}`);
+    onResolved?.(url);
+    return true;
+}
+
+/** 根据 combo 当前值构造 input 目录媒体的访问 URL（无值时返回空串）。 */
+export function mediaValueToURL(api, app, value) {
+    if (!value) return "";
+    const [subfolder, filename] = splitFilePath(value);
+    return api.apiURL(`/view?filename=${encodeURIComponent(filename)}&type=input&subfolder=${subfolder}&${app.getRandParam().substring(1)}`);
+}
+
+/**
+ * 将媒体播放器限制在 [起始秒, 起始秒+裁剪秒数] 区间内播放，实时预览裁剪范围。
+ * 裁剪秒数<=0 时不限制（播放整段）。返回解绑函数。
+ */
+export function bindCropPreview(node, mediaEl) {
+    const startW = node.widgets?.find(w => w.name === "起始秒");
+    const durW = node.widgets?.find(w => w.name === "裁剪秒数");
+    if (!mediaEl || (!startW && !durW)) return () => {};
+
+    const getStart = () => Math.max(0, Number(startW?.value) || 0);
+    const getDur = () => Math.max(0, Number(durW?.value) || 0);
+
+    const clampToStart = () => {
+        const start = getStart();
+        if (Number.isFinite(mediaEl.duration) && start < mediaEl.duration) {
+            mediaEl.currentTime = start;
+        }
+    };
+
+    const onTimeUpdate = () => {
+        const start = getStart();
+        const dur = getDur();
+        if (dur <= 0) return;
+        const end = start + dur;
+        if (mediaEl.currentTime < start) mediaEl.currentTime = start;
+        if (mediaEl.currentTime >= end) {
+            mediaEl.pause();
+            mediaEl.currentTime = start;
+        }
+    };
+
+    mediaEl.addEventListener("loadedmetadata", clampToStart);
+    mediaEl.addEventListener("play", () => {
+        if (getDur() > 0 && mediaEl.currentTime >= getStart() + getDur()) clampToStart();
+    });
+    mediaEl.addEventListener("timeupdate", onTimeUpdate);
+
+    const wrapCallback = (w) => {
+        if (!w) return;
+        const orig = w.callback;
+        w.callback = function (...args) {
+            orig?.apply(this, args);
+            clampToStart();
+        };
+    };
+    wrapCallback(startW);
+    wrapCallback(durW);
+
+    return () => {
+        mediaEl.removeEventListener("loadedmetadata", clampToStart);
+        mediaEl.removeEventListener("timeupdate", onTimeUpdate);
+    };
+}

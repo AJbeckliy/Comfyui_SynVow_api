@@ -6,6 +6,10 @@ ComfyUI 用于 SynVow 集成的自定义节点。
 
 ## 更新日志
 
+### 2026-06-01
+- **新增模型 `nano-banana-2-低价`、`nano-banana-pro-低价`**（NanoBanana 系列节点：单图生成、T_batch、I_batch、TI_batch）
+  - 低价版采用 `ratio` / `resolution` / `files` 请求结构，结果从 `result.url` 解析
+
 ### 2026-05-29
 - **新增模型 `gpt-5.5-2606`、`gpt-5.4-2606`**（SynVow GPT 提示词生成、GPT-Image-2 文生图提示词控制器、图生图提示词控制器）
   - 默认模型更新为 `gpt-5.5-2606`

@@ -536,7 +536,10 @@ class SynVowGptImage2_IBatch:
             for lst in all_lists:
                 if not lst:
                     continue
-                imgs.append(lst[0] if len(lst) == 1 else lst[i])
+                if len(lst) == 1:
+                    imgs.append(lst[0])
+                elif i < len(lst):
+                    imgs.append(lst[i])
             tasks.append((p, imgs))
 
         image_urls = _run_tasks(tasks, model, size, quality, eff_resolution, True, api_key, headers, _API_URL, _POLL_URL)
@@ -627,7 +630,10 @@ class SynVowGptImage2_TIBatch:
             for lst in all_lists:
                 if not lst:
                     continue
-                imgs.append(lst[0] if len(lst) == 1 else lst[i])
+                if len(lst) == 1:
+                    imgs.append(lst[0])
+                elif i < len(lst):
+                    imgs.append(lst[i])
             tasks.append((assigned_prompts[i], imgs))
 
         image_urls = _run_tasks(tasks, model, size, quality, eff_resolution, True, api_key, headers, _API_URL, _POLL_URL)

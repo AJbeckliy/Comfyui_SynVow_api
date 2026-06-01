@@ -10,7 +10,7 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from . import synvow_auth
 from .media_common import (
     DIRECT_API_BASE, tensor_to_jpeg_bytes, download_video,
-    upload_images, upload_audio_file, upload_video_file,
+    upload_images,
 )
 
 SEEDANCE2_SUBMIT_URL = f"{DIRECT_API_BASE}/api/models/video/generate"
@@ -26,17 +26,11 @@ _RESOLUTION_TO_MODEL = {
 }
 
 
-def _build_files(api_key, image_urls=None, video_path=None, audio_path=None):
+def _build_files(api_key, image_urls=None):
     files = []
     if image_urls:
         for u in image_urls:
             files.append({"url": u, "type": "image"})
-    if video_path and video_path.strip():
-        uploaded_video_url = upload_video_file(api_key, video_path.strip())
-        files.append({"url": uploaded_video_url, "type": "video"})
-    if audio_path and audio_path.strip():
-        uploaded_audio_url = upload_audio_file(api_key, audio_path.strip())
-        files.append({"url": uploaded_audio_url, "type": "audio"})
     return files or None
 
 
@@ -52,13 +46,13 @@ def _submit_task(api_key, prompt, model, ratio, duration, resolution, files=None
     if files:
         payload["files"] = files
     print(f"[Seedance2] 提交: model={payload.get('model')} ratio={payload.get('ratio')} duration={payload.get('duration')} resolution={payload.get('resolution')}")
-    res = requests.post(SEEDANCE2_SUBMIT_URL, headers=headers, json=payload, verify=False, timeout=120)
+    res = requests.post(SEEDANCE2_SUBMIT_URL + "?async=true", headers=headers, json=payload, verify=False, timeout=120)
     if not res.text.strip():
         raise Exception(f"提交返回为空 ({res.status_code})")
     resp = res.json()
     if res.status_code == 401:
         raise RuntimeError("API Key 无效或已过期，请重新登录")
-    if res.status_code != 200:
+    if res.status_code not in (200, 202):
         raise Exception(f"提交失败 ({res.status_code}): {resp.get('message', res.text[:200])}")
     task_id = (resp.get("task_id") or resp.get("data", {}).get("task_id") or
                resp.get("data", {}).get("data", {}).get("task_id") or
@@ -155,8 +149,6 @@ class SynVowSeedance2Video:
                 "image_3": ("IMAGE",), "image_4": ("IMAGE",),
                 "image_5": ("IMAGE",), "image_6": ("IMAGE",),
                 "image_7": ("IMAGE",), "image_8": ("IMAGE",),
-                "video_path": ("STRING", {"forceInput": True}),
-                "audio_path": ("STRING", {"forceInput": True}),
                 "filename": ("STRING", {"multiline": False, "default": ""}),
                 "save_path": ("STRING", {"multiline": False, "default": ""}),
             }
@@ -172,7 +164,7 @@ class SynVowSeedance2Video:
     def generate_video(self, prompt, 模型, ratio, duration, resolution,
                        image_1=None, image_2=None, image_3=None, image_4=None,
                        image_5=None, image_6=None, image_7=None, image_8=None,
-                       video_path="", audio_path="", filename="", save_path=""):
+                       filename="", save_path=""):
         api_key = synvow_auth.read_api_key()
         model = _RESOLUTION_TO_MODEL.get(resolution, "seedance_2_720p")
 
@@ -180,7 +172,7 @@ class SynVowSeedance2Video:
                                image_5, image_6, image_7, image_8] if t is not None]
         image_urls = upload_images(api_key, [tensor_to_jpeg_bytes(t) for t in tensors]) if tensors else None
 
-        files = _build_files(api_key, image_urls=image_urls, video_path=video_path, audio_path=audio_path)
+        files = _build_files(api_key, image_urls=image_urls)
 
         try:
             task_id, consumption_id = _submit_task(api_key, prompt, model, ratio, duration, resolution, files)
@@ -229,8 +221,6 @@ class SynVowSeedance2VideoBatch:
                 "image_3": ("IMAGE",), "image_4": ("IMAGE",),
                 "image_5": ("IMAGE",), "image_6": ("IMAGE",),
                 "image_7": ("IMAGE",), "image_8": ("IMAGE",),
-                "video_path": ("STRING", {"forceInput": True}),
-                "audio_path": ("STRING", {"forceInput": True}),
                 "filename": ("STRING", {"multiline": False, "default": ""}),
                 "save_path": ("STRING", {"multiline": False, "default": ""}),
             }
@@ -248,7 +238,7 @@ class SynVowSeedance2VideoBatch:
     def process_batch(self, prompts_list, 模型, ratio, duration, resolution,
                       image_1=None, image_2=None, image_3=None, image_4=None,
                       image_5=None, image_6=None, image_7=None, image_8=None,
-                      video_path=None, audio_path=None, filename=None, save_path=None):
+                      filename=None, save_path=None):
         _u = lambda v, d=None: v[0] if isinstance(v, list) and v else (v if v is not None else d)
         ratio, duration, resolution = _u(ratio, "adaptive"), _u(duration, "5"), _u(resolution, "720p")
         model = _RESOLUTION_TO_MODEL.get(resolution, "seedance_2_720p")
@@ -260,9 +250,7 @@ class SynVowSeedance2VideoBatch:
                                _u(image_5), _u(image_6), _u(image_7), _u(image_8)] if t is not None]
         image_urls = upload_images(api_key, [tensor_to_jpeg_bytes(t) for t in tensors]) if tensors else None
 
-        _vp = _u(video_path, "")
-        _ap = _u(audio_path, "")
-        files = _build_files(api_key, image_urls=image_urls, video_path=_vp, audio_path=_ap)
+        files = _build_files(api_key, image_urls=image_urls)
 
         raw = prompts_list if isinstance(prompts_list, list) else [prompts_list]
         prompts = []
@@ -322,6 +310,6 @@ NODE_CLASS_MAPPINGS = {
     "SynVowSeedance2VideoBatch": SynVowSeedance2VideoBatch,
 }
 NODE_DISPLAY_NAME_MAPPINGS = {
-    "SynVowSeedance2Video": "SynVow Seedance2.0 视频生成",
-    "SynVowSeedance2VideoBatch": "SynVow Seedance2.0 批量视频生成",
+    "SynVowSeedance2Video": "SynVow Seedance2.0 视频生成 (720P)",
+    "SynVowSeedance2VideoBatch": "SynVow Seedance2.0 批量视频生成 (720P)",
 }

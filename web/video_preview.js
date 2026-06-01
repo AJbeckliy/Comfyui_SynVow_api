@@ -16,17 +16,9 @@ app.registerExtension({
             videoEl.style.display = "block";
             const previewWidget = this.addDOMWidget("videopreview", "preview", videoEl, { serialize: false });
             previewWidget.serialize = false;
-        };
 
-        const origCreatedForExec = nodeType.prototype.onNodeCreated;
-        nodeType.prototype.onNodeCreated = function () {
-            origCreatedForExec?.apply(this, arguments);
-            const self = this;
             this.onExecuted = function (message) {
-                console.log("[VideoPreview] onExecuted", message);
-                const previewWidget = self.widgets?.find(w => w.name === "videopreview");
-                if (!previewWidget?.element) return;
-
+                if (!previewWidget.element) return;
                 const gif = message?.gifs?.[0];
                 if (!gif?.filename) {
                     previewWidget.element.src = "";
