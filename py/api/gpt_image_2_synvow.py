@@ -113,6 +113,27 @@ def _blank_image(h=1024, w=1024):
     return torch.zeros((1, h, w, 3), dtype=torch.float32)
 
 
+def _append_url(urls, value):
+    if isinstance(value, str) and value.startswith(("http://", "https://")):
+        if value not in urls:
+            urls.append(value)
+    elif isinstance(value, list):
+        for item in value:
+            _append_url(urls, item)
+
+
+def _collect_urls_recursive(value, urls):
+    if isinstance(value, dict):
+        for key in ("url", "image_url", "imageUrl", "output_url", "outputUrl"):
+            _append_url(urls, value.get(key))
+        for key in ("images", "results", "result", "output", "outputs", "data", "sourceData"):
+            if key in value:
+                _collect_urls_recursive(value.get(key), urls)
+    elif isinstance(value, list):
+        for item in value:
+            _collect_urls_recursive(item, urls)
+
+
 def _extract_urls(r):
     urls = []
     if not isinstance(r, dict):
@@ -134,6 +155,9 @@ def _extract_urls(r):
                 urls.append(url)
     except (KeyError, TypeError):
         pass
+    if urls:
+        return urls
+    _collect_urls_recursive(r, urls)
     return urls
 
 
@@ -180,7 +204,7 @@ def _submit_task(payload, headers, api_url):
     consumption_id = _d.get("consumption_id") or _data_item.get("consumption_id")
     if not task_id:
         raise RuntimeError(f"提交失败，无 task_id: {str(_d)[:200]}")
-    print(f"[GPT-Image-2] task_id={task_id[:8]}...")
+    print(f"[GPT-Image-2] task_id=...{task_id[-8:]}")
     return task_id, consumption_id
 
 
@@ -198,7 +222,7 @@ def _poll_task(task_id, consumption_id, headers, poll_url, model):
         mm.throw_exception_if_processing_interrupted()
         elapsed = int(time.time() - start_time)
         if elapsed >= timeout_total:
-            print(f"[GPT-Image-2] 超时: {task_id[:8]}... ({elapsed}s)")
+            print(f"[GPT-Image-2] 超时: ...{task_id[-8:]} ({elapsed}s)")
             return None
         try:
             poll_res = requests.post(poll_url, headers=headers, json=poll_body, timeout=30, verify=False)
@@ -206,19 +230,21 @@ def _poll_task(task_id, consumption_id, headers, poll_url, model):
             poll_json = poll_res.json()
             data_field = poll_json.get("data", poll_json) if isinstance(poll_json, dict) else poll_json
             status = data_field.get("status", "") if isinstance(data_field, dict) else ""
-            print(f"[GPT-Image-2] {task_id[:8]}... status={status} ({elapsed}s)")
+            print(f"[GPT-Image-2] ...{task_id[-8:]} status={status} ({elapsed}s)")
             if status in ("SUCCESS", "success", "succeeded", "completed", "done", "finished"):
                 return poll_json
             elif status in ("FAILURE", "failed", "error", "EXCEPTION"):
                 msg = data_field.get("fail_reason", "任务失败")
-                print(f"[GPT-Image-2] 失败: {task_id[:8]}... {msg}")
+                print(f"[GPT-Image-2] 失败: ...{task_id[-8:]} {msg}")
                 return None
         except Exception as e:
-            print(f"[GPT-Image-2] 轮询异常: {task_id[:8]}... {e}，跳过")
+            print(f"[GPT-Image-2] 轮询异常: ...{task_id[-8:]} {e}，跳过")
             return None
 
 
 def _download_image(img_url):
+    short = f"...{img_url[-24:]}" if len(img_url) > 24 else img_url
+    print(f"[GPT-Image-2] 开始下载: {short}")
     for attempt in range(3):
         try:
             with requests.Session() as _s:
@@ -226,21 +252,36 @@ def _download_image(img_url):
             r.raise_for_status()
             img = Image.open(io.BytesIO(r.content)).convert("RGB")
             arr = np.array(img).astype(np.float32) / 255.0
+            print(f"[GPT-Image-2] 下载成功 ({attempt+1}/3): {short} 尺寸={img.width}x{img.height}")
             return torch.from_numpy(arr).unsqueeze(0)
         except Exception as e:
-            print(f"[GPT-Image-2] 下载图片失败 (attempt {attempt+1}/3) {img_url}: {e}")
+            print(f"[GPT-Image-2] 下载失败 ({attempt+1}/3): {short} 错误={e}")
             if attempt < 2:
-                time.sleep(3 * (attempt + 1))
+                wait = 3 * (attempt + 1)
+                print(f"[GPT-Image-2] {wait}s 后重试...")
+                time.sleep(wait)
+    print(f"[GPT-Image-2] 3次重试均失败，使用黑图占位: {short}")
     return _blank_image()
 
 
+def _download_with_placeholder(image_urls):
+    """并发下载所有 URL，失败/缺失位置用黑图占位，返回 tensor 列表（顺序对齐）。"""
+    valid = [(i, u) for i, u in enumerate(image_urls) if u]
+    print(f"[GPT-Image-2] 并发下载 {len(valid)}/{len(image_urls)} 张图片...")
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max(len(image_urls), 1)) as ex:
+        futures = {i: ex.submit(_download_image, u) for i, u in valid}
+    downloaded = {i: f.result() for i, f in futures.items()}
+    print(f"[GPT-Image-2] 下载完成 {len(downloaded)}/{len(image_urls)} 张")
+    ref_h, ref_w = next(((t.shape[1], t.shape[2]) for t in downloaded.values()), (1024, 1024))
+    return [downloaded.get(i, _blank_image(ref_h, ref_w)) for i in range(len(image_urls))]
+
+
+def _download_urls_with_placeholder(image_urls):
+    return _download_with_placeholder(image_urls)
+
+
 def _collect_image_tensors(image_urls):
-    downloaded = {i: _download_image(u) for i, u in enumerate(image_urls) if u}
-    ref_h, ref_w = 1024, 1024
-    for t in downloaded.values():
-        ref_h, ref_w = t.shape[1], t.shape[2]
-        break
-    tensors = [downloaded.get(i, _blank_image(ref_h, ref_w)) for i in range(len(image_urls))]
+    tensors = _download_with_placeholder(image_urls)
     if not tensors:
         return _blank_image()
     h, w = tensors[0].shape[1], tensors[0].shape[2]
@@ -252,15 +293,6 @@ def _collect_image_tensors(image_urls):
             t = torch.from_numpy(np.array(pil).astype(np.float32) / 255.0).unsqueeze(0)
         resized.append(t)
     return torch.cat(resized, dim=0)
-
-
-def _download_urls_with_placeholder(image_urls):
-    downloaded = {i: _download_image(u) for i, u in enumerate(image_urls) if u}
-    ref_h, ref_w = 1024, 1024
-    for t in downloaded.values():
-        ref_h, ref_w = t.shape[1], t.shape[2]
-        break
-    return [downloaded.get(i, _blank_image(ref_h, ref_w)) for i in range(len(image_urls))]
 
 
 _API_URL = f"{synvow_auth.DIRECT_API_BASE}/api/models/image/edit"
@@ -295,7 +327,7 @@ def _run_tasks(tasks, model, size, quality, resolution, is_img2img, api_key, hea
         try:
             task_id, consumption_id = _submit_task(payload, headers, api_url)
             submitted.append((task_id, consumption_id))
-            print(f"[GPT-Image-2] [{i+1}/{total}] 提交成功 task_id={task_id[:8]}...")
+            print(f"[GPT-Image-2] [{i+1}/{total}] 提交成功 task_id=...{task_id[-8:]}")
         except Exception as e:
             print(f"[GPT-Image-2] [{i+1}/{total}] 提交失败: {e}")
             submitted.append(None)
@@ -318,7 +350,11 @@ def _run_tasks(tasks, model, size, quality, resolution, is_img2img, api_key, hea
     for i, r in enumerate(poll_results):
         if r is not None:
             urls = _extract_urls(r)
-            image_urls.extend(urls)
+            if urls:
+                image_urls.extend(urls)
+            else:
+                print(f"[GPT-Image-2] [{i+1}/{total}] 任务完成但未解析到图片URL: {str(r)[:500]}")
+                image_urls.append(None)
         else:
             image_urls.append(None)
     return image_urls

@@ -162,7 +162,7 @@ def _submit_task(payload, headers, api_url):
     consumption_id = _d.get("consumption_id") or _data_item.get("consumption_id")
     if not task_id:
         raise RuntimeError(f"提交失败，无 task_id: {str(_d)[:200]}")
-    print(f"[NanoBanana] task_id={task_id[:8]}...")
+    print(f"[NanoBanana] task_id=...{task_id[-8:]}")
     return task_id, consumption_id
 
 
@@ -180,7 +180,7 @@ def _poll_task(task_id, consumption_id, headers, poll_url, model):
         mm.throw_exception_if_processing_interrupted()
         elapsed = int(time.time() - start_time)
         if elapsed >= timeout_total:
-            print(f"[NanoBanana] 超时: {task_id[:8]}... ({elapsed}s)")
+            print(f"[NanoBanana] 超时: ...{task_id[-8:]} ({elapsed}s)")
             return None
         try:
             poll_res = requests.post(poll_url, headers=headers, json=poll_body, timeout=30, verify=False)
@@ -188,40 +188,57 @@ def _poll_task(task_id, consumption_id, headers, poll_url, model):
             poll_json = poll_res.json()
             data_field = poll_json.get("data", poll_json) if isinstance(poll_json, dict) else poll_json
             status = data_field.get("status", "") if isinstance(data_field, dict) else ""
-            print(f"[NanoBanana] {task_id[:8]}... status={status} ({elapsed}s)")
+            print(f"[NanoBanana] ...{task_id[-8:]} status={status} ({elapsed}s)")
             if status in ("SUCCESS", "success", "succeeded", "completed", "done", "finished"):
                 return poll_json
             elif status in ("FAILURE", "failed", "error", "EXCEPTION"):
                 msg = data_field.get("fail_reason", "任务失败")
-                print(f"[NanoBanana] 失败: {task_id[:8]}... {msg}")
+                print(f"[NanoBanana] 失败: ...{task_id[-8:]} {msg}")
                 return None
         except Exception as e:
-            print(f"[NanoBanana] 轮询异常: {task_id[:8]}... {e}，跳过")
+            print(f"[NanoBanana] 轮询异常: ...{task_id[-8:]} {e}，跳过")
             return None
 
 
 def _download_image(img_url):
+    short = f"...{img_url[-24:]}" if len(img_url) > 24 else img_url
+    print(f"[NanoBanana] 开始下载: {short}")
     for attempt in range(3):
         try:
             r = requests.get(img_url, timeout=120, verify=False)
             r.raise_for_status()
             img = Image.open(io.BytesIO(r.content)).convert("RGB")
             arr = np.array(img).astype(np.float32) / 255.0
+            print(f"[NanoBanana] 下载成功 ({attempt+1}/3): {short} 尺寸={img.width}x{img.height}")
             return torch.from_numpy(arr).unsqueeze(0)
         except Exception as e:
-            print(f"[NanoBanana] 下载图片失败 (attempt {attempt+1}/3) {img_url}: {e}")
+            print(f"[NanoBanana] 下载失败 ({attempt+1}/3): {short} 错误={e}")
             if attempt < 2:
-                time.sleep(3 * (attempt + 1))
+                wait = 3 * (attempt + 1)
+                print(f"[NanoBanana] {wait}s 后重试...")
+                time.sleep(wait)
+    print(f"[NanoBanana] 3次重试均失败，使用黑图占位: {short}")
     return _blank_image()
 
 
+def _download_with_placeholder(image_urls):
+    """并发下载所有 URL，失败/缺失位置用黑图占位，返回 tensor 列表（顺序对齐）。"""
+    valid = [(i, u) for i, u in enumerate(image_urls) if u]
+    print(f"[NanoBanana] 并发下载 {len(valid)}/{len(image_urls)} 张图片...")
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max(len(image_urls), 1)) as ex:
+        futures = {i: ex.submit(_download_image, u) for i, u in valid}
+    downloaded = {i: f.result() for i, f in futures.items()}
+    print(f"[NanoBanana] 下载完成 {len(downloaded)}/{len(image_urls)} 张")
+    ref_h, ref_w = next(((t.shape[1], t.shape[2]) for t in downloaded.values()), (1024, 1024))
+    return [downloaded.get(i, _blank_image(ref_h, ref_w)) for i in range(len(image_urls))]
+
+
+def _download_urls_with_placeholder(image_urls):
+    return _download_with_placeholder(image_urls)
+
+
 def _collect_tensors(image_urls):
-    downloaded = {i: _download_image(u) for i, u in enumerate(image_urls) if u}
-    ref_h, ref_w = 1024, 1024
-    for t in downloaded.values():
-        ref_h, ref_w = t.shape[1], t.shape[2]
-        break
-    tensors = [downloaded.get(i, _blank_image(ref_h, ref_w)) for i in range(len(image_urls))]
+    tensors = _download_with_placeholder(image_urls)
     if not tensors:
         return _blank_image()
     h, w = tensors[0].shape[1], tensors[0].shape[2]
@@ -233,15 +250,6 @@ def _collect_tensors(image_urls):
             t = torch.from_numpy(np.array(pil).astype(np.float32) / 255.0).unsqueeze(0)
         resized.append(t)
     return torch.cat(resized, dim=0)
-
-
-def _download_urls_with_placeholder(image_urls):
-    downloaded = {i: _download_image(u) for i, u in enumerate(image_urls) if u}
-    ref_h, ref_w = 1024, 1024
-    for t in downloaded.values():
-        ref_h, ref_w = t.shape[1], t.shape[2]
-        break
-    return [downloaded.get(i, _blank_image(ref_h, ref_w)) for i in range(len(image_urls))]
 
 
 def _unpack(v):
@@ -258,7 +266,7 @@ def _run_tasks(tasks, model, aspect_ratio, image_size, is_img2img, api_key, head
         try:
             task_id, consumption_id = _submit_task(payload, headers, api_url)
             submitted.append((task_id, consumption_id))
-            print(f"[NanoBanana] [{i+1}/{total}] 提交成功 task_id={task_id[:8]}...")
+            print(f"[NanoBanana] [{i+1}/{total}] 提交成功 task_id=...{task_id[-8:]}")
         except Exception as e:
             print(f"[NanoBanana] [{i+1}/{total}] 提交失败: {e}")
             submitted.append(None)

@@ -60,7 +60,7 @@ def _submit_task(api_key, prompt, model, ratio, duration, resolution, files=None
     if not task_id:
         raise Exception(f"响应中无 task_id: {str(resp)[:200]}")
     consumption_id = resp.get("consumption_id") or resp.get("data", {}).get("consumption_id") or ""
-    print(f"[Seedance2] task_id={task_id[:8]}...")
+    print(f"[Seedance2] task_id=...{task_id[-8:]}")
     return task_id, consumption_id
 
 
@@ -81,19 +81,19 @@ def _poll_seedance2(api_key, task_id, model, timeout=1800, interval=5, consumpti
                 body["consumption_id"] = consumption_id
             res = requests.post(SEEDANCE2_POLL_URL, headers=headers, json=body, verify=False, timeout=30)
             if res.status_code in (429, 500, 503):
-                print(f"[Seedance2] {task_id[:8]}... HTTP {res.status_code}, 退避10秒")
+                print(f"[Seedance2] ...{task_id[-8:]} HTTP {res.status_code}, 退避10秒")
                 time.sleep(10)
                 continue
             data = res.json() if res.status_code == 200 else {}
             inner = data.get("data") or data
             status = str(inner.get("status") or inner.get("task_status") or "").upper()
             elapsed = int(time.time() - start)
-            print(f"[Seedance2] {task_id[:8]}... status={status or '(无状态)'} ({elapsed}s)")
+            print(f"[Seedance2] ...{task_id[-8:]} status={status or '(无状态)'} ({elapsed}s)")
             if status in ("SUCCESS", "SUCCEED", "SUCCEEDED", "COMPLETED", "DONE", "FINISH", "FINISHED"):
                 return inner
             if status in ("FAILURE", "FAILED", "ERROR"):
                 err = inner.get("fail_reason") or str(inner.get("error", "Unknown"))
-                print(f"[Seedance2] 失败: {task_id[:8]}... {err}")
+                print(f"[Seedance2] 失败: ...{task_id[-8:]} {err}")
                 raise Exception(f"任务失败: {err}")
         except Exception as e:
             if "任务失败" in str(e) or "超时" in str(e):
@@ -118,6 +118,26 @@ def _extract_video_url(result):
     return ""
 
 
+def _download_video_with_retry(url, task_id, save_path, filename="", retries=3):
+    short = f"...{url[-24:]}" if len(url) > 24 else url
+    print(f"[Seedance2] 开始下载视频: {short}")
+    for attempt in range(retries):
+        try:
+            path = download_video(url, task_id, save_path, prefix="seedance2", filename=filename)
+            if path:
+                print(f"[Seedance2] 下载成功 ({attempt+1}/{retries}): {short} -> {path}")
+                return path
+            raise Exception("download_video 返回空路径")
+        except Exception as e:
+            print(f"[Seedance2] 下载失败 ({attempt+1}/{retries}): {short} 错误={e}")
+            if attempt < retries - 1:
+                wait = 3 * (attempt + 1)
+                print(f"[Seedance2] {wait}s 后重试...")
+                time.sleep(wait)
+    print(f"[Seedance2] {retries}次重试均失败，返回空路径: {short}")
+    return ""
+
+
 def _poll_only(api_key, task_id, model, save_path, filename="", stagger_delay=0, consumption_id=""):
     if stagger_delay > 0:
         time.sleep(stagger_delay)
@@ -125,7 +145,7 @@ def _poll_only(api_key, task_id, model, save_path, filename="", stagger_delay=0,
     url = _extract_video_url(result)
     if not url:
         raise Exception(f"[Seedance2] 任务成功但无视频 URL: {result}")
-    path = download_video(url, task_id, save_path, prefix="seedance2", filename=filename) or ""
+    path = _download_video_with_retry(url, task_id, save_path, filename=filename)
     return {"success": True, "video_path": path, "video_url": url, "task_id": task_id}
 
 
@@ -180,7 +200,7 @@ class SynVowSeedance2Video:
             url = _extract_video_url(result)
             if not url:
                 raise Exception(f"任务成功但无视频 URL: {result}")
-            path = download_video(url, task_id, save_path, prefix="seedance2", filename=filename) or ""
+            path = _download_video_with_retry(url, task_id, save_path, filename=filename)
             info = json.dumps({
                 "status": "SUCCESS", "task_id": task_id,
                 "model": model, "video_url": url, "video_path": path,
