@@ -6,6 +6,14 @@ ComfyUI custom nodes for SynVow integration.
 
 ## Changelog
 
+### 2026-06-04
+- **Added GPT-image2 long-scroll detail page workflow nodes** (`💫SynVow_api/api/文本`)
+  - `GPT-image2详情页规划`: plans product narrative, visual master direction and screen sections from product/reference images
+  - `GPT-image2详情页结构`: converts narrative JSON into per-screen page structure blueprints
+  - `GPT-image2详情页批量提示词`: generates a `STRING[]` prompt list for batch GPT-image2 generation
+  - `详情页图像列表顺序拼接长图`: vertically concatenates generated slice images into one long detail page
+  - Includes 8 `longscroll_detail_*` prompt template files under `py/prompts`
+
 ### 2026-06-01
 - **Added models `nano-banana-2-低价`, `nano-banana-pro-低价`** (NanoBanana nodes: single, T_batch, I_batch, TI_batch)
 
@@ -101,6 +109,27 @@ ComfyUI custom nodes for SynVow integration.
 | GPT-Image-2 文生图提示词控制器 | gemini-* / gpt-* | Optimize image generation prompts via LLM |
 | 图生图提示词控制器 | gemini-* / gpt-* | Reference image prompt optimizer |
 | 🛒 电商详情页提示词生成器 | gemini-* | Multi-screen e-commerce detail page prompt generator |
+| GPT-image2详情页规划 | gemini-* | Plan long-scroll product detail page narrative and visual master direction |
+| GPT-image2详情页结构 | gemini-* | Build per-screen page structure blueprints from narrative JSON |
+| GPT-image2详情页批量提示词 | gemini-* | Generate batch GPT-image2 prompts as `STRING[]` |
+| 详情页图像列表顺序拼接长图 | — | Concatenate generated detail-page image list vertically |
+
+#### GPT-image2 long-scroll detail page workflow
+
+Recommended connection order:
+
+1. `GPT-image2详情页规划`
+   - Inputs: product images, reference images, product name, product category, selling/copy/design notes, slice count.
+   - Outputs: `叙事结构_JSON`, `长卷视觉母版说明`, `叙事结构_Markdown`, `生成状态`.
+2. `GPT-image2详情页结构`
+   - Inputs: `叙事结构_JSON` and `长卷视觉母版说明`.
+   - Outputs: `页面结构蓝图_JSON`, `页面结构蓝图_Markdown`, `生成状态`.
+3. `GPT-image2详情页批量提示词`
+   - Inputs: page structure blueprint and visual master description.
+   - Outputs: `批量提示词_JSON`, `批量提示词_文本`, `提示词列表`, `生成状态`.
+4. `详情页图像列表顺序拼接长图`
+   - Input: generated `IMAGE` list.
+   - Output: one long image; images are resized to the first slice width and concatenated vertically in list order.
 
 ### 💫SynVow_api/Text
 
