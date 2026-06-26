@@ -6,6 +6,11 @@ ComfyUI 用于 SynVow 集成的自定义节点。
 
 ## 更新日志
 
+### 2026-06-23
+- **集成 YunMengAI/YMAI 提示词节点**（统一放入 `💫SynVow_api/api/文本` 分类）
+  - 新增 `YM-爆款封面`、`YM-故事板`、`YM-人物情绪`、`YM-角色卡`
+  - 已改为复用 SynVow 登录凭证、模型列表、LLM 调用接口和余额刷新机制，无需额外配置 `RH_API_KEY`
+
 ### 2026-06-01
 - **新增模型 `nano-banana-2-低价`、`nano-banana-pro-低价`**（NanoBanana 系列节点：单图生成、T_batch、I_batch、TI_batch）
   - 低价版采用 `ratio` / `resolution` / `files` 请求结构，结果从 `result.url` 解析
@@ -103,6 +108,15 @@ ComfyUI 用于 SynVow 集成的自定义节点。
 | 图生图提示词控制器 | gemini-* / gpt-* | 参考图提示词优化 |
 | 🛒 电商详情页提示词生成器 | gemini-* | 多屏电商详情页提示词生成，支持产品参考图与风格参考图 |
 
+### 💫SynVow_api/api/文本 - YM 提示词节点
+
+| 节点名称 | 模型 | 描述 |
+|----------|------|------|
+| YM-爆款封面 | SynVow 文本/多模态模型 | 根据标题、主题和可选参考图生成封面设计提示词 |
+| YM-故事板 | SynVow 文本/多模态模型 | 根据脚本生成分镜表提示词和分镜视频提示词 |
+| YM-人物情绪 | SynVow 文本/多模态模型 | 根据人物图片和情绪方向生成视频提示词 |
+| YM-角色卡 | SynVow 文本/多模态模型 | 生成人物三视图、面部三视图、面部增强三视图、服装参考或角色卡提示词 |
+
 ### 💫SynVow_api/Text
 
 | 节点名称 | 模型 | 描述 |
@@ -153,7 +167,7 @@ ComfyUI 用于 SynVow 集成的自定义节点。
 
 ## 依赖
 
-- Python `requests`、`aiohttp`（ComfyUI 环境通常已自带）
+- Python `requests`、`aiohttp`、`Pillow`、`numpy`（ComfyUI 环境通常已自带）
 
 ---
 
@@ -168,3 +182,5 @@ ComfyUI 用于 SynVow 集成的自定义节点。
 ## License
 
 MIT
+
+YMAI 节点已融合进现有 SynVow API 项目结构。节点代码位于 `py/api/ymai_*.py`，提示词资源位于 `py/prompts/ymai_*`。

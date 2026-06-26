@@ -6,6 +6,11 @@ ComfyUI custom nodes for SynVow integration.
 
 ## Changelog
 
+### 2026-06-23
+- **Integrated YunMengAI/YMAI prompt nodes** under `💫SynVow_api/api/文本`
+  - Adds `YM-爆款封面`, `YM-故事板`, `YM-人物情绪`, and `YM-角色卡`
+  - Uses the existing SynVow login credentials, model list, LLM endpoint, and balance refresh flow; no extra `RH_API_KEY` setup is required
+
 ### 2026-06-04
 - **Added GPT-image2 long-scroll detail page workflow nodes** (`💫SynVow_api/api/文本`)
   - `GPT-image2详情页规划`: plans product narrative, visual master direction and screen sections from product/reference images
@@ -131,6 +136,15 @@ Recommended connection order:
    - Input: generated `IMAGE` list.
    - Output: one long image; images are resized to the first slice width and concatenated vertically in list order.
 
+### 💫SynVow_api/api/文本 - YM prompt nodes
+
+| Node | Model | Description |
+|------|-------|-------------|
+| YM-爆款封面 | SynVow text/multimodal models | Generate cover-design prompts from title, topic, and optional reference image |
+| YM-故事板 | SynVow text/multimodal models | Generate storyboard-table prompts and storyboard video prompts from a script |
+| YM-人物情绪 | SynVow text/multimodal models | Generate character emotion reaction video prompts from image and emotion direction |
+| YM-角色卡 | SynVow text/multimodal models | Generate character three-view, face three-view, enhanced face view, outfit reference, or character-card prompts |
+
 ### 💫SynVow_api/Text
 
 | Node | Model | Description |
@@ -181,7 +195,7 @@ Recommended connection order:
 
 ## Requirements
 
-- Python `requests`, `aiohttp` (usually already available in ComfyUI environment)
+- Python `requests`, `aiohttp`, `Pillow`, `numpy` (usually already available in ComfyUI environment)
 
 ---
 
@@ -196,3 +210,5 @@ Recommended connection order:
 ## License
 
 MIT
+
+YMAI nodes are integrated into the existing SynVow API structure. Node code lives under `py/api/ymai_*.py`, and prompt resources live under `py/prompts/ymai_*`.
