@@ -19,8 +19,6 @@ def _load_audio(filepath):
                 buf = buf.view(-1, n_channels).t()
             frames.append(buf)
         wav = torch.cat(frames, dim=1).float()
-        if wav.dtype != torch.float32:
-            wav = wav.float()
         return wav, sr
 
 

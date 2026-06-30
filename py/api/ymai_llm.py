@@ -5,19 +5,55 @@ from __future__ import annotations
 import re
 import time
 import json
+import hashlib
 from io import BytesIO
 from typing import Any, Dict, Iterable, List, Optional
 
 import requests
 
 from . import synvow_auth
-from .gemini_synvow import GEMINI_MODEL_OPTIONS
+from .gemini_synvow import DEFAULT_GEMINI_MODEL, GEMINI_MODEL_OPTIONS
 from .gpt_synvow import GPT_MODEL_OPTIONS
 from .media_common import DIRECT_API_BASE, upload_images
 
 
-DEFAULT_MODEL = "gemini-3.1-flash-2606"
+DEFAULT_MODEL = DEFAULT_GEMINI_MODEL
 CHAT_MAX_RETRIES = 3
+SEED_INPUT = ("INT", {"default": 0, "min": 0, "max": 0xFFFFFFFFFFFFFFFF})
+
+
+def add_seed_input(inputs: Dict[str, Dict[str, Any]]) -> Dict[str, Dict[str, Any]]:
+    cloned = {group: dict(values) if isinstance(values, dict) else values for group, values in inputs.items()}
+    optional = dict(cloned.get("optional", {}))
+    optional["seed"] = SEED_INPUT
+    cloned["optional"] = optional
+    return cloned
+
+
+def json_safe(value: Any) -> Any:
+    if isinstance(value, (str, int, float, bool)) or value is None:
+        return value
+    if isinstance(value, (list, tuple)):
+        return [json_safe(item) for item in value]
+    if isinstance(value, dict):
+        return {str(key): json_safe(item) for key, item in sorted(value.items(), key=lambda pair: str(pair[0]))}
+    shape = getattr(value, "shape", None)
+    dtype = getattr(value, "dtype", None)
+    if shape is not None:
+        return {"type": type(value).__name__, "shape": list(shape), "dtype": str(dtype)}
+    return repr(value)
+
+
+def input_hash(*args: Any, **kwargs: Any) -> str:
+    payload = {"args": json_safe(args), "kwargs": json_safe(kwargs)}
+    raw = json.dumps(payload, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+    return hashlib.sha256(raw.encode("utf-8")).hexdigest()
+
+
+def strip_seed(kwargs: Dict[str, Any]) -> Dict[str, Any]:
+    kwargs.pop("seed", None)
+    return kwargs
+
 
 def _dedupe_models(models: List[str]) -> List[str]:
     seen = set()
@@ -32,7 +68,7 @@ def _dedupe_models(models: List[str]) -> List[str]:
 MODEL_OPTIONS = _dedupe_models(list(GEMINI_MODEL_OPTIONS) + list(GPT_MODEL_OPTIONS))
 
 
-def fetch_models(force: bool = False) -> List[str]:
+def fetch_models() -> List[str]:
     return list(MODEL_OPTIONS)
 
 
@@ -115,7 +151,7 @@ def post_chat_completion(payload: Dict[str, Any], timeout: int = 180) -> Dict[st
             raise RuntimeError(f"SynVow LLM returned non-JSON content: {response.text[:200]}") from exc
 
         if response.status_code == 200:
-            _refresh_balance()
+            synvow_auth.refresh_balance()
             return _unwrap_response_data(data)
 
         message = _extract_error_message(data, response.text)
@@ -166,15 +202,6 @@ def _unwrap_response_data(data: Dict[str, Any]) -> Dict[str, Any]:
     if isinstance(data, list):
         return {"choices": data}
     return data
-
-
-def _refresh_balance() -> None:
-    try:
-        import server
-
-        server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
-    except Exception:
-        pass
 
 
 def extract_content(data: Dict[str, Any]) -> str:

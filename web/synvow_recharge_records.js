@@ -1,7 +1,7 @@
 /**
  * SynVow 充值记录对话框
  */
-import { $el, getToken, injectStyle, API_BASE } from "./dom.js";
+import { $el, getToken, injectStyle, authedGet, fmtTime, paginationCss } from "./dom.js";
 import { showLoginDialog } from "./synvow_login.js";
 
 let recordsDialog = null;
@@ -44,12 +44,7 @@ export function showRechargeRecordsDialog() {
         .sv-records-empty { text-align:center; color:#667788; padding:40px; }
         .sv-records-loading { text-align:center; color:#667788; padding:40px; }
         .sv-records-content { flex:1; overflow-y:auto; margin-bottom:16px; }
-        .sv-records-pagination { display:flex; justify-content:center; align-items:center; gap:12px; }
-        .sv-records-page-btn { background:#1e3a4a; border:1px solid #334455; border-radius:4px; padding:6px 12px; color:white; font-size:13px; cursor:pointer; }
-        .sv-records-page-btn:hover { border-color:#2dd4bf; }
-        .sv-records-page-btn:disabled { opacity:0.5; cursor:not-allowed; }
-        .sv-records-page-info { color:#8899aa; font-size:13px; }
-    `);
+    ` + paginationCss("sv-records"));
 
     const contentDiv = $el("div.sv-records-content", {}, [
         $el("div.sv-records-loading", { textContent: "加载中..." })
@@ -88,11 +83,7 @@ export function showRechargeRecordsDialog() {
         nextBtn.disabled = true;
 
         try {
-            const url = `${API_BASE}/account/recharge-records?page=${page}&per_page=10`;
-            const res = await fetch(url, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const data = await res.json();
+            const data = await authedGet(`/account/recharge-records?page=${page}&per_page=10`, token);
             if (data.code === 200 && data.data) {
                 const items = data.data.items || data.data.list || [];
                 const total = data.data.total || 0;
@@ -118,7 +109,7 @@ export function showRechargeRecordsDialog() {
                                 ${items.map(item => {
                                     const status = STATUS_MAP[item.status] || { text: "未知", color: "#6b7280" };
                                     const payment = PAYMENT_MAP[item.payment_type] || item.payment_type;
-                                    const time = new Date(item.created_at).toLocaleString('zh-CN');
+                                    const time = fmtTime(item.created_at);
                                     return `
                                         <tr>
                                             <td>${item.order_no}</td>

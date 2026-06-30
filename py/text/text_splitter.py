@@ -1,7 +1,7 @@
 """
 文本分割节点
 """
-from typing import List, Dict, Any, Tuple, Union
+from typing import Dict, Any, Tuple
 
 class SynVowApiTextSplitter:
     @classmethod

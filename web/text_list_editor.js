@@ -163,5 +163,3 @@ app.registerExtension({
         };
     }
 });
-
-console.log("Text List Editor extension loaded");

@@ -1,4 +1,4 @@
-﻿"""
+"""
 NanoBanana SynVow API nodes - 图像生成 / 批量生成
 """
 
@@ -233,9 +233,6 @@ def _download_with_placeholder(image_urls):
     return [downloaded.get(i, _blank_image(ref_h, ref_w)) for i in range(len(image_urls))]
 
 
-def _download_urls_with_placeholder(image_urls):
-    return _download_with_placeholder(image_urls)
-
 
 def _collect_tensors(image_urls):
     tensors = _download_with_placeholder(image_urls)
@@ -296,14 +293,6 @@ def _run_tasks(tasks, model, aspect_ratio, image_size, is_img2img, api_key, head
     return image_urls
 
 
-def _send_refresh():
-    try:
-        import server
-        server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
-    except Exception:
-        pass
-
-
 def _is_changed(**kwargs):
     import hashlib, json
     key = json.dumps({k: str(v) for k, v in kwargs.items()}, sort_keys=True, ensure_ascii=False)
@@ -328,7 +317,7 @@ class SynVowNanoBanana:
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
                 "image1": ("IMAGE",), "image2": ("IMAGE",), "image3": ("IMAGE",),
                 "image4": ("IMAGE",), "image5": ("IMAGE",), "image6": ("IMAGE",),
-                "image7": ("IMAGE",), "image8": ("IMAGE",),
+                "image7": ("IMAGE",), "image8": ("IMAGE",), "image9": ("IMAGE",),
             },
         }
 
@@ -339,7 +328,7 @@ class SynVowNanoBanana:
 
     def generate(self, model_type=None, aspect_ratio=None, image_size=None, seed=None,
                  prompt=None, image1=None, image2=None, image3=None, image4=None,
-                 image5=None, image6=None, image7=None, image8=None):
+                 image5=None, image6=None, image7=None, image8=None, image9=None):
         model_type   = _unpack(model_type) or "nano-banana-2-2605"
         aspect_ratio = _unpack(aspect_ratio) or "1:1"
         image_size   = _unpack(image_size) or "2K"
@@ -349,11 +338,12 @@ class SynVowNanoBanana:
         image3 = _unpack(image3); image4 = _unpack(image4)
         image5 = _unpack(image5); image6 = _unpack(image6)
         image7 = _unpack(image7); image8 = _unpack(image8)
+        image9 = _unpack(image9)
 
         api_key = synvow_auth.read_api_key()
         headers = synvow_auth.make_api_headers(api_key)
 
-        imgs = [t for t in [image1, image2, image3, image4, image5, image6, image7, image8] if t is not None]
+        imgs = [t for t in [image1, image2, image3, image4, image5, image6, image7, image8, image9] if t is not None]
         if aspect_ratio == "auto" and imgs:
             pil0 = _tensor_to_pil(imgs[0])
             aspect_ratio = _find_closest_aspect_ratio(pil0.width, pil0.height)
@@ -372,7 +362,7 @@ class SynVowNanoBanana:
             status_str = f"[ERROR] 生成失败 model={model_type} aspectRatio={aspect_ratio}"
 
         out_tensor = _collect_tensors(image_urls)
-        _send_refresh()
+        synvow_auth.refresh_balance()
         return (out_tensor, status_str)
 
 
@@ -396,7 +386,7 @@ class SynVowNanoBanana_TBatch:
                 "prompts_list": ("STRING", {"forceInput": True}),
                 "image1": ("IMAGE",), "image2": ("IMAGE",), "image3": ("IMAGE",),
                 "image4": ("IMAGE",), "image5": ("IMAGE",), "image6": ("IMAGE",),
-                "image7": ("IMAGE",), "image8": ("IMAGE",),
+                "image7": ("IMAGE",), "image8": ("IMAGE",), "image9": ("IMAGE",),
             },
         }
 
@@ -407,7 +397,7 @@ class SynVowNanoBanana_TBatch:
 
     def process_batch(self, model_type=None, aspect_ratio=None, image_size=None, seed=None,
                       prompts_list=None, image1=None, image2=None, image3=None, image4=None,
-                      image5=None, image6=None, image7=None, image8=None):
+                      image5=None, image6=None, image7=None, image8=None, image9=None):
         model_type   = _unpack(model_type) or "nano-banana-2-2605"
         aspect_ratio = _unpack(aspect_ratio) or "1:1"
         image_size   = _unpack(image_size) or "2K"
@@ -416,11 +406,12 @@ class SynVowNanoBanana_TBatch:
         image3 = _unpack(image3); image4 = _unpack(image4)
         image5 = _unpack(image5); image6 = _unpack(image6)
         image7 = _unpack(image7); image8 = _unpack(image8)
+        image9 = _unpack(image9)
 
         api_key = synvow_auth.read_api_key()
         headers = synvow_auth.make_api_headers(api_key)
 
-        imgs = [t for t in [image1, image2, image3, image4, image5, image6, image7, image8] if t is not None]
+        imgs = [t for t in [image1, image2, image3, image4, image5, image6, image7, image8, image9] if t is not None]
         if aspect_ratio == "auto" and imgs:
             pil0 = _tensor_to_pil(imgs[0])
             aspect_ratio = _find_closest_aspect_ratio(pil0.width, pil0.height)
@@ -435,12 +426,12 @@ class SynVowNanoBanana_TBatch:
         print(f"[NanoBanana TBatch] {total} 条 prompt, model={model_type}")
 
         image_urls = _run_tasks(tasks, model_type, aspect_ratio, image_size, is_img2img, api_key, headers, _API_URL, _POLL_URL)
-        image_list = _download_urls_with_placeholder(image_urls)
+        image_list = _download_with_placeholder(image_urls)
 
         successful = sum(1 for u in image_urls if u)
         status_str = f"已完成 {successful}/{total} model={model_type} aspectRatio={aspect_ratio} size={image_size}" if successful else f"[ERROR] 所有任务失败 model={model_type} total={total}"
         print(f"[NanoBanana TBatch] 完成: {successful}/{total}")
-        _send_refresh()
+        synvow_auth.refresh_balance()
         return (image_list, status_str)
 
 
@@ -518,12 +509,12 @@ class SynVowNanoBanana_IBatch:
             tasks.append((p, imgs))
 
         image_urls = _run_tasks(tasks, model_type, aspect_ratio, image_size, True, api_key, headers, _API_URL, _POLL_URL)
-        image_list = _download_urls_with_placeholder(image_urls)
+        image_list = _download_with_placeholder(image_urls)
 
         successful = sum(1 for u in image_urls if u)
         status_str = f"已完成 {successful}/{batch_size} model={model_type} aspectRatio={aspect_ratio} size={image_size}" if successful else f"[ERROR] 所有任务失败 model={model_type} total={batch_size}"
         print(f"[NanoBanana IBatch] 完成: {successful}/{batch_size}")
-        _send_refresh()
+        synvow_auth.refresh_balance()
         return (image_list, status_str)
 
 
@@ -549,7 +540,7 @@ class SynVowNanoBanana_TIBatch:
                 "images_list2": ("IMAGE",),
                 "images_list3": ("IMAGE",),
                 "images_list4": ("IMAGE",),
-                "images_list5": ("IMAGE",),                
+                "images_list5": ("IMAGE",),
                 "prompts_list": ("STRING", {"forceInput": True}),
             },
         }
@@ -613,12 +604,12 @@ class SynVowNanoBanana_TIBatch:
             tasks.append((assigned_prompts[i], imgs))
 
         image_urls = _run_tasks(tasks, model_type, aspect_ratio, image_size, True, api_key, headers, _API_URL, _POLL_URL)
-        image_list = _download_urls_with_placeholder(image_urls)
+        image_list = _download_with_placeholder(image_urls)
 
         successful = sum(1 for u in image_urls if u)
         status_str = f"已完成 {successful}/{batch_size} model={model_type} aspectRatio={aspect_ratio} size={image_size}" if successful else f"[ERROR] 所有任务失败 model={model_type} total={batch_size}"
         print(f"[NanoBanana TIBatch] 完成: {successful}/{batch_size}")
-        _send_refresh()
+        synvow_auth.refresh_balance()
         return (image_list, status_str)
 
 

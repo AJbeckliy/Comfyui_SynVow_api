@@ -1,30 +1,141 @@
 /**
  * SynVow 消费记录对话框
  */
-import { $el, getToken, injectStyle, API_BASE } from "./dom.js";
+import { $el, getToken, injectStyle, authedGet, fmtTime, paginationCss } from "./dom.js";
 import { showLoginDialog } from "./synvow_login.js";
 
 let recordsDialog = null;
 let currentPage = 1;
 
-function extractUrls(value) {
-    if (!value) return [];
+// 消费记录资源 URL 提取：对齐 synmew core/media.ts，按 model_name 分类（音/视/图）优先取对应字段。
+const isHttpUrl = (v) => typeof v === "string" && /^https?:\/\//i.test(v);
+const dedupe = (urls) => [...new Set(urls)];
+
+function pushHttpUrls(target, v) {
+    if (isHttpUrl(v)) target.push(v);
+    else if (Array.isArray(v)) v.forEach(x => pushHttpUrls(target, x));
+}
+
+function parseConsumptionSource(value) {
+    if (value == null) return null;
     if (typeof value === "string") {
-        if (/^https?:\/\//i.test(value)) return [value];
-        try { return extractUrls(JSON.parse(value)); } catch { return []; }
+        if (isHttpUrl(value)) return value;
+        try { return JSON.parse(value); } catch { return null; }
     }
-    if (Array.isArray(value)) return value.flatMap(extractUrls);
-    if (typeof value === "object") {
+    return value;
+}
+
+/** 按 model_name 推断资源类型（仅匹配本项目已接入的模型） */
+function consumptionResourceKind(modelName) {
+    const m = (modelName ?? "").toLowerCase();
+    if (/suno/.test(m)) return "audio";
+    if (/seedance|grok|omni[-_]?flash|veo|youtube|bilibili|douyin|视频号/.test(m)) return "video";
+    return "image";
+}
+
+/** 图像类：图像字段优先，避免误取 videos */
+function extractImageUrls(d) {
+    if (!d) return [];
+    if (isHttpUrl(d)) return [d];
+    if (Array.isArray(d)) {
         const urls = [];
-        if (typeof value.url === "string" && /^https?:\/\//i.test(value.url)) urls.push(value.url);
-        if (Array.isArray(value.url)) urls.push(...value.url.filter(u => typeof u === "string" && /^https?:\/\//i.test(u)));
-        if (typeof value.result_file === "string" && /^https?:\/\//i.test(value.result_file)) urls.push(value.result_file);
-        for (const key of ["data", "result", "results", "output", "sourceData", "task_result", "images", "videos", "audios"]) {
-            urls.push(...extractUrls(value[key]));
+        for (const item of d) {
+            if (item && typeof item === "object" && "url" in item) pushHttpUrls(urls, item.url);
+            else urls.push(...extractImageUrls(item));
         }
-        return [...new Set(urls)];
+        if (urls.length) return dedupe(urls);
+    }
+    if (typeof d !== "object" || d === null) return [];
+    if (Array.isArray(d.results)) {
+        const urls = [];
+        for (const item of d.results) if (item && typeof item === "object") pushHttpUrls(urls, item.url);
+        if (urls.length) return dedupe(urls);
+    }
+    const images = d.data?.result?.images;
+    if (Array.isArray(images)) {
+        const urls = [];
+        for (const item of images) if (item && typeof item === "object") pushHttpUrls(urls, item.url);
+        if (urls.length) return dedupe(urls);
+    }
+    if (d.result && typeof d.result === "object") {
+        const urls = [];
+        pushHttpUrls(urls, d.result.url);
+        if (urls.length) return dedupe(urls);
+    }
+    if (d.url) {
+        const urls = [];
+        pushHttpUrls(urls, d.url);
+        if (urls.length) return dedupe(urls);
+    }
+    for (const key of ["data", "sourceData", "images", "result", "results", "output", "task_result", "items"]) {
+        if (d[key] != null) {
+            const r = extractImageUrls(d[key]);
+            if (r.length) return r;
+        }
     }
     return [];
+}
+
+/** 视频类：videos / cld2VideoUrl 等视频字段优先 */
+function extractVideoUrls(d) {
+    const out = [];
+    const walk = (data) => {
+        if (!data) return;
+        if (typeof data === "string") { if (isHttpUrl(data)) out.push(data); return; }
+        if (Array.isArray(data)) { data.forEach(walk); return; }
+        if (typeof data !== "object") return;
+        pushHttpUrls(out, data.result_url);
+        pushHttpUrls(out, data.cld2VideoUrl);
+        pushHttpUrls(out, data.video_url);
+        pushHttpUrls(out, data.video);
+        pushHttpUrls(out, data.result_file);
+        if (data.videos != null) walk(data.videos);
+        pushHttpUrls(out, data.url);
+        for (const key of ["data", "result", "results", "output", "sourceData", "task_result", "videos"]) {
+            if (data[key] != null) walk(data[key]);
+        }
+    };
+    walk(d);
+    return dedupe(out);
+}
+
+/** 音频类：Suno cld2AudioUrl 优先，不取 cld2VideoUrl */
+function extractAudioUrls(d) {
+    const out = [];
+    const walk = (data) => {
+        if (!data) return;
+        if (typeof data === "string") { if (isHttpUrl(data) && /audiopipe\.suno\.ai|\.suno\.ai/i.test(data)) out.push(data); return; }
+        if (Array.isArray(data)) { data.forEach(walk); return; }
+        if (typeof data !== "object") return;
+        pushHttpUrls(out, data.cld2AudioUrl);
+        if (Array.isArray(data.items)) {
+            for (const it of data.items) if (it && typeof it === "object") pushHttpUrls(out, it.cld2AudioUrl);
+        }
+        if (data.audios != null) walk(data.audios);
+        for (const key of ["data", "result", "results", "output", "sourceData", "task_result", "audios", "items"]) {
+            if (data[key] != null) walk(data[key]);
+        }
+    };
+    walk(d);
+    return dedupe(out);
+}
+
+/** 按 model_name 类型优先提取消费记录 source 中的资源 URL，主类型取不到时跨类型兜底 */
+function extractResourceUrls(source, modelName) {
+    const parsed = parseConsumptionSource(source);
+    if (!parsed) return [];
+    if (isHttpUrl(parsed)) return [parsed];
+
+    const kind = consumptionResourceKind(modelName);
+    let urls = kind === "image" ? extractImageUrls(parsed)
+        : kind === "video" ? extractVideoUrls(parsed)
+        : extractAudioUrls(parsed);
+
+    if (!urls.length) {
+        urls = kind === "video" ? extractImageUrls(parsed) : extractVideoUrls(parsed);
+        if (!urls.length && kind !== "image") urls = extractImageUrls(parsed);
+    }
+    return urls;
 }
 
 export function showConsumptionRecordsDialog() {
@@ -50,11 +161,6 @@ export function showConsumptionRecordsDialog() {
         .sv-cr-link { color:#2dd4bf; font-size:12px; padding:3px 8px; border:1px solid #2dd4bf40; border-radius:4px; cursor:pointer; background:none; text-decoration:none; }
         .sv-cr-link:hover { background:#2dd4bf20; }
         .sv-cr-none { color:#445566; font-size:12px; }
-        .sv-cr-pagination { display:flex; justify-content:center; align-items:center; gap:12px; }
-        .sv-cr-page-btn { background:#1e3a4a; border:1px solid #334455; border-radius:4px; padding:6px 12px; color:white; font-size:13px; cursor:pointer; }
-        .sv-cr-page-btn:hover { border-color:#2dd4bf; }
-        .sv-cr-page-btn:disabled { opacity:0.5; cursor:not-allowed; }
-        .sv-cr-page-info { color:#8899aa; font-size:13px; }
         .sv-cr-preview-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.85); display:flex; justify-content:center; align-items:center; z-index:10010; }
         .sv-cr-preview-box { position:relative; max-width:90vw; max-height:90vh; display:flex; align-items:center; justify-content:center; }
         .sv-cr-preview-close { position:absolute; top:-36px; right:0; background:none; border:none; color:white; font-size:28px; cursor:pointer; }
@@ -63,7 +169,7 @@ export function showConsumptionRecordsDialog() {
         .sv-cr-preview-prev { left:-48px; }
         .sv-cr-preview-next { right:-48px; }
         .sv-cr-preview-count { position:absolute; bottom:-28px; left:50%; transform:translateX(-50%); color:#8899aa; font-size:13px; }
-    `);
+    ` + paginationCss("sv-cr"));
 
     const contentDiv = $el("div.sv-cr-content", {}, [
         $el("div.sv-cr-empty", { textContent: "加载中..." })
@@ -139,10 +245,7 @@ export function showConsumptionRecordsDialog() {
         nextBtn.disabled = true;
 
         try {
-            const res  = await fetch(`${API_BASE}/account/consumption-records?page=${page}&per_page=10`, {
-                headers: { "Authorization": `Bearer ${token}` }
-            });
-            const data = await res.json();
+            const data = await authedGet(`/account/consumption-records?page=${page}&per_page=10`, token);
             if (data.code === 200 && data.data) {
                 const d           = data.data;
                 const items       = d.list || [];
@@ -156,12 +259,12 @@ export function showConsumptionRecordsDialog() {
                     const tbody = $el("tbody");
                     for (const item of items) {
                         const ok  = item.status === 1 && parseFloat(item.amount || 0) !== 0;
-                        const urls = ok ? extractUrls(item.source) : [];
+                        const urls = ok ? extractResourceUrls(item.source, item.model_name ?? "") : [];
                         const resCell = urls.length
                             ? $el("a.sv-cr-link", { textContent: "打开", href: "#", onclick: (e) => { e.preventDefault(); openPreview(urls); } })
                             : $el("span.sv-cr-none", { textContent: "无" });
                         tbody.appendChild($el("tr", {}, [
-                            $el("td", { textContent: new Date(item.created_at).toLocaleString("zh-CN") }),
+                            $el("td", { textContent: fmtTime(item.created_at) }),
                             $el("td", { textContent: item.model_name || "-" }),
                             $el("td", {}, [$el("span.sv-cr-badge", { textContent: ok ? "成功" : "失败", className: `sv-cr-badge ${ok ? "sv-cr-success" : "sv-cr-fail"}` })]),
                             $el("td", { textContent: `${ok ? "-" : "+"}¥${parseFloat(item.amount || 0).toFixed(6)}`, style: { color: ok ? "#ef4444" : "#22c55e" } }),

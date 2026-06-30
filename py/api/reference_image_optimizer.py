@@ -1,4 +1,4 @@
-﻿"""
+"""
 SynVow 参考图提示词优化 节点 V1.1
 """
 
@@ -11,6 +11,8 @@ import requests
 import urllib3
 
 from . import synvow_auth
+from .gemini_synvow import GEMINI_MODEL_OPTIONS
+from .gpt_synvow import GPT_MODEL_OPTIONS
 from .media_common import upload_image as _upload_image, DIRECT_API_BASE as _DIRECT_API_BASE
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -28,7 +30,7 @@ _REFERENCE_MODE_MAP = {
     "只参考版式": "layout_only",
 }
 
-_MODEL_OPTIONS = ["gpt-5.5-2606", "gpt-5.4-2606", "gemini-3.1-flash-2606", "gemini-3.5-flash-2606", "gemini-3.1-pro-2606", "gemini-3-pro-2606", "gpt-5.5-2605", "gpt-5.4-2605", "gemini-3.1-pro-2605", "gemini-3.1-flash-2605", "gemini-3.5-flash-2605", "gemini-3-pro-2605"]
+_MODEL_OPTIONS = list(GPT_MODEL_OPTIONS) + list(GEMINI_MODEL_OPTIONS)
 
 
 def _build_user_message(ref_url: str, user_prompt: str, reference_mode: str, target_aspect_ratio: str, subject_url: str = None) -> list:
@@ -141,11 +143,7 @@ class PromptOptimizeBReferenceImage:
         if not optimized_prompt:
             optimized_prompt = raw
 
-        try:
-            import server
-            server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
-        except Exception:
-            pass
+        synvow_auth.refresh_balance()
         return (optimized_prompt, reference_summary)
 
 

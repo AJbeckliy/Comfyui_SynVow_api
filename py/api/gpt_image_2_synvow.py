@@ -16,6 +16,7 @@ import urllib3
 from PIL import Image
 
 from . import synvow_auth
+from .media_common import upload_image as _upload_image
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -83,30 +84,12 @@ _MODEL_TYPE_OPTIONS = [
     "gpt-image-2-1k-2605",
     "gpt-image-2-4k-2605",
     "gpt-image-2-稳定",
+    "gpt-image-2-官方",
 ]
 
 _NEW_MODELS = {"gpt-image-2-稳定"}
-
-
-def _upload_image_for_backup(api_key, img_tensor):
-    arr = (img_tensor[0].cpu().numpy() * 255).clip(0, 255).astype(np.uint8)
-    buf = io.BytesIO()
-    Image.fromarray(arr).convert("RGB").save(buf, format="JPEG", quality=90)
-    buf.seek(0)
-    upload_url = f"{synvow_auth.DIRECT_API_BASE}/api/upload/images"
-    res = requests.post(
-        upload_url,
-        headers={"X-API-Key": api_key},
-        files=[("files", ("image.jpg", buf, "image/jpeg"))],
-        verify=False, timeout=60,
-    )
-    data = res.json()
-    if res.status_code != 200 or data.get("code") != 200:
-        raise RuntimeError(f"Image upload failed: {data}")
-    urls = data.get("data", {}).get("urls", [])
-    if not urls:
-        raise RuntimeError(f"Image upload returned no URL: {data}")
-    return urls[0]
+_RAW_RATIO_MODELS = {"gpt-image-2-官方"}
+_GPT_IMAGE_1K_ONLY_MODEL = "gpt-image-2-1k-2605"
 
 
 def _blank_image(h=1024, w=1024):
@@ -163,13 +146,23 @@ def _extract_urls(r):
 
 def _build_payload(model, prompt, size, quality, resolution, is_img2img, img_tensors, api_key=None):
     payload = {"model": model, "prompt": prompt}
-    if model in _NEW_MODELS:
+    if model in _RAW_RATIO_MODELS:
+        if size:
+            payload["size"] = size
+        if resolution:
+            payload["resolution"] = resolution.lower()
+        if quality:
+            payload["quality"] = quality.lower()
+        payload["n"] = 1
+        if is_img2img and img_tensors and api_key:
+            payload["image_urls"] = [_upload_image(api_key, t) for t in img_tensors]
+    elif model in _NEW_MODELS:
         if size and size != "auto":
             payload["size"] = size
         if resolution:
             payload["resolution"] = resolution
         if is_img2img and img_tensors and api_key:
-            payload["image_urls"] = [_upload_image_for_backup(api_key, t) for t in img_tensors]
+            payload["image_urls"] = [_upload_image(api_key, t) for t in img_tensors]
     else:
         payload["replyType"] = "async"
         if size and size != "auto":
@@ -177,7 +170,7 @@ def _build_payload(model, prompt, size, quality, resolution, is_img2img, img_ten
         if quality and quality != "auto":
             payload["quality"] = quality
         if is_img2img and img_tensors and api_key:
-            payload["images"] = [_upload_image_for_backup(api_key, t) for t in img_tensors]
+            payload["images"] = [_upload_image(api_key, t) for t in img_tensors]
     return payload
 
 
@@ -276,9 +269,6 @@ def _download_with_placeholder(image_urls):
     return [downloaded.get(i, _blank_image(ref_h, ref_w)) for i in range(len(image_urls))]
 
 
-def _download_urls_with_placeholder(image_urls):
-    return _download_with_placeholder(image_urls)
-
 
 def _collect_image_tensors(image_urls):
     tensors = _download_with_placeholder(image_urls)
@@ -299,18 +289,18 @@ _API_URL = f"{synvow_auth.DIRECT_API_BASE}/api/models/image/edit"
 _POLL_URL = f"{synvow_auth.DIRECT_API_BASE}/api/models/tasks"
 
 
+def _resolve_size_params(model, aspect_ratio, resolution):
+    if model in _RAW_RATIO_MODELS:
+        return resolution or "1K", aspect_ratio or "auto"
+    eff_resolution = "1K" if model == _GPT_IMAGE_1K_ONLY_MODEL else (resolution or "1K")
+    ratio_map = _RATIO_MAPS.get(eff_resolution, _RATIO_TO_SIZE_1K)
+    return eff_resolution, ratio_map.get(aspect_ratio, "auto")
+
+
 def _is_changed(**kwargs):
     import hashlib, json
     key = json.dumps({k: str(v) for k, v in kwargs.items()}, sort_keys=True, ensure_ascii=False)
     return hashlib.md5(key.encode()).hexdigest()
-
-
-def _send_refresh():
-    try:
-        import server
-        server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
-    except Exception:
-        pass
 
 
 def _unpack(v):
@@ -413,9 +403,7 @@ class SynVowGptImage2:
 
         headers = synvow_auth.make_api_headers(api_key)
         model = model_type or "gpt-image-2-1k-2605"
-        eff_resolution = "1K" if model_type == "gpt-image-2-1k-2605" else resolution
-        ratio_map = _RATIO_MAPS.get(eff_resolution, _RATIO_TO_SIZE_1K)
-        size = ratio_map.get(aspect_ratio, "auto")
+        eff_resolution, size = _resolve_size_params(model, aspect_ratio, resolution)
 
         imgs = [t for t in [image1, image2, image3, image4, image5, image6, image7, image8] if t is not None]
         is_img2img = len(imgs) > 0
@@ -428,7 +416,7 @@ class SynVowGptImage2:
         status_str = f"已完成 model={model} size={size} quality={quality}" if successful else f"[ERROR] 生成失败 model={model} size={size}"
 
         out_tensor = _collect_image_tensors(image_urls)
-        _send_refresh()
+        synvow_auth.refresh_balance()
         return (out_tensor, status_str)
 
 
@@ -485,9 +473,7 @@ class SynVowGptImage2_TBatch:
 
         headers = synvow_auth.make_api_headers(api_key)
         model = model_type or "gpt-image-2-1k-2605"
-        eff_resolution = "1K" if model_type == "gpt-image-2-1k-2605" else resolution
-        ratio_map = _RATIO_MAPS.get(eff_resolution, _RATIO_TO_SIZE_1K)
-        size = ratio_map.get(aspect_ratio, "auto")
+        eff_resolution, size = _resolve_size_params(model, aspect_ratio, resolution)
 
         imgs = [t for t in [image1, image2, image3, image4, image5, image6, image7, image8] if t is not None]
         is_img2img = len(imgs) > 0
@@ -499,12 +485,12 @@ class SynVowGptImage2_TBatch:
         print(f"[GPT-Image-2 TBatch] {total} 条 prompt, model={model}")
 
         image_urls = _run_tasks(tasks, model, size, quality, eff_resolution, is_img2img, api_key, headers, _API_URL, _POLL_URL)
-        image_list = _download_urls_with_placeholder(image_urls)
+        image_list = _download_with_placeholder(image_urls)
 
         successful = sum(1 for u in image_urls if u)
         status_str = f"已完成 {successful}/{total} model={model} size={size} quality={quality}" if successful else f"[ERROR] 所有任务失败 model={model} total={total}"
         print(f"[GPT-Image-2 TBatch] 完成: {successful}/{total}")
-        _send_refresh()
+        synvow_auth.refresh_balance()
         return (image_list, status_str)
 
 
@@ -553,9 +539,7 @@ class SynVowGptImage2_IBatch:
 
         headers = synvow_auth.make_api_headers(api_key)
         model = model_type or "gpt-image-2-1k-2605"
-        eff_resolution = "1K" if model_type == "gpt-image-2-1k-2605" else resolution
-        ratio_map = _RATIO_MAPS.get(eff_resolution, _RATIO_TO_SIZE_1K)
-        size = ratio_map.get(aspect_ratio, "auto")
+        eff_resolution, size = _resolve_size_params(model, aspect_ratio, resolution)
 
         p = str(prompt).strip() if prompt else ""
         all_lists = [images_list1,
@@ -579,12 +563,12 @@ class SynVowGptImage2_IBatch:
             tasks.append((p, imgs))
 
         image_urls = _run_tasks(tasks, model, size, quality, eff_resolution, True, api_key, headers, _API_URL, _POLL_URL)
-        image_list = _download_urls_with_placeholder(image_urls)
+        image_list = _download_with_placeholder(image_urls)
 
         successful = sum(1 for u in image_urls if u)
         status_str = f"已完成 {successful}/{batch_size} model={model} size={size} quality={quality}" if successful else f"[ERROR] 所有任务失败 model={model} total={batch_size}"
         print(f"[GPT-Image-2 IBatch] 完成: {successful}/{batch_size}")
-        _send_refresh()
+        synvow_auth.refresh_balance()
         return (image_list, status_str)
 
 
@@ -636,9 +620,7 @@ class SynVowGptImage2_TIBatch:
 
         headers = synvow_auth.make_api_headers(api_key)
         model = model_type or "gpt-image-2-1k-2605"
-        eff_resolution = "1K" if model_type == "gpt-image-2-1k-2605" else resolution
-        ratio_map = _RATIO_MAPS.get(eff_resolution, _RATIO_TO_SIZE_1K)
-        size = ratio_map.get(aspect_ratio, "auto")
+        eff_resolution, size = _resolve_size_params(model, aspect_ratio, resolution)
 
         all_lists = [images_list1,
                      images_list2 if images_list2 is not None else [],
@@ -673,12 +655,12 @@ class SynVowGptImage2_TIBatch:
             tasks.append((assigned_prompts[i], imgs))
 
         image_urls = _run_tasks(tasks, model, size, quality, eff_resolution, True, api_key, headers, _API_URL, _POLL_URL)
-        image_list = _download_urls_with_placeholder(image_urls)
+        image_list = _download_with_placeholder(image_urls)
 
         successful = sum(1 for u in image_urls if u)
         status_str = f"已完成 {successful}/{batch_size} model={model} size={size} quality={quality}" if successful else f"[ERROR] 所有任务失败 model={model} total={batch_size}"
         print(f"[GPT-Image-2 TIBatch] 完成: {successful}/{batch_size}")
-        _send_refresh()
+        synvow_auth.refresh_balance()
         return (image_list, status_str)
 
 

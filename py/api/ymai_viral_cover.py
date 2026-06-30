@@ -4,14 +4,12 @@ from __future__ import annotations
 
 import hashlib
 import json
-import time
 from pathlib import Path
 
-from .ymai_llm import chat_completion, default_model, fetch_models, image_to_data_urls
+from .ymai_llm import add_seed_input, chat_completion, default_model, fetch_models, image_to_data_urls, input_hash, strip_seed
 
 
 AUTO_STYLE = "不指定（根据标题自动设计）"
-LEGACY_AUTO_STYLES = {"不指定（根据主题自动设计）"}
 STYLES = [
     AUTO_STYLE,
     "小红书干净高级风",
@@ -57,7 +55,7 @@ def build_user_prompt(封面风格, 主题关键词, 封面标题, 自定义要�
     主题关键词 = (主题关键词 or "").strip()
     封面标题 = (封面标题 or "").strip()
 
-    if 封面风格 == AUTO_STYLE or 封面风格 in LEGACY_AUTO_STYLES:
+    if 封面风格 == AUTO_STYLE:
         style_profile = "不预设风格，请根据标题、可选主题和参考图自行选择最合适的完整封面设计"
     elif 封面风格 == "自定义":
         style_profile = (
@@ -82,7 +80,7 @@ class ViralCoverLLMPrompt:
     @classmethod
     def INPUT_TYPES(cls):
         models = fetch_models()
-        return {
+        return add_seed_input({
             "required": {
                 "model": (models, {"default": default_model(models)}),
                 "封面标题": ("STRING", {"default": "", "multiline": False}),
@@ -95,7 +93,7 @@ class ViralCoverLLMPrompt:
                 "temperature": ("FLOAT", {"default": 0.4, "min": 0.0, "max": 2.0, "step": 0.1}),
                 "max_tokens": ("INT", {"default": 2048, "min": 256, "max": 8192, "step": 1}),
             },
-        }
+        })
 
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("封面提示词",)
@@ -103,10 +101,7 @@ class ViralCoverLLMPrompt:
     CATEGORY = "💫SynVow_api/api/文本"
     OUTPUT_NODE = True
     API_NODE = False
-
-    @classmethod
-    def IS_CHANGED(cls, *args, **kwargs):
-        return time.time_ns()
+    IS_CHANGED = staticmethod(input_hash)
 
     def generate(
         self,
@@ -118,7 +113,9 @@ class ViralCoverLLMPrompt:
         自定义要求="",
         temperature=0.4,
         max_tokens=2048,
+        **kwargs,
     ):
+        strip_seed(kwargs)
         if not str(封面标题 or "").strip():
             raise RuntimeError("请填写封面标题。")
 
@@ -153,3 +150,12 @@ class ViralCoverLLMPrompt:
             )
         )
         return (result,)
+
+
+NODE_CLASS_MAPPINGS = {
+    "ViralCoverLLMPrompt": ViralCoverLLMPrompt,
+}
+
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "ViralCoverLLMPrompt": "YM-爆款封面",
+}

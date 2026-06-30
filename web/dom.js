@@ -108,6 +108,30 @@ export function injectStyle(id, css) {
     document.head.appendChild(s);
 }
 
+/** 带 JWT 的 GET 请求，返回解析后的 JSON。 */
+export async function authedGet(path, token) {
+    const res = await fetch(`${API_BASE}${path}`, {
+        headers: token ? { "Authorization": `Bearer ${token}` } : {},
+    });
+    return res.json();
+}
+
+/** 统一时间格式化（zh-CN 本地时间）。 */
+export function fmtTime(value) {
+    return new Date(value).toLocaleString("zh-CN");
+}
+
+/** 生成统一的分页 CSS（上一页/下一页按钮 + 页码信息），仅 class 前缀不同。 */
+export function paginationCss(prefix) {
+    return `
+        .${prefix}-pagination { display:flex; justify-content:center; align-items:center; gap:12px; }
+        .${prefix}-page-btn { background:#1e3a4a; border:1px solid #334455; border-radius:4px; padding:6px 12px; color:white; font-size:13px; cursor:pointer; }
+        .${prefix}-page-btn:hover { border-color:#2dd4bf; }
+        .${prefix}-page-btn:disabled { opacity:0.5; cursor:not-allowed; }
+        .${prefix}-page-info { color:#8899aa; font-size:13px; }
+    `;
+}
+
 export async function postJson(path, body, token) {
     const headers = { "Content-Type": "application/json" };
     if (token) headers["Authorization"] = `Bearer ${token}`;
@@ -119,7 +143,7 @@ export async function postJson(path, body, token) {
     return res.json();
 }
 
-export function splitFilePath(path) {
+function splitFilePath(path) {
     const idx = path.lastIndexOf("/");
     return idx === -1 ? ["", path] : [path.substring(0, idx), path.substring(idx + 1)];
 }
@@ -148,6 +172,75 @@ export async function uploadMediaFile(api, app, comboWidget, file, onResolved) {
     const url = api.apiURL(`/view?filename=${encodeURIComponent(filename)}&type=input&subfolder=${subfolder}&${app.getRandParam().substring(1)}`);
     onResolved?.(url);
     return true;
+}
+
+/**
+ * 注册音频/视频加载节点的通用上传/拖拽/预览逻辑（audio 与 video 仅元素类型等参数不同）。
+ * cfg: { nodeName, widgetName, playerName, mime, createElement(): HTMLMediaElement, onPlayerSrc?(el, src) }
+ */
+export function registerMediaLoader(app, api, cfg) {
+    const updatePlayer = (playerWidget, src) => {
+        const el = playerWidget?.element;
+        if (!el) return;
+        el.src = src;
+        cfg.onPlayerSrc?.(el, src);
+    };
+
+    app.registerExtension({
+        name: cfg.extensionName,
+        async beforeRegisterNodeDef(nodeType, nodeData) {
+            if (nodeData?.name !== cfg.nodeName) return;
+            const origCreated = nodeType.prototype.onNodeCreated;
+            nodeType.prototype.onNodeCreated = function () {
+                origCreated?.apply(this, arguments);
+
+                const mediaWidget = this.widgets?.find(w => w.name === cfg.widgetName);
+                if (!mediaWidget) return;
+
+                const mediaEl = cfg.createElement();
+                const playerWidget = this.addDOMWidget(cfg.playerName, cfg.playerName, mediaEl, { serialize: false });
+                playerWidget.serialize = false;
+
+                bindCropPreview(this, mediaEl);
+
+                const syncPlayer = () => updatePlayer(playerWidget, mediaValueToURL(api, app, mediaWidget.value));
+
+                const origCallback = mediaWidget.callback;
+                mediaWidget.callback = function (...args) {
+                    origCallback?.apply(this, args);
+                    syncPlayer();
+                };
+
+                const origConfigure = this.onConfigure;
+                this.onConfigure = function (...args) {
+                    origConfigure?.apply(this, args);
+                    syncPlayer();
+                };
+
+                syncPlayer();
+
+                this.addWidget("button", "选择文件上传", "", () => {
+                    const input = document.createElement("input");
+                    input.type = "file";
+                    input.accept = `${cfg.mime}/*`;
+                    input.onchange = async () => {
+                        const file = input.files?.[0];
+                        if (file) await uploadMediaFile(api, app, mediaWidget, file, src => updatePlayer(playerWidget, src));
+                    };
+                    input.click();
+                }, { serialize: false });
+
+                this.onDragOver = (e) => [...(e.dataTransfer?.items ?? [])].some(
+                    i => i.kind === "file" && i.type.startsWith(`${cfg.mime}/`)
+                );
+                this.onDragDrop = async (e) => {
+                    const files = [...(e.dataTransfer?.files ?? [])].filter(f => f.type.startsWith(`${cfg.mime}/`));
+                    for (const f of files) await uploadMediaFile(api, app, mediaWidget, f, src => updatePlayer(playerWidget, src));
+                    return files.length > 0;
+                };
+            };
+        },
+    });
 }
 
 /** 根据 combo 当前值构造 input 目录媒体的访问 URL（无值时返回空串）。 */

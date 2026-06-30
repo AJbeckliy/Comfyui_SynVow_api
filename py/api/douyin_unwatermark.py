@@ -77,21 +77,14 @@ class SynVowVideoParser:
             video_path = download_video(video_url, "douyin", save_path, prefix="douyin", filename=_fname) or ""
             status = f"已完成 model={model}"
 
-            try:
-                import server
-                server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
-            except Exception:
-                pass
+            synvow_auth.refresh_balance()
 
             return (video_url, video_path, status)
 
         except Exception as e:
             print(f"[短视频解析] Error: {e}")
-            try:
-                import server
-                server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
-            except Exception:
-                pass
+
+            synvow_auth.refresh_balance()
             return ("", "", f"[ERROR] {e}")
 
 

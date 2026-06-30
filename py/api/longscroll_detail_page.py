@@ -17,13 +17,13 @@ import requests
 import torch
 import torch.nn.functional as F
 
-from .gemini_synvow import GEMINI_MODEL_OPTIONS
+from .gemini_synvow import DEFAULT_GEMINI_MODEL, GEMINI_MODEL_OPTIONS
 from .media_common import DIRECT_API_BASE, upload_image as _upload_image
 
 
 CATEGORY = "💫SynVow_api/api/文本"
 PROMPTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "prompts"))
-DEFAULT_MODEL = "gemini-3.1-flash-2606"
+DEFAULT_MODEL = DEFAULT_GEMINI_MODEL
 PAGE_STRUCTURE_CHUNK_SIZE = 2
 PROMPT_BATCH_CHUNK_SIZE = 2
 LONGSCROLL_NODE_VERSION = "2026-06-04-lightweight-outline-chunk2-v1"
@@ -187,20 +187,6 @@ def load_json(value, fallback):
         return deepcopy(fallback)
 
 
-# --- Synced standalone long-scroll helper functions ---
-def find_slice_item(structure, slice_id):
-    wanted = str(slice_id).strip().zfill(2)
-    if isinstance(structure, list):
-        structure = {"items": structure}
-    if not isinstance(structure, dict):
-        return {}
-    for key in ("items", "sections"):
-        for item in structure.get(key, []):
-            if str(item.get("slice_id", "")).strip().zfill(2) == wanted:
-                return item
-    return {}
-
-
 def text_exact_to_lines(text_exact):
     if isinstance(text_exact, list):
         return [str(item).strip() for item in text_exact if str(item).strip()]
@@ -255,33 +241,6 @@ def sanitize_text_exact(text_exact, module_type=""):
             "tags": lines[2:5],
         }
     return lines
-
-
-def sanitize_structure_item_visible_text(item):
-    if not isinstance(item, dict):
-        return item
-    module_type = str(item.get("module_type", "")).strip()
-    item["text_exact"] = sanitize_text_exact(item.get("text_exact", {}), module_type)
-    if not safe_visible_text_lines(item.get("text_exact", {}), module_type) and module_type != "faq_close":
-        item["text_exact"] = sanitize_text_exact(fallback_visible_text_for_module(module_type), module_type)
-    primary = item.get("primary_module")
-    if isinstance(primary, dict) and is_forbidden_visible_label(primary.get("message", "")):
-        safe_lines = safe_visible_text_lines(item.get("text_exact", {}), module_type)
-        primary["message"] = safe_lines[0] if safe_lines else ""
-    for module in item.get("secondary_modules", []) or []:
-        if not isinstance(module, dict):
-            continue
-        message = module.get("message", "")
-        if isinstance(message, list):
-            module["message"] = [value for value in message if not is_forbidden_visible_label(value)]
-        elif is_forbidden_visible_label(message):
-            module["message"] = ""
-    if module_type == "faq_close":
-        item["closing_visible_text_policy"] = (
-            "Do not render internal planning labels, page-type names, UI words or structural placeholders. "
-            "If no meaningful closing copy is available, use a product/lifestyle closing visual with no visible text."
-        )
-    return item
 
 
 def sanitize_final_prompt(prompt):
@@ -353,89 +312,6 @@ def ensure_prompt_visible_copy(prompt, item):
             "Use clean modern Chinese sans-serif typography. These are the only visible text elements."
         )
     return text
-
-
-def compact_item_for_prompt(item):
-    return {
-        "slice_id": item.get("slice_id", ""),
-        "chapter": item.get("chapter", ""),
-        "section_name": item.get("section_name", ""),
-        "module_type": item.get("module_type", ""),
-        "module_label": item.get("module_label", ""),
-        "screen_job": item.get("screen_job", ""),
-        "evidence_type": item.get("evidence_type", ""),
-        "commercial_goal": item.get("commercial_goal", ""),
-        "user_question": item.get("user_question", ""),
-        "layout_archetype": item.get("layout_archetype", ""),
-        "primary_module": item.get("primary_module", {}),
-        "secondary_modules": item.get("secondary_modules", []),
-        "text_exact": item.get("text_exact", []),
-        "top_edge_anchor": item.get("top_edge_anchor", ""),
-        "bottom_edge_anchor": item.get("bottom_edge_anchor", ""),
-        "visual_continuity": item.get("visual_continuity", ""),
-        "forbidden_layout": item.get("forbidden_layout", ""),
-    }
-
-
-def auto_outpaint_screen_task(slice_id):
-    try:
-        index = int(str(slice_id).strip())
-    except Exception:
-        index = 2
-
-    tasks = {
-        2: (
-            "Auto current screen task: core selling-point bridge screen. "
-            "Continue from the previous screen with a calm transition area, then introduce 2-3 key benefits of the product. "
-            "Use concise Chinese copy such as a benefit headline, one short subheadline and compact labels."
-        ),
-        3: (
-            "Auto current screen task: function/mechanism screen. "
-            "Show how the product solves the main user pain point with one primary functional visual and 1-2 supporting close-ups. "
-            "Keep the product or key working part clear, accurate and premium."
-        ),
-        4: (
-            "Auto current screen task: detail close-up screen. "
-            "Focus on material, structure, craftsmanship, interface, texture or key component details. "
-            "Use macro photography/product close-up feeling, with sparse Chinese labels and elegant leader lines if needed."
-        ),
-        5: (
-            "Auto current screen task: usage demonstration screen. "
-            "Show the product being used naturally, or show a clear before-during-after usage flow. "
-            "Avoid a complicated tutorial; keep it commercial, readable and visually connected."
-        ),
-        6: (
-            "Auto current screen task: lifestyle scenario screen. "
-            "Place the product in a real everyday scene and communicate comfort, convenience and emotional value. "
-            "Use 1-2 scene vignettes at most, not a dense collage."
-        ),
-        7: (
-            "Auto current screen task: multi-scene / companion value screen. "
-            "Show the product fitting several daily moments with a rhythmic ecommerce layout. "
-            "Use one main scene plus 1-2 small supporting moments, keeping visual hierarchy clear."
-        ),
-        8: (
-            "Auto current screen task: trust and safety screen. "
-            "Present quality, material, safety, durability, standard, battery, cleaning or after-sales trust points depending on the product. "
-            "Use restrained icons or badges, no hard UI panel."
-        ),
-        9: (
-            "Auto current screen task: parameter/configuration screen. "
-            "Show product package, dimensions or core specifications in a clean premium layout. "
-            "Keep the information light and readable, not a dense spreadsheet."
-        ),
-        10: (
-            "Auto current screen task: emotional closing / simple FAQ screen. "
-            "Use a quiet lifestyle or product still-life scene with warm Chinese copy that closes the long page. "
-            "No purchase button, no QR code, no aggressive sales layout."
-        ),
-    }
-    if index in tasks:
-        return tasks[index]
-
-    cycle = (index - 2) % 8
-    fallback_order = [2, 3, 4, 5, 6, 7, 8, 10]
-    return tasks[fallback_order[cycle]]
 
 
 MOJIBAKE_MARKERS = (
@@ -916,199 +792,6 @@ def require_llm_object(result, workflow_name):
             preview = "<空字符串，可能是 JSON 修复器误修复或模型返回了空 JSON 字符串>"
         raise ValueError(f"大模型返回 JSON 顶层是字符串，且无法拆出对象；内容预览：{preview}")
     raise ValueError(f"大模型返回 JSON 顶层不是对象：{type(result).__name__}")
-
-
-def get_narrative_section_by_id(narrative, slice_id):
-    if not isinstance(narrative, dict):
-        return {}
-    wanted = str(slice_id).strip().zfill(2)
-    for section in narrative.get("sections", []) or []:
-        if isinstance(section, dict) and str(section.get("slice_id", "")).strip().zfill(2) == wanted:
-            return section
-    return {}
-
-
-def fallback_structure_item(plan_item, narrative, index):
-    slice_id = str(plan_item.get("slice_id", "") or index).zfill(2)
-    section = get_narrative_section_by_id(narrative, slice_id)
-    text_exact = section.get("text_exact", []) if isinstance(section, dict) else []
-    module_type = str(plan_item.get("module_type", "")).strip()
-    text_lines = safe_visible_text_lines(text_exact, module_type)
-    if not text_lines and module_type != "faq_close":
-        text_lines = fallback_visible_text_for_module(module_type)
-    headline = text_lines[0] if text_lines else ""
-    subheadline = text_lines[1] if len(text_lines) > 1 else ""
-    allowed = plan_item.get("allowed_archetypes", []) or []
-    section_name = section.get("section_name") or plan_item.get("module_label", f"第 {slice_id} 屏")
-    screen_job = plan_item.get("screen_job", "") or section.get("narrative_role", "")
-    main_visual = section.get("main_visual", "") or plan_item.get("notes", "")
-    return {
-        "slice_id": slice_id,
-        "section_name": section_name,
-        "module_type": module_type,
-        "module_label": plan_item.get("module_label", ""),
-        "layout_archetype": allowed[0] if allowed else "",
-        "commercial_goal": truncate_text(section.get("narrative_role", "") or screen_job, 160),
-        "user_question": f"这一屏如何证明：{headline}",
-        "screen_job": screen_job,
-        "evidence_type": plan_item.get("evidence_type", ""),
-        "information_density": plan_item.get("information_density", ""),
-        "content_point_target": plan_item.get("content_point_target", ""),
-        "screen_fill_strategy": plan_item.get("screen_fill_strategy", ""),
-        "hierarchy_strategy": plan_item.get("hierarchy_strategy", ""),
-        "composition_shift": plan_item.get("composition_shift", ""),
-        "primary_module": {
-            "role": "primary",
-            "message": headline,
-            "visual": truncate_text(main_visual, 360),
-            "area_ratio": "55-70%",
-            "visual_evidence": truncate_text(section.get("composition", "") or plan_item.get("notes", ""), 260),
-        },
-        "secondary_modules": [
-            {
-                "role": "secondary",
-                "message": subheadline or plan_item.get("evidence_type", ""),
-                "visual": truncate_text(plan_item.get("screen_fill_strategy", "") or plan_item.get("notes", ""), 220),
-                "area_ratio": "15-25%",
-                "visual_evidence": truncate_text(plan_item.get("content_point_target", ""), 180),
-            }
-        ] if (subheadline or plan_item.get("evidence_type", "")) else [],
-        "text_exact": sanitize_text_exact({
-            "headline": headline,
-            "subheadline": subheadline,
-            "tags": text_lines[2:5],
-        }, module_type),
-        "top_edge_anchor": section.get("transition_in", "延续上一屏的光线、材质和空间氛围。"),
-        "bottom_edge_anchor": section.get("transition_out", "为下一屏保留材质、光线或场景延展。"),
-        "auto_filled": True,
-    }
-
-
-def fill_missing_structure_items(items, module_plan, narrative, start_id, end_id):
-    normalized = [deepcopy(item) for item in (items or []) if isinstance(item, dict)]
-    by_id = {
-        str(item.get("slice_id", "") or index).strip().zfill(2): item
-        for index, item in enumerate(normalized, 1)
-    }
-    plan_by_id = {
-        str(item.get("slice_id", "")).strip().zfill(2): item
-        for item in module_plan.get("items", []) or []
-        if isinstance(item, dict)
-    }
-    filled = []
-    for index in range(start_id, end_id + 1):
-        slice_id = str(index).zfill(2)
-        item = by_id.get(slice_id)
-        plan_item = plan_by_id.get(slice_id)
-        if item:
-            if plan_item:
-                fallback = fallback_structure_item(plan_item, narrative, index)
-                for key, value in fallback.items():
-                    if key == "auto_filled":
-                        continue
-                    if key not in item or item.get(key) in (None, "", [], {}):
-                        item[key] = value
-                if any(item.get(key) in (None, "", [], {}) for key in ("primary_module", "text_exact")):
-                    item["auto_filled"] = True
-            filled.append(sanitize_structure_item_visible_text(item))
-            continue
-        if plan_item:
-            filled.append(sanitize_structure_item_visible_text(fallback_structure_item(plan_item, narrative, index)))
-    return sort_items_by_slice_id(filled)
-
-
-def fallback_prompt_from_structure_item(item, visual_master_spec, product_constraints, continuity_policy):
-    text_exact = item.get("text_exact", {})
-    text_lines = safe_visible_text_lines(text_exact, item.get("module_type", ""))
-    headline = text_lines[0] if text_lines else item.get("section_name", "")
-    subheadline = text_lines[1] if len(text_lines) > 1 else ""
-    module_type = str(item.get("module_type", "")).strip()
-    layout_intent = str(item.get("layout_archetype", "")).strip()
-    module_visual_strategy = {
-        "hero": "Create an appetizing premium hero scene with strong product identity, warm commercial lighting, generous negative space and a clear visual hook.",
-        "scenario_person": "Create an immersive lifestyle or human scenario that extends the hero screen's selling point and desired result; keep the product naturally integrated into the scene. Avoid negative pain-point contrast, black-and-white split screens, grey problem scenes, or cheap before/after comparisons.",
-        "function": "Create a clear function-benefit visualization using macro evidence, ingredient/material cues, motion flow, cutaway-like visual logic or subtle floating annotations.",
-        "detail": "Create a refined detail-evidence screen with macro texture, material close-ups, craft details and premium ecommerce polish.",
-        "steps": "Create a vertical 2-3 step sequence with simple visual flow, short labels and clear reading order.",
-        "parameter_trust": "Create a vertical trust/parameter hierarchy with short labels, quality cues, safety/trust icons and product/material background integration.",
-        "faq_close": "Create a quiet emotional closing scene with lifestyle warmth, final benefit and minimal trust notes.",
-    }.get(module_type, "Create a polished premium ecommerce detail-page screen with clear hierarchy, warm lighting, product consistency and restrained information density.")
-    prompt_parts = [
-        "Canvas and aspect ratio: Create a single 9:21 vertical image.",
-        "Reference image usage: Image 1 is the product identity reference. Infer the exact product appearance from Image 1; do not redesign or invent product details.",
-        "Overall visual system: Use a warm, premium, appetizing ecommerce visual style based on the established page style. Keep palette, lighting, materials, typography and spatial atmosphere consistent with the previous screens.",
-        f"Current viewport: Slice {item.get('slice_id', '')}, {item.get('section_name', '')}.",
-        f"Module role: {item.get('module_type', '')} / {item.get('module_label', '')}.",
-        f"Screen job and evidence: {module_visual_strategy}",
-        f"Layout intent: {layout_intent}; use it as an information intent, not a fixed card template.",
-        "Flexible page composition: Keep one dominant headline and one dominant visual focus. Use secondary evidence as smaller, lighter, low-contrast visual notes. Vary the composition from adjacent screens; avoid repeated white cards, centered product hero, icon rows and bottom explanation strips.",
-        "Primary module: Show the main product benefit or scene clearly with a strong visual focus. If the product appears, refer only to the product from Image 1 or a product close-up based on Image 1.",
-        "Secondary modules: Add only small supporting visual evidence, such as short labels, material details, ingredient cues, texture close-ups, quality icons or subtle floating notes. Keep them visually smaller and less dominant than the primary module; avoid equal-weight card collage.",
-        f"Chinese typography: visible Chinese headline: \"{headline}\"; visible Chinese subheadline: \"{subheadline}\"; visible Chinese tags: \"{' / '.join(text_lines[2:5])}\". Use a clean modern Chinese sans-serif font, consistent hierarchy and relaxed spacing.",
-        "Continuity policy: Keep the top and bottom edges visually compatible with adjacent screens through light, color, material texture, crumbs/particles, soft gradients or environmental continuation. Do not place important text near the edges.",
-        "Important constraints: Do not render planning notes as visible text. Only the visible Chinese headline, subheadline and tags should appear in the image. No English visible text, no garbled text, no product redesign, no dense small copy, no PPT-like white card layout.",
-    ]
-    return sanitize_final_prompt("\n".join(part for part in prompt_parts if str(part).strip()))
-
-
-def fill_missing_prompt_items(items, page_structure, target_slice_count, visual_master_spec, product_constraints, continuity_policy):
-    normalized = [deepcopy(item) for item in (items or []) if isinstance(item, dict)]
-    by_id = {
-        str(item.get("slice_id", "") or index).strip().zfill(2): item
-        for index, item in enumerate(normalized, 1)
-    }
-    structure_by_id = {
-        str(item.get("slice_id", "")).strip().zfill(2): item
-        for item in extract_items_from_llm_result(page_structure)
-    }
-    filled = []
-    for index in range(1, target_slice_count + 1):
-        slice_id = str(index).zfill(2)
-        item = by_id.get(slice_id)
-        structure_item = structure_by_id.get(slice_id, {})
-        if item:
-            if structure_item:
-                for key in ("module_type", "module_label", "screen_job", "evidence_type", "layout_archetype"):
-                    if not item.get(key) and structure_item.get(key):
-                        item[key] = structure_item.get(key)
-                if not str(item.get("prompt", "")).strip():
-                    item["prompt"] = fallback_prompt_from_structure_item(
-                        structure_item,
-                        visual_master_spec,
-                        product_constraints,
-                        continuity_policy,
-                    )
-                    item["auto_filled"] = True
-            elif not str(item.get("prompt", "")).strip():
-                item["prompt"] = fallback_prompt_from_structure_item(
-                    item,
-                    visual_master_spec,
-                    product_constraints,
-                    continuity_policy,
-                )
-                item["auto_filled"] = True
-            if str(item.get("prompt", "")).strip():
-                item["prompt"] = sanitize_final_prompt(sanitize_prompt_blueprint_context(
-                    ensure_prompt_visible_copy(item.get("prompt", ""), item),
-                    item,
-                ))
-            filled.append(sanitize_structure_item_visible_text(item))
-            continue
-        if structure_item:
-            fallback = deepcopy(structure_item)
-            fallback["prompt"] = fallback_prompt_from_structure_item(
-                structure_item,
-                visual_master_spec,
-                product_constraints,
-                continuity_policy,
-            )
-            fallback["auto_filled"] = True
-            fallback["prompt"] = sanitize_final_prompt(sanitize_prompt_blueprint_context(
-                ensure_prompt_visible_copy(fallback.get("prompt", ""), fallback),
-                fallback,
-            ))
-            filled.append(sanitize_structure_item_visible_text(fallback))
-    return sort_items_by_slice_id(filled)
 
 
 def enforce_module_plan_on_items(items, module_plan):

@@ -103,11 +103,7 @@ class SynVowGPTAPI:
                 except Exception as e:
                     outputs[idx] = str(e)
 
-        try:
-            import server
-            server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
-        except Exception:
-            pass
+            synvow_auth.refresh_balance()
         return (outputs,)
 
 

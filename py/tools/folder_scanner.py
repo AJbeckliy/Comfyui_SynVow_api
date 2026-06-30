@@ -1,9 +1,7 @@
 import os
-import random
 import re
-import time
 from pathlib import Path
-from typing import List, Tuple, Set, Dict, Optional, Union
+from typing import List, Tuple, Set, Dict, Union
 
 class SynVowFolderScanner:
     @classmethod
@@ -27,8 +25,6 @@ class SynVowFolderScanner:
     DESCRIPTION = "扫描文件夹输出路径列表"
 
     def __init__(self) -> None:
-        self._cache: Dict[str, Tuple[str, int]] = {}
-        self._last_scan_time: Dict[str, float] = {}
         self._image_extensions = {'.jpg', '.jpeg', '.png', '.webp', '.bmp', '.gif', '.tiff'}
         self._txt_extensions = {'.txt'}
         self._video_extensions = {'.mp4', '.mkv', '.avi', '.mov', '.wmv', '.flv', '.webm', '.m4v'}

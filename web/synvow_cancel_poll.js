@@ -11,7 +11,6 @@ const SYNVOW_NODE_TYPES = new Set([
     "SynVowGptImage2_TBatch",
     "SynVowGptImage2_IBatch",
     "SynVowGptImage2_TIBatch",
-    "SynVowGptImage2All",
     "SynVowNanoBanana",
     "SynVowNanoBanana_TBatch",
     "SynVowNanoBanana_IBatch",

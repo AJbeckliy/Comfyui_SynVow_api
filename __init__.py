@@ -311,27 +311,6 @@ async def _sv_clear_token(request):
         return web.json_response({"code": 500, "message": str(e)})
 
 
-@server.PromptServer.instance.routes.get("/sv_api/models/by-mode")
-async def _sv_models_by_mode(request):
-    """按前端模式返回过滤后的模型名称列表"""
-    from .py.api import synvow_auth as _auth
-    MODE_MAP = {"default": "default", "stable": "优质", "official": "official"}
-    mode = request.rel_url.query.get("mode", "default")
-    category = request.rel_url.query.get("category", "image")
-    pool_code = MODE_MAP.get(mode, "default")
-
-    models = _auth._model_cache.get("models", [])
-
-
-    filtered = [m for m in models if isinstance(m, dict)
-                and isinstance(m.get("api_pool_category"), dict)
-                and m["api_pool_category"].get("code") == pool_code]
-    names = _auth._filter_models_by_category(filtered if filtered else models, category)
-    if not names:
-        names = _auth.get_model_list(category)
-    return web.json_response({"models": names})
-
-
 # ---------------------------------------------------------------------------
 #  动态加载节点
 # ---------------------------------------------------------------------------

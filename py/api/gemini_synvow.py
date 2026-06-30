@@ -1,4 +1,4 @@
-﻿"""
+"""
 SynVow Gemini API node - Chat/Vision via local proxy
 Uses Proxy_Router + X-API-Key auth (same pattern as NanoBanana)
 """
@@ -9,7 +9,19 @@ import requests as _requests
 from . import synvow_auth
 from .media_common import upload_image as _upload_image, DIRECT_API_BASE
 
-GEMINI_MODEL_OPTIONS = ["gemini-3.1-flash-2606", "gemini-3.5-flash-2606", "gemini-3.1-pro-2606", "gemini-3-pro-2606", "gemini-3.1-pro-2605", "gemini-3.1-flash-2605", "gemini-3.5-flash-2605", "gemini-3-pro-2605"]
+GEMINI_MODEL_OPTIONS = [
+    "gemini-3.1-pro-稳定",
+    "gemini-3.5-flash-稳定",
+    "gemini-3-pro-2606",
+    "gemini-3.1-pro-2606",
+    "gemini-3.1-flash-2606",
+    "gemini-3.5-flash-2606",
+    "gemini-3-pro-2605",
+    "gemini-3.1-pro-2605",
+    "gemini-3.1-flash-2605",
+    "gemini-3.5-flash-2605",
+]
+DEFAULT_GEMINI_MODEL = GEMINI_MODEL_OPTIONS[0]
 
 
 class SynVowGeminiAPI:
@@ -21,7 +33,7 @@ class SynVowGeminiAPI:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "模型": (GEMINI_MODEL_OPTIONS, {"default": "gemini-3.1-flash-2606"}),
+                "模型": (GEMINI_MODEL_OPTIONS, {"default": DEFAULT_GEMINI_MODEL}),
                 "system_prompt": ("STRING", {"multiline": True, "default": ""}),
                 "user_prompt": ("STRING", {"multiline": True, "default": ""}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
@@ -92,7 +104,7 @@ class SynVowGeminiAPI:
                  image_5=None, image_6=None, image_7=None, image_8=None,
                  image_9=None, image_10=None):
         api_key = synvow_auth.read_api_key()
-        model_name = 模型 or "gemini-3.1-flash-2606"
+        model_name = 模型 or DEFAULT_GEMINI_MODEL
 
         single_imgs = [img for img in [image_1, image_2, image_3, image_4, image_5,
                                        image_6, image_7, image_8, image_9, image_10]
@@ -114,11 +126,7 @@ class SynVowGeminiAPI:
                 except Exception as e:
                     outputs[idx] = str(e)
 
-        try:
-            import server
-            server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
-        except Exception:
-            pass
+            synvow_auth.refresh_balance()
         return (outputs,)
 
 
@@ -132,7 +140,7 @@ class SynVowGeminiAPI_TBatch:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "模型": (GEMINI_MODEL_OPTIONS, {"default": "gemini-3.1-flash-2606"}),
+                "模型": (GEMINI_MODEL_OPTIONS, {"default": DEFAULT_GEMINI_MODEL}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
             "optional": {
@@ -159,7 +167,7 @@ class SynVowGeminiAPI_TBatch:
         def _u(v, d=None):
             return v[0] if isinstance(v, list) and v else (v if v is not None else d)
 
-        model_name = _u(模型) or "gemini-3.1-flash-2606"
+        model_name = _u(模型) or DEFAULT_GEMINI_MODEL
         seed_val = _u(seed, 0)
         api_key = synvow_auth.read_api_key()
 
@@ -188,11 +196,7 @@ class SynVowGeminiAPI_TBatch:
                 except Exception as e:
                     outputs[idx] = str(e)
 
-        try:
-            import server
-            server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
-        except Exception:
-            pass
+            synvow_auth.refresh_balance()
         return (outputs,)
 
 

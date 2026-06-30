@@ -1,4 +1,4 @@
-﻿"""
+"""
 视频节点公共工具：图像/视频上传、视频下载
 """
 import requests
@@ -8,7 +8,6 @@ import io
 import numpy as np
 from PIL import Image
 import folder_paths
-from . import synvow_auth
 
 DIRECT_API_BASE = "https://service.synvow.com/api/v1"
 
@@ -87,23 +86,6 @@ def download_video(video_url, task_id, save_path="", prefix="video", max_retries
     return None
 
 
-def upload_video_file(api_key, video_path):
-    url = f"{DIRECT_API_BASE}/api/upload/videos"
-    headers = {"X-API-Key": api_key}
-    fname = os.path.basename(video_path)
-    print(f"[upload] 视频上传: {fname} -> {url}")
-    with open(video_path, "rb") as f:
-        res = requests.post(url, headers=headers, files=[("files", (fname, f, "video/mp4"))], verify=False, timeout=120)
-    data = res.json()
-    print(f"[upload] 视频上传响应: HTTP {res.status_code} | {str(data)[:200]}")
-    if res.status_code != 200 or data.get("code") != 200:
-        raise Exception(f"Video upload failed: {data}")
-    urls = data.get("data", {}).get("urls", [])
-    if not urls:
-        raise Exception(f"Video upload returned no URL: {data}")
-    return urls[0]
-
-
 def upload_images(api_key, image_bytes_list):
     url = f"{DIRECT_API_BASE}/api/upload/images"
     headers = {"X-API-Key": api_key}
@@ -118,24 +100,4 @@ def upload_images(api_key, image_bytes_list):
     if not urls:
         raise Exception(f"Image upload returned no URL: {data}")
     return urls
-
-
-def upload_audio_file(api_key, audio_path):
-    url = f"{DIRECT_API_BASE}/api/upload/audios"
-    headers = {"X-API-Key": api_key}
-    fname = os.path.basename(audio_path)
-    ext = fname.rsplit(".", 1)[-1].lower() if "." in fname else "mp3"
-    mime = {"mp3": "audio/mpeg", "wav": "audio/wav", "ogg": "audio/ogg",
-            "flac": "audio/flac", "aac": "audio/aac", "m4a": "audio/mp4"}.get(ext, "audio/mpeg")
-    print(f"[upload] 音频上传: {fname} -> {url}")
-    with open(audio_path, "rb") as f:
-        res = requests.post(url, headers=headers, files=[("files", (fname, f, mime))], verify=False, timeout=120)
-    data = res.json()
-    print(f"[upload] 音频上传响应: HTTP {res.status_code} | {str(data)[:200]}")
-    if res.status_code != 200 or data.get("code") != 200:
-        raise Exception(f"Audio upload failed: {data}")
-    urls = data.get("data", {}).get("urls", [])
-    if not urls:
-        raise Exception(f"Audio upload returned no URL: {data}")
-    return urls[0]
 

@@ -8,9 +8,12 @@ from xml.etree import ElementTree
 
 from .ymai_llm import (
     DEFAULT_MODEL,
+    add_seed_input,
     chat_completion,
     fetch_models as shared_fetch_models,
     image_to_data_urls,
+    input_hash,
+    strip_seed,
 )
 
 
@@ -120,7 +123,7 @@ class EmotionReactionVideoPromptNode:
     def INPUT_TYPES(cls):
         models = fetch_models()
         default_model = DEFAULT_MODEL if DEFAULT_MODEL in models else models[0]
-        return {
+        return add_seed_input({
             "required": {
                 "模型": (models, {"default": default_model}),
                 "情绪方向": (EMOTION_DIRECTIONS, {"default": EMOTION_DIRECTIONS[0]}),
@@ -140,7 +143,7 @@ class EmotionReactionVideoPromptNode:
             "optional": {
                 "图像": ("IMAGE",),
             },
-        }
+        })
 
     RETURN_TYPES = ("STRING",)
     RETURN_NAMES = ("提示词",)
@@ -148,6 +151,7 @@ class EmotionReactionVideoPromptNode:
     CATEGORY = "💫SynVow_api/api/文本"
     OUTPUT_NODE = True
     API_NODE = False
+    IS_CHANGED = staticmethod(input_hash)
 
     def generate(
         self,
@@ -158,6 +162,7 @@ class EmotionReactionVideoPromptNode:
         图像: Any = None,
         **kwargs: Any,
     ):
+        strip_seed(kwargs)
         补充要求 = str(kwargs.get("自定义、补充要求", ""))
         user_prompt = build_user_prompt(
             情绪方向,
@@ -180,3 +185,12 @@ class EmotionReactionVideoPromptNode:
         if not prompt:
             raise RuntimeError("SynVow LLM 返回了空提示词。")
         return {"ui": {"text": [prompt]}, "result": (prompt,)}
+
+
+NODE_CLASS_MAPPINGS = {
+    "EmotionReactionVideoPromptNode": EmotionReactionVideoPromptNode,
+}
+
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "EmotionReactionVideoPromptNode": "YM-人物情绪",
+}

@@ -9,10 +9,13 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from .ymai_llm import (
     DEFAULT_MODEL,
+    add_seed_input,
     default_model,
     fetch_models,
     image_to_data_urls,
+    input_hash,
     post_chat_completion as shared_post_chat_completion,
+    strip_seed,
 )
 from . import synvow_auth
 
@@ -106,8 +109,8 @@ def _system_prompt() -> str:
     return "你是一名专业 AIGC 故事版提示词导演。只返回 JSON 对象，字段为 storyboard_prompt、video_prompt_list。"
 
 
-def fetch_llm_models(force: bool = False) -> List[str]:
-    return fetch_models(force=force)
+def fetch_llm_models() -> List[str]:
+    return fetch_models()
 
 
 def _default_model(models: List[str]) -> str:
@@ -374,11 +377,12 @@ class YunMengStoryboardPromptBuilder:
     CATEGORY = "💫SynVow_api/api/文本"
     OUTPUT_NODE = True
     API_NODE = False
+    IS_CHANGED = staticmethod(input_hash)
 
     @classmethod
     def INPUT_TYPES(cls):
         models = fetch_llm_models()
-        return {
+        return add_seed_input({
             "required": {
                 "LLM模型": (models, {"default": _default_model(models)}),
                 "脚本": ("STRING", {"multiline": True, "default": ""}),
@@ -393,12 +397,13 @@ class YunMengStoryboardPromptBuilder:
                 "场景参考图": ("IMAGE",),
                 "画风参考图": ("IMAGE",),
             },
-        }
+        })
 
     def _error_result(self, message: str) -> Tuple[str, str]:
         return message, ""
 
     def build_prompts(self, **kwargs):
+        strip_seed(kwargs)
         script = str(kwargs.get("脚本") or "").strip()
         if not script:
             message = "[ERROR] 故事版节点需要填写脚本。"
@@ -436,3 +441,12 @@ class YunMengStoryboardPromptBuilder:
             error = _format_runtime_error(exc, model)
             print(error)
             return self._error_result(error)
+
+
+NODE_CLASS_MAPPINGS = {
+    "YunMengStoryboardPromptBuilder": YunMengStoryboardPromptBuilder,
+}
+
+NODE_DISPLAY_NAME_MAPPINGS = {
+    "YunMengStoryboardPromptBuilder": "YM-故事板",
+}

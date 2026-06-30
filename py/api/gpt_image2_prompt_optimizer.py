@@ -1,4 +1,4 @@
-﻿"""
+"""
 SynVow GPT-Image-2 Prompt Optimizer 节点 V1.5 — 双LLM Schema流程
 """
 
@@ -8,11 +8,12 @@ import requests
 import urllib3
 
 from . import synvow_auth
+from .gemini_synvow import GEMINI_MODEL_OPTIONS
+from .gpt_synvow import GPT_MODEL_OPTIONS
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
-_DIRECT_API_BASE = "https://service.synvow.com/api/v1"
-_CHAT_URL = f"{_DIRECT_API_BASE}/api/models/completions"
+_CHAT_URL = f"{synvow_auth.DIRECT_API_BASE}/api/models/completions"
 
 _SINGLE_PROMPT = (pathlib.Path(__file__).parent.parent / "prompts" / "gpt-image-2_text2image_single_v1.txt").read_text(encoding="utf-8")
 
@@ -85,7 +86,7 @@ class GptImage2PromptOptimizer:
                     {"default": "保留原文"},
                 ),
                 "model": (
-                    ["gpt-5.5-2606", "gpt-5.4-2606", "gemini-3.1-flash-2606", "gemini-3.5-flash-2606", "gemini-3.1-pro-2606", "gemini-3-pro-2606", "gpt-5.5-2605", "gpt-5.4-2605", "gemini-3.1-pro-2605", "gemini-3.1-flash-2605", "gemini-3.5-flash-2605", "gemini-3-pro-2605"],
+                    list(GPT_MODEL_OPTIONS) + list(GEMINI_MODEL_OPTIONS),
                     {"default": "gpt-5.5-2606"},
                 ),
                 "optimize_strength": (
@@ -148,11 +149,7 @@ class GptImage2PromptOptimizer:
             f"payload={user_message}\n"
             f"final_prompt={optimized}"
         )
-        try:
-            import server
-            server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
-        except Exception:
-            pass
+        synvow_auth.refresh_balance()
         return (optimized, debug_info)
 
 

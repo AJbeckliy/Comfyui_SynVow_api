@@ -220,7 +220,6 @@ function saveAuth(data) {
     const token = data.token || data.access_token;
     const refreshToken = data.refresh_token || data.refreshToken;
     const user = data.user || data.user_info || data.profile || data;
-    const nickname = user?.nickname || user?.username || "已登录";
     if (token) localStorage.setItem("sv_token", token);
     if (refreshToken) localStorage.setItem("sv_refresh_token", refreshToken);
     localStorage.setItem("sv_user", JSON.stringify(user));
@@ -364,19 +363,6 @@ async function handleResetPassword() {
 
 export function hideLoginDialog() { if (loginDialog) loginDialog.style.display = "none"; }
 
-function extractWechatCode(input) {
-    const raw = (input || "").trim();
-    if (!raw) return "";
-    if (/^[A-Za-z0-9_-]{8,}$/.test(raw)) return raw;
-    try {
-        const u = new URL(raw);
-        return u.searchParams.get("code") || "";
-    } catch (_) {
-        const matched = raw.match(/[?&]code=([^&#]+)/i);
-        return matched ? decodeURIComponent(matched[1]) : "";
-    }
-}
-
 function hideWechatDialog() {
     if (wechatPollTimer) {
         clearInterval(wechatPollTimer);
@@ -506,27 +492,6 @@ export function showBindPhoneDialog() {
     ]);
 
     document.body.appendChild(bindPhoneDialog);
-}
-
-async function handleWechatCodeLogin(loginInputId) {
-    const raw = getVal(loginInputId) || "";
-    const code = extractWechatCode(raw);
-    if (!code) {
-        showToast("请粘贴授权 code 或回调链接", "error");
-        return;
-    }
-
-    try {
-        const data = await postJson("/auth/wechat/login", { code });
-        const token = data.data?.token || data.data?.access_token;
-        if (data.code === 200 && token) {
-            await finishWechatLoginWithToken(token, data.data?.refresh_token || data.data?.refreshToken || "");
-        } else {
-            showToast(data.message || "微信登录失败", "error");
-        }
-    } catch (e) {
-        showToast("网络错误，请稍后重试", "error");
-    }
 }
 
 function startWechatStatePolling(state, statusNode) {

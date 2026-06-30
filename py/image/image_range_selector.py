@@ -1,5 +1,3 @@
-import torch
-
 class ImageRangeSelector:
     """从图像列表或批次中根据起始和结束索引选择范围内的图像"""
 

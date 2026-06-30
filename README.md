@@ -6,10 +6,18 @@ ComfyUI custom nodes for SynVow integration.
 
 ## Changelog
 
+### 2026-06-30
+- **Code cleanup**: removed unused/duplicate/dead code and unified logic, behavior unchanged
+  - Deleted the dead model-pool filter script, an orphaned backend route, and related dead code
+  - Consolidated duplicated logic (audio/video loaders, pagination styles, time/request helpers)
+- **Models & UI aligned with the frontend**
+  - GPT-Image-2 adds the `gpt-image-2-官方` model; image inputs extended to 9
+  - Gemini model list and default model aligned
+  - Model price dialog switched to a card grid; display name now uses the real model name only
+- **Fixed consumption-record "resource" open**: resolves URLs by model type (image/video/audio), fixing video/audio records that previously showed no link
+
 ### 2026-06-23
-- **Integrated YunMengAI/YMAI prompt nodes** under `💫SynVow_api/api/文本`
-  - Adds `YM-爆款封面`, `YM-故事板`, `YM-人物情绪`, and `YM-角色卡`
-  - Uses the existing SynVow login credentials, model list, LLM endpoint, and balance refresh flow; no extra `RH_API_KEY` setup is required
+- **Integrated YMAI prompt nodes**: adds `YM-爆款封面`, `YM-故事板`, `YM-人物情绪`, `YM-角色卡`; reuses SynVow login and endpoints, no extra setup needed
 
 ### 2026-06-04
 - **Added GPT-image2 long-scroll detail page workflow nodes** (`💫SynVow_api/api/文本`)

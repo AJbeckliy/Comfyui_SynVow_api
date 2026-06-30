@@ -5,13 +5,11 @@ import json
 import os
 import requests
 
+from .gemini_synvow import DEFAULT_GEMINI_MODEL, GEMINI_MODEL_OPTIONS
 from .media_common import upload_image as _upload_image, DIRECT_API_BASE as _DIRECT_API_BASE
 
 _CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 _PROMPTS_DIR = os.path.join(_CURRENT_DIR, "..", "prompts")
-
-_MODEL_OPTIONS = ["gemini-3.1-flash-2606", "gemini-3.5-flash-2606", "gemini-3.1-pro-2606", "gemini-3-pro-2606", "gemini-3.1-pro-2605", "gemini-3.1-flash-2605", "gemini-3.5-flash-2605", "gemini-3-pro-2605"]
-
 
 def _load_prompt(filename):
     prompt_file = os.path.join(_PROMPTS_DIR, filename)
@@ -58,7 +56,7 @@ class EcommercePromptGenerator:
     def INPUT_TYPES(s):
         return {
             "required": {
-                "模型": (_MODEL_OPTIONS, {"default": "gemini-3.1-flash-2606"}),
+                "模型": (GEMINI_MODEL_OPTIONS, {"default": DEFAULT_GEMINI_MODEL}),
                 "product_type": ("STRING", {
                     "multiline": False,
                     "default": "美妆粉底液",
@@ -175,7 +173,7 @@ class EcommercePromptGenerator:
     def generate_prompts_with_vision(self, 模型, product_type, selling_points, design_style, scene_preference, output_language, seed, prompt_count, product_image_1=None, product_image_2=None, product_image_3=None, product_image_4=None, product_image_5=None, product_image_6=None, product_image_7=None, product_image_8=None, ref_image_1=None, ref_image_2=None, ref_image_3=None, ref_image_4=None):
         from . import synvow_auth
         api_key = synvow_auth.read_api_key()
-        model_name = 模型 or "gemini-3.1-flash-2606"
+        model_name = 模型 or DEFAULT_GEMINI_MODEL
 
         product_urls = self._collect_image_urls(
             [product_image_1, product_image_2, product_image_3, product_image_4,
@@ -266,11 +264,7 @@ class EcommercePromptGenerator:
             call_idx += 1
         if not collected:
             err = last_error or "未知错误"
-            try:
-                import server
-                server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
-            except Exception:
-                pass
+            synvow_auth.refresh_balance()
             return ([f"[GENERATION_FAILED] {err}"], 0, err)
 
         collected = collected[:target_count]
@@ -279,11 +273,7 @@ class EcommercePromptGenerator:
             "image_count": len(image_urls),
             "collected_count": len(collected),
         }
-        try:
-            import server
-            server.PromptServer.instance.send_sync("synvow_refresh_balance", {})
-        except Exception:
-            pass
+        synvow_auth.refresh_balance()
         return (collected, len(collected), json.dumps(debug_payload, ensure_ascii=False))
 
 
