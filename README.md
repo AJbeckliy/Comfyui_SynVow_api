@@ -1,10 +1,20 @@
 ﻿# Comfyui_SynVow_api
 
-ComfyUI custom nodes for SynVow integration.
+ComfyUI custom nodes for SynVow integration, including SynVow account login, image/video generation, GPT-Image-2 workflows, prompt tools, and transparent PNG asset generation.
+
+ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视频生成、GPT-Image-2 工作流、提示词工具和透明 PNG 素材生成。
 
 ---
 
 ## Changelog
+
+### 2026-07-01
+- **Added transparent PNG asset workflow nodes**
+  - `SynVow 透明素材提示词生成器`: generates reusable transparent asset prompts for ecommerce elements, UI icon sets, game props, holiday campaign assets, stickers and reference-image layer splitting
+  - `SynVow GPT-Image-2 Alpha (T_batch)`: URL-only GPT-Image-2 Alpha node for transparent PNG generation, with prompt-list batching, reference image inputs and cancel-polling support
+  - `SynVow 透明PNG保存预览`: saves original image URLs as RGBA PNG files to preserve the real alpha channel
+  - Added transparent asset prompt config under `py/prompts`
+  - Added frontend cleanup/cancel helpers for the new Alpha and transparent PNG save nodes
 
 ### 2026-06-30
 - **Code cleanup**: removed unused/duplicate/dead code and unified logic, behavior unchanged
@@ -105,6 +115,7 @@ ComfyUI custom nodes for SynVow integration.
 | SynVow GPT-Image-2 (T_batch) | gpt-image-2 | Batch text-to-image |
 | SynVow GPT-Image-2 (I_batch) | gpt-image-2 | Batch image-to-image |
 | SynVow GPT-Image-2 (T_I_batch) | gpt-image-2 | Batch T2I + I2I |
+| SynVow GPT-Image-2 Alpha (T_batch) | gpt-image-2 | URL-only transparent PNG generation with prompt-list batching |
 
 ### 💫SynVow_api/api/Video
 
@@ -126,6 +137,7 @@ ComfyUI custom nodes for SynVow integration.
 | GPT-image2详情页结构 | gemini-* | Build per-screen page structure blueprints from narrative JSON |
 | GPT-image2详情页批量提示词 | gemini-* | Generate batch GPT-image2 prompts as `STRING[]` |
 | 详情页图像列表顺序拼接长图 | — | Concatenate generated detail-page image list vertically |
+| SynVow 透明素材提示词生成器 | gemini-* | Generate transparent PNG asset prompts and asset plans |
 
 #### GPT-image2 long-scroll detail page workflow
 
@@ -143,6 +155,22 @@ Recommended connection order:
 4. `详情页图像列表顺序拼接长图`
    - Input: generated `IMAGE` list.
    - Output: one long image; images are resized to the first slice width and concatenated vertically in list order.
+
+#### Transparent PNG asset workflow
+
+Recommended connection order:
+
+1. `SynVow 透明素材提示词生成器`
+   - Choose `scene_preset`, set `asset_count`, and write the asset direction in `custom_prompt`.
+   - Supports scenes such as `通用透明素材`, `参考图分层拆图`, `电商素材包`, `UI图标套装`, `人物/IP贴纸`, `周边贴纸素材`, `游戏道具素材`, and `节日活动素材`.
+   - Use `规则预设(不调用LLM)` for stable preset planning, or `自动规划(LLM)` when the node should plan asset names and style consistency.
+2. `SynVow GPT-Image-2 Alpha (T_batch)`
+   - Connect `prompts_list` from the prompt generator.
+   - Leave image inputs empty for text-to-image assets, or connect reference images for reference-image layer splitting.
+   - Outputs original `image_urls` instead of ComfyUI `IMAGE` tensors to avoid losing alpha.
+3. `SynVow 透明PNG保存预览`
+   - Connect `image_urls`.
+   - Downloads the original generated image URLs and saves RGBA PNG files with the real alpha channel.
 
 ### 💫SynVow_api/api/文本 - YM prompt nodes
 
@@ -175,6 +203,7 @@ Recommended connection order:
 | 图像范围选择器 | — | Select a range of images from image list by index |
 | 图像列表组合器 | — | Compose up to 10 images into an image list |
 | 图像加载器 | — | Load image with filename, path and mask output |
+| SynVow 透明PNG保存预览 | — | Save original image URLs as RGBA PNG files and preview the result |
 
 ### 💫SynVow_api/Utils
 
