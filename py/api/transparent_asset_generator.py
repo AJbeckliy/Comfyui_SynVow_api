@@ -16,7 +16,7 @@ from .ymai_llm import chat_completion, default_model, fetch_models, image_to_dat
 
 
 CATEGORY = "💫SynVow_api/api/文本"
-NODE_VERSION = "2026-07-01-transparent-assets-prompts-only-v9"
+NODE_VERSION = "2026-07-02-transparent-assets-auto-style-v11"
 PROMPTS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "..", "prompts"))
 PROMPT_CONFIG_PATH = os.path.join(PROMPTS_DIR, "transparent_asset_generator_prompts.json")
 CHARACTER_STICKER_CONSISTENCY_LOCK = (
@@ -27,6 +27,15 @@ CHARACTER_STICKER_CONSISTENCY_LOCK = (
     "Only the expression, small gesture or small prop may change. "
     "Do not switch between 2D anime, 3D toy, semi-realistic portrait, flat vector, different eye styles "
     "or different rendering materials."
+)
+STYLE_REFERENCE_PRIORITY_LOCK = (
+    "Style reference image priority: when a style_reference_image is provided, it is the highest-priority "
+    "source for the art direction. Extract and follow its line quality, stroke thickness, edge roughness, "
+    "shape language, color palette, fill method, texture, material, detail density, camera/perspective, "
+    "lighting, shadow behavior, and overall rendering style. Use the product_or_reference_image only for "
+    "subject identity, content, or layer structure. Do not let the scene preset, internal scene defaults, "
+    "or default sticker/icon style override the style reference. Do not copy the style reference subject "
+    "unless the user explicitly asks for that subject."
 )
 
 
@@ -89,6 +98,25 @@ LAYOUT_SPLIT_LAYER_NAMES = [
 ]
 
 
+def _auto_style_controls(scene: str) -> Tuple[str, str]:
+    defaults = {
+        LAYOUT_SPLIT_SCENE: ("保守", "丰富"),
+        GENERIC_SCENE: ("标准", "适中"),
+        "电商素材包": ("保守", "丰富"),
+        "UI图标套装": ("标准", "适中"),
+        "人物/IP贴纸": ("保守", "适中"),
+        "周边贴纸素材": ("标准", "适中"),
+        "游戏道具素材": ("高表现", "丰富"),
+        "节日活动素材": ("标准", "丰富"),
+    }
+    style_strength, complexity = defaults.get(scene, (DEFAULT_STYLE_STRENGTH, DEFAULT_COMPLEXITY))
+    if style_strength not in STYLE_STRENGTHS:
+        style_strength = DEFAULT_STYLE_STRENGTH
+    if complexity not in COMPLEXITIES:
+        complexity = DEFAULT_COMPLEXITY
+    return style_strength, complexity
+
+
 def _unpack(value):
     return value[0] if isinstance(value, list) else value
 
@@ -98,6 +126,11 @@ def _safe_int(value, default=1):
         return int(str(value).strip())
     except Exception:
         return default
+
+
+def _is_rule_planner_mode(value: Any) -> bool:
+    text = str(value or "")
+    return ("规则" in text and "不调用" in text) or ("rule" in text.lower() and "llm" in text.lower())
 
 
 def _stable_fingerprint(**kwargs):
@@ -141,7 +174,44 @@ def _normalize_style_prompt(value: Any) -> str:
     return ""
 
 
-def _layout_split_fallback_items(count: int, custom_prompt: str = "") -> List[Dict[str, str]]:
+def _normalize_source_image_description(value: Any) -> str:
+    if not isinstance(value, dict):
+        return ""
+    keys = (
+        "source_image_description",
+        "reference_image_description",
+        "full_image_description",
+        "image_description",
+        "visual_description",
+    )
+    for key in keys:
+        text = value.get(key)
+        if isinstance(text, str) and text.strip():
+            cleaned = re.sub(r"\s+", " ", text).strip()
+            return cleaned[:2400]
+    return ""
+
+
+def _reference_image_role_notes(product_image=None, style_image=None) -> List[str]:
+    notes: List[str] = []
+    image_index = 1
+    if product_image is not None:
+        notes.append(
+            f"Image {image_index}: product_or_reference_image. Use this image only for subject identity, "
+            "content, visible layers, product/person structure, or source objects."
+        )
+        image_index += 1
+    if style_image is not None:
+        notes.append(
+            f"Image {image_index}: style_reference_image. This image has the highest priority for art direction. "
+            "Extract line quality, stroke thickness, edge roughness, shape language, palette, fill method, "
+            "texture, material, detail density, perspective, lighting and shadow behavior. Apply this extracted "
+            "style to every planned asset while changing only the requested subject/expression/gesture/function."
+        )
+    return notes
+
+
+def _layout_split_fallback_items(count: int, custom_prompt: str = "", suppress_style: bool = False) -> List[Dict[str, str]]:
     style_direction = _style_direction_from_custom_prompt(LAYOUT_SPLIT_SCENE, custom_prompt, count)
     names = LAYOUT_SPLIT_LAYER_NAMES[:max(1, min(count, len(LAYOUT_SPLIT_LAYER_NAMES)))]
     result = []
@@ -149,12 +219,12 @@ def _layout_split_fallback_items(count: int, custom_prompt: str = "") -> List[Di
         result.append({
             "name": name,
             "description": name,
-            "prompt": _single_custom_item_prompt(LAYOUT_SPLIT_SCENE, name, style_direction, []),
+            "prompt": _single_custom_item_prompt(LAYOUT_SPLIT_SCENE, name, style_direction, [], suppress_style=suppress_style),
         })
     return result
 
 
-def _fallback_items(scene: str, count: int, custom_prompt: str = "") -> List[Dict[str, str]]:
+def _fallback_items(scene: str, count: int, custom_prompt: str = "", suppress_style: bool = False) -> List[Dict[str, str]]:
     if scene == GENERIC_SCENE:
         base = custom_prompt.strip() or "transparent design asset"
         result = []
@@ -163,11 +233,11 @@ def _fallback_items(scene: str, count: int, custom_prompt: str = "") -> List[Dic
             result.append({
                 "name": f"通用透明素材_{index:02d}",
                 "description": subject,
-                "prompt": _single_custom_item_prompt(scene, subject, "", []),
+                "prompt": _single_custom_item_prompt(scene, subject, "", [], suppress_style=suppress_style),
             })
         return result
     if scene == LAYOUT_SPLIT_SCENE:
-        return _layout_split_fallback_items(count, custom_prompt)
+        return _layout_split_fallback_items(count, custom_prompt, suppress_style=suppress_style)
 
     custom_names = _extract_custom_item_names(scene, custom_prompt, count)
     if custom_names:
@@ -179,7 +249,7 @@ def _fallback_items(scene: str, count: int, custom_prompt: str = "") -> List[Dic
             result.append({
                 "name": item_name,
                 "description": item_name,
-                "prompt": _single_custom_item_prompt(scene, item_name, style_direction, other_names),
+                "prompt": _single_custom_item_prompt(scene, item_name, style_direction, other_names, suppress_style=suppress_style),
             })
         if len(result) >= count:
             return result[:count]
@@ -192,7 +262,7 @@ def _fallback_items(scene: str, count: int, custom_prompt: str = "") -> List[Dic
         result.append({
             "name": name,
             "description": name,
-            "prompt": _single_custom_item_prompt(scene, name, style_direction, []),
+            "prompt": _single_custom_item_prompt(scene, name, style_direction, [], suppress_style=suppress_style),
         })
     return result
 
@@ -202,7 +272,7 @@ def _extract_custom_item_names(scene: str, custom_prompt: str, count: int) -> Li
     if not text or scene == GENERIC_SCENE:
         return []
 
-    match = re.search(r"(?:包含|包括|含有|分别是|需要|拆出|提取|:|：)(.+)", text)
+    match = re.search(r"(?:包含|包括|含有|要有|分别是|需要|拆出|提取|:|：)(.+)", text)
     if match:
         source = match.group(1)
     else:
@@ -372,8 +442,9 @@ def _layout_split_item_prompt(item_name: str, style_direction: str) -> str:
     style_text = f" User split instruction: {style_direction}." if style_direction else ""
     common = (
         "Use the connected reference image as the only source of truth. "
-        "Do not invent new props, mascots, icons, food, stickers, text, or unrelated design assets. "
-        "Preserve the reference image's visual identity, placement logic, color relationship, and commercial poster style."
+        "Do not redesign, repaint, upscale, stylize, simplify, enhance, or invent anything. "
+        "Do not add new props, mascots, icons, food, stickers, text, logos, background, decorations, or unrelated design assets. "
+        "Preserve the original canvas relationship, element position, element scale, material texture, lighting direction, shadows, color relationship, and visible detail as much as possible."
     )
     if "文字" in item_name or "Logo" in item_name or "logo" in item_name.lower():
         return (
@@ -400,8 +471,9 @@ def _layout_split_item_prompt(item_name: str, style_direction: str) -> str:
     if any(word in item_name for word in ("装饰", "元素", "光影", "氛围", "其他")):
         return (
             "Recreate only the visible decorative foreground elements from the reference image as one transparent overlay layer. "
-            "This can include existing stickers, mascots, props, sparkles, drops, ribbons, light accents, badges, or small decoration elements that are actually visible in the reference. "
-            "Do not include text/logo, the main person, main product, or background plate. Do not add new decorations that are not in the reference. "
+            "Include only real decorative graphics, effects, light accents, splashes, particles, stickers, badges, or small foreground elements that are explicitly visible in the reference image. "
+            "If the source image has no visible decorative foreground elements, output an empty transparent layer. "
+            "Do not include text/logo, the main person, main product, background plate, or any guessed decoration. "
             f"{common}{style_text}"
         )
     return (
@@ -410,8 +482,14 @@ def _layout_split_item_prompt(item_name: str, style_direction: str) -> str:
     )
 
 
-def _single_custom_item_prompt(scene: str, item_name: str, style_direction: str, other_names: List[str]) -> str:
-    style_text = f" Style direction: {style_direction}." if style_direction else ""
+def _single_custom_item_prompt(
+    scene: str,
+    item_name: str,
+    style_direction: str,
+    other_names: List[str],
+    suppress_style: bool = False,
+) -> str:
+    style_text = f" Style direction: {style_direction}." if style_direction and not suppress_style else ""
     one_asset_rule = (
         "This prompt is for the current asset only. "
         "The output canvas must contain exactly one object only."
@@ -431,12 +509,22 @@ def _single_custom_item_prompt(scene: str, item_name: str, style_direction: str,
     if scene == "游戏道具素材":
         return f"Generate exactly one standalone game asset icon: {item_name}. {one_asset_rule} Only this single prop or item, no inventory grid, no item sheet, no full game scene.{style_text}"
     if scene == "人物/IP贴纸":
+        if suppress_style:
+            return (
+                f"Generate exactly one character/emote sticker asset: {item_name}. "
+                f"{one_asset_rule} Use the subject/reference image only for broad identity and content cues. "
+                "Use the style_reference_image as the only source for visual style; do not add any written style assumptions. "
+                "Show one clear requested expression, gesture, or small prop only. "
+                "Avoid realistic human likeness, celebrity likeness, photoreal face, complex full-body anatomy, detailed hands, multiple characters, "
+                "sticker sheet, multiple poses in one image, or mockup scene."
+            )
         return (
-            f"Generate exactly one simple original cartoon mascot/emote sticker asset: {item_name}. "
-            f"{one_asset_rule} Use one non-real-person mascot head, bust, or simple rounded character with one clear expression or gesture. "
-            "If a reference image is provided, convert it into one consistent original chibi sticker character; "
-            "preserve only general hair, face and color cues, not a photoreal portrait. "
-            f"{CHARACTER_STICKER_CONSISTENCY_LOCK} "
+            f"Generate exactly one original character/emote sticker asset: {item_name}. "
+            f"{one_asset_rule} Use one bust, head, simplified mascot, or simple character with one clear expression or gesture. "
+            "If a subject reference image is provided, preserve only the broad identity cues needed by the user. "
+            "When a style reference image is provided, the style reference controls the rendering style completely, including whether the result is monochrome, flat, rough, minimal, hand-drawn, or non-chibi. "
+            "Do not force anime eyes, chibi proportions, colorful hair, skin-tone rendering, glossy material, gradients, or cute-Q details when they conflict with the style reference. "
+            "Keep character consistency across outputs by preserving the same simplified face structure, silhouette, line weight, camera angle and detail level. "
             "Avoid realistic human likeness, celebrity likeness, photoreal face, complex full-body anatomy, detailed hands, multiple characters, "
             "sticker sheet, multiple poses in one image, or mockup scene."
             f"{style_text}"
@@ -466,12 +554,28 @@ def _prompt_mentions_multi_asset(prompt: str) -> bool:
     return any(hint in lower for hint in _MULTI_ASSET_PROMPT_HINTS)
 
 
-def _enforce_single_asset_prompt(scene: str, name: str, prompt: str, custom_prompt: str, count: int) -> str:
+def _enforce_single_asset_prompt(
+    scene: str,
+    name: str,
+    prompt: str,
+    custom_prompt: str,
+    count: int,
+    suppress_style: bool = False,
+) -> str:
     style_direction = _style_direction_from_custom_prompt(scene, custom_prompt, count)
-    single_prompt = _single_custom_item_prompt(scene, name, style_direction, [])
-    if scene == LAYOUT_SPLIT_SCENE:
-        return single_prompt
+    single_prompt = _single_custom_item_prompt(scene, name, style_direction, [], suppress_style=suppress_style)
     raw_prompt = re.sub(r"\s+", " ", str(prompt or "")).strip()
+    if scene == LAYOUT_SPLIT_SCENE:
+        if not raw_prompt:
+            return single_prompt
+        return (
+            f"{raw_prompt}. "
+            "Use the connected reference image and source_image_description as the only source of truth. "
+            "Reconstruct only this requested visible layer. Do not add standard category examples, decorative guesses, or elements that are not explicitly visible in the reference image. "
+            "Exclude all other layers from this output."
+        )
+    if suppress_style:
+        return single_prompt
     if not raw_prompt or _prompt_mentions_multi_asset(raw_prompt):
         return single_prompt
     return (
@@ -481,10 +585,7 @@ def _enforce_single_asset_prompt(scene: str, name: str, prompt: str, custom_prom
     )
 
 
-def _normalize_items(value: Any, count: int, scene: str, custom_prompt: str = "") -> List[Dict[str, str]]:
-    if scene == LAYOUT_SPLIT_SCENE:
-        return _layout_split_fallback_items(count, custom_prompt)
-
+def _normalize_items(value: Any, count: int, scene: str, custom_prompt: str = "", suppress_style: bool = False) -> List[Dict[str, str]]:
     if isinstance(value, dict):
         items = value.get("items", [])
     elif isinstance(value, list):
@@ -508,11 +609,11 @@ def _normalize_items(value: Any, count: int, scene: str, custom_prompt: str = ""
             normalized.append({
                 "name": name,
                 "description": description,
-                "prompt": _enforce_single_asset_prompt(scene, name, prompt, custom_prompt, count),
+                "prompt": _enforce_single_asset_prompt(scene, name, prompt, custom_prompt, count, suppress_style=suppress_style),
             })
 
     if len(normalized) < count:
-        fallback = _fallback_items(scene, count, custom_prompt)
+        fallback = _fallback_items(scene, count, custom_prompt, suppress_style=suppress_style)
         normalized.extend(fallback[len(normalized):count])
     return normalized[:count]
 
@@ -533,7 +634,7 @@ def _plan_with_llm(
     llm_model: str,
     product_image=None,
     style_image=None,
-) -> Tuple[List[Dict[str, str]], str, str]:
+) -> Tuple[List[Dict[str, str]], str, str, str]:
     image_urls: List[str] = []
     if product_image is not None:
         image_urls.extend(image_to_data_urls(product_image))
@@ -545,12 +646,29 @@ def _plan_with_llm(
         "asset_count": count,
         "scene_strategy": SCENE_HINTS.get(scene, ""),
         "user_direction": custom_prompt or "",
-        "style_strength": style_strength,
-        "visual_complexity": complexity,
+        "auto_scene_rendering_strategy": {
+            "fidelity": style_strength,
+            "detail": complexity,
+            "source": "scene_preset_auto_default",
+        },
         "reference_images": {
             "product_or_ip_reference": product_image is not None,
             "style_reference": style_image is not None,
         },
+        "reference_image_role_notes": _reference_image_role_notes(product_image, style_image),
+        "source_image_description_required": product_image is not None,
+        "source_image_analysis_workflow": (
+            "If product_or_ip_reference is true, first write source_image_description as a faithful full-scene visual description of the connected reference image before planning layers or assets. "
+            "Describe the real visible content, composition, camera angle, subject pose, silhouette, materials, surface texture, lighting direction, shadows, color relationships, text/logo placement, background structure, edge relationships, and image quality. "
+            "For reference layer split mode, every item prompt must use this source_image_description as the source of truth and then specify the exact layer to reconstruct. Do not plan or describe objects that are not visible in the reference image."
+        ),
+        "style_reference_priority": (
+            "If style_reference is true, the style_reference_image is the highest-priority art-direction source. "
+            "The returned style_prompt must explicitly describe the style reference image's linework, palette, "
+            "fill/texture/material, detail density, camera/perspective, lighting, shadow behavior and shape language. "
+            "Scene preset and internal scene defaults are secondary controls and must not override the style reference."
+            if style_image is not None else ""
+        ),
         "requirements": _config_list("planner_requirements", [
             "Plan exactly asset_count items.",
             "Each item must be reusable as a transparent PNG component.",
@@ -568,34 +686,95 @@ def _plan_with_llm(
         timeout=240,
     )
     parsed = _extract_json_object(content)
-    return _normalize_items(parsed, count, scene, custom_prompt), content, _normalize_style_prompt(parsed)
+    return (
+        _normalize_items(parsed, count, scene, custom_prompt, suppress_style=style_image is not None),
+        content,
+        _normalize_style_prompt(parsed),
+        _normalize_source_image_description(parsed),
+    )
+
+
+def _explicit_style_override(custom_prompt: str) -> str:
+    text = str(custom_prompt or "").lower()
+    has_monochrome = any(token in text for token in ("黑白", "单色", "monochrome", "black and white", "black-and-white"))
+    has_line_style = any(token in text for token in ("粗线", "粗线条", "线稿", "简笔", "极简", "minimal", "line art", "bold line"))
+    if has_monochrome or has_line_style:
+        parts = []
+        if has_monochrome:
+            parts.append(
+                "Hard user style lock: use a black-and-white or monochrome palette only, with no skin-tone fill, no colored hair, no colorful clothing, no blush color, and no decorative color accents."
+            )
+        if has_line_style:
+            parts.append(
+                "Hard user style lock: use bold simple line-art, minimal flat shapes, low detail density, rough hand-drawn edges if appropriate, and no gradients, glossy rendering, 3D volume, anime eye detail, or cute-Q polished finish."
+            )
+        return " ".join(parts)
+    return ""
 
 
 def _style_lock(scene: str, style_strength: str, complexity: str, custom_prompt: str, count: int = 0) -> str:
     strength_map = _config_dict("style_strength_map")
     complexity_map = _config_dict("complexity_map")
     style_direction = _style_direction_from_custom_prompt(scene, custom_prompt, count)
-    return (
+    explicit_override = _explicit_style_override(custom_prompt)
+    rendering_hint = " ".join(
+        part for part in (
+            strength_map.get(style_strength, style_strength),
+            complexity_map.get(complexity, complexity),
+        ) if part
+    )
+    base = (
         f"Shared visual style: {SCENE_HINTS.get(scene, '')} "
-        f"Style strength: {strength_map.get(style_strength, style_strength)}. "
-        f"Complexity: {complexity_map.get(complexity, complexity)}. "
+        f"Scene rendering strategy: {rendering_hint}. "
         f"User direction: {style_direction or 'follow the scene preset'}."
     )
+    return f"{base} {explicit_override}".strip()
 
 
-def _compose_style_lock(base_style: str, planner_style_prompt: str) -> str:
+def _compose_style_lock(
+    base_style: str,
+    planner_style_prompt: str,
+    has_style_reference: bool = False,
+    reference_role_notes: List[str] = None,
+) -> str:
     base_style = str(base_style or "").strip()
     planner_style_prompt = str(planner_style_prompt or "").strip()
-    if not planner_style_prompt:
-        return base_style
-    return (
-        f"{base_style}\n"
-        f"Global style prompt generated by planner, apply identically to every output: {planner_style_prompt}\n"
-        "Do not reinterpret or vary this global style prompt between assets; only change the requested asset subject, expression, gesture or function."
-    )
+    if has_style_reference:
+        parts = [
+            "Style pass-through mode: a style_reference_image is connected. Ignore all written preset styles, internal scene defaults, default character/icon/sticker styles, and LLM-generated style descriptions. Use the connected style_reference_image as the only visual style source."
+        ]
+        parts.append(STYLE_REFERENCE_PRIORITY_LOCK)
+        if reference_role_notes:
+            parts.append(
+                "When reference images are attached to the image generation request, interpret them in this role order: "
+                + " ".join(str(note).strip() for note in reference_role_notes if str(note).strip())
+            )
+        parts.append(
+            "Subject/product reference images are content-only. The style reference image controls all linework, palette, fill, material, texture, detail density, perspective, lighting and shadow behavior."
+        )
+        return "\n".join(part for part in parts if part)
+    parts = [base_style] if base_style else []
+    if planner_style_prompt:
+        parts.append(f"Global style prompt generated by planner, apply identically to every output: {planner_style_prompt}")
+        parts.append(
+            "Do not reinterpret or vary this global style prompt between assets; only change the requested asset subject, expression, gesture or function."
+        )
+    return "\n".join(part for part in parts if part)
 
 
-def _scene_generation_rules(scene: str) -> str:
+def _scene_generation_rules(scene: str, style_pass_through: bool = False) -> str:
+    if style_pass_through:
+        if scene == "人物/IP贴纸":
+            return (
+                "One character/emote sticker asset only. One output must contain one subject with one requested expression, gesture or small prop only. "
+                "Use subject/reference image for broad identity and content only. Do not define or add any written visual style; follow the style_reference_image exclusively. "
+                "No realistic human likeness, celebrity likeness, multiple characters, sticker sheet, contact sheet, multiple poses, background scene, or text unless the user requested a blank sign."
+            )
+        return (
+            "One reusable transparent asset only. One output must contain exactly one requested subject/object only. "
+            "Do not define or add any written visual style; follow the style_reference_image exclusively. "
+            "No asset sheet, grid, contact sheet, collage, full poster, UI screen, full scene, extra objects, or visible text unless explicitly requested."
+        )
     rules = _config_dict("scene_generation_rules")
     return str(rules.get(scene) or rules.get(GENERIC_SCENE) or "Generate one transparent reusable asset.")
 
@@ -621,12 +800,48 @@ def _transparent_constraints_for_item(scene: str, item_name: str) -> str:
     )
 
 
+def _source_image_context_for_prompt(scene: str, source_image_description: str) -> str:
+    text = re.sub(r"\s+", " ", str(source_image_description or "")).strip()
+    if not text:
+        return ""
+    if scene == LAYOUT_SPLIT_SCENE:
+        return (
+            "Source image full visual description. Treat this as the source of truth for layer reconstruction: "
+            f"{text}"
+        )
+    return f"Reference image visual description: {text}"
+
+
+def _is_text_logo_layer_item(item: Dict[str, str]) -> bool:
+    layer_text = " ".join(
+        str(item.get(key, "") or "")
+        for key in ("name", "layer", "layer_name", "split_layer")
+    ).lower()
+    return any(
+        token in layer_text
+        for token in ("文字", "文案", "标题", "logo", "标志", "typography", "text", "brand mark")
+    )
+
+
+def _style_lock_for_item(scene: str, item: Dict[str, str], style_lock: str) -> str:
+    if scene == LAYOUT_SPLIT_SCENE and _is_text_logo_layer_item(item):
+        return (
+            "Text/logo layer reconstruction mode: preserve the exact visible typography and logo layout from the reference image. "
+            "Match the original text content, line breaks, relative positions, alignment, scale relationship, font weight, color, and logo mark geometry as closely as possible. "
+            "Do not apply photography, fur, product material, lighting, texture, depth of field, or scene-rendering style to this text/logo layer. "
+            "Output only flat text/logo marks on real alpha transparency."
+        )
+    return style_lock
+
+
 def _build_generation_prompt(
     scene: str,
     item: Dict[str, str],
     style_lock: str,
     index: int,
     count: int,
+    style_pass_through: bool = False,
+    source_image_description: str = "",
 ) -> str:
     template_key = "layout_split_generation_prompt_template" if scene == LAYOUT_SPLIT_SCENE else "generation_prompt_template"
     template = PROMPT_CONFIG.get(template_key)
@@ -649,8 +864,9 @@ def _build_generation_prompt(
         "count": count,
         "item_prompt": item.get("prompt", "").strip(),
         "item_name": item.get("name", "").strip(),
-        "style_lock": style_lock,
-        "scene_rule": _scene_generation_rules(scene),
+        "style_lock": _style_lock_for_item(scene, item, style_lock),
+        "source_image_context": _source_image_context_for_prompt(scene, source_image_description),
+        "scene_rule": _scene_generation_rules(scene, style_pass_through=style_pass_through),
         "transparent_constraints": _transparent_constraints_for_item(scene, item.get("name", "")),
     }
     rendered = []
@@ -692,8 +908,6 @@ class SynVowTransparentAssetPromptGenerator:
                 "asset_count": (ASSET_COUNTS, {"default": DEFAULT_ASSET_COUNT}),
                 "custom_prompt": ("STRING", {"multiline": True, "default": ""}),
                 "llm_model": (llm_models, {"default": default_model(llm_models)}),
-                "style_strength": (STYLE_STRENGTHS, {"default": DEFAULT_STYLE_STRENGTH}),
-                "complexity": (COMPLEXITIES, {"default": DEFAULT_COMPLEXITY}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
             "optional": {
@@ -721,36 +935,33 @@ class SynVowTransparentAssetPromptGenerator:
         asset_count,
         custom_prompt,
         llm_model,
-        style_strength,
-        complexity,
         seed,
         product_or_reference_image=None,
         style_reference_image=None,
+        **_legacy_inputs,
     ):
         scene = _unpack(scene_preset) or DEFAULT_SCENE
         planner_mode = _unpack(planner_mode) or DEFAULT_PLANNER_MODE
         count = _safe_int(_unpack(asset_count), _safe_int(DEFAULT_ASSET_COUNT, 6))
         custom_prompt = str(_unpack(custom_prompt) or "").strip()
         llm_model = _unpack(llm_model) or default_model(fetch_models())
-        style_strength = _unpack(style_strength) or DEFAULT_STYLE_STRENGTH
-        complexity = _unpack(complexity) or DEFAULT_COMPLEXITY
         product_or_reference_image = _unpack(product_or_reference_image)
         style_reference_image = _unpack(style_reference_image)
+        style_pass_through = style_reference_image is not None
+        style_strength, complexity = _auto_style_controls(scene)
 
         if scene == GENERIC_SCENE and not custom_prompt:
             raise RuntimeError("通用透明素材模式需要填写 custom_prompt。")
 
         llm_debug = ""
         planner_style_prompt = ""
-        if scene == LAYOUT_SPLIT_SCENE:
-            items = _fallback_items(scene, count, custom_prompt)
-            plan_source = "layer_preset"
-        elif scene == GENERIC_SCENE or planner_mode == "规则预设(不调用LLM)":
-            items = _fallback_items(scene, count, custom_prompt)
-            plan_source = "rule"
+        source_image_description = ""
+        if (scene == LAYOUT_SPLIT_SCENE and _is_rule_planner_mode(planner_mode)) or scene == GENERIC_SCENE or _is_rule_planner_mode(planner_mode):
+            items = _fallback_items(scene, count, custom_prompt, suppress_style=style_pass_through)
+            plan_source = "layer_preset" if scene == LAYOUT_SPLIT_SCENE else "rule"
         else:
             try:
-                items, llm_debug, planner_style_prompt = _plan_with_llm(
+                items, llm_debug, planner_style_prompt, source_image_description = _plan_with_llm(
                     scene,
                     count,
                     custom_prompt,
@@ -763,13 +974,22 @@ class SynVowTransparentAssetPromptGenerator:
                 plan_source = f"llm:{llm_model}"
             except Exception as exc:
                 print(f"[TransparentAssetPrompts] LLM 规划失败，使用规则预设: {exc}")
-                items = _fallback_items(scene, count, custom_prompt)
+                items = _fallback_items(scene, count, custom_prompt, suppress_style=style_pass_through)
                 plan_source = f"rule_fallback:{exc}"
 
         base_style = _style_lock(scene, style_strength, complexity, custom_prompt, count)
-        style = _compose_style_lock(base_style, planner_style_prompt)
+        reference_role_notes = _reference_image_role_notes(product_or_reference_image, style_reference_image)
+        style = _compose_style_lock(base_style, planner_style_prompt, style_pass_through, reference_role_notes)
         prompts = [
-            _build_generation_prompt(scene, item, style, index, len(items))
+            _build_generation_prompt(
+                scene,
+                item,
+                style,
+                index,
+                len(items),
+                style_pass_through=style_pass_through,
+                source_image_description=source_image_description,
+            )
             for index, item in enumerate(items, start=1)
         ]
 
@@ -779,10 +999,17 @@ class SynVowTransparentAssetPromptGenerator:
             "plan_source": plan_source,
             "prompt_config_path": PROMPT_CONFIG_PATH,
             "asset_count": len(items),
-            "style_strength": style_strength,
-            "complexity": complexity,
-            "style_prompt_source": "llm" if planner_style_prompt else "rule",
-            "style_prompt": planner_style_prompt or base_style,
+            "scene_rendering_strategy": {
+                "fidelity": style_strength,
+                "detail": complexity,
+                "source": "scene_preset_auto_default",
+            },
+            "style_prompt_source": "image_reference_pass_through" if style_pass_through else ("llm" if planner_style_prompt else "rule"),
+            "style_prompt": "connected style_reference_image only" if style_pass_through else (planner_style_prompt or base_style),
+            "style_prompt_ignored_due_to_reference_image": planner_style_prompt if style_pass_through and planner_style_prompt else "",
+            "style_reference_image_used": style_reference_image is not None,
+            "reference_image_role_notes": reference_role_notes,
+            "source_image_description": source_image_description,
             "items": [
                 {
                     "index": index,
