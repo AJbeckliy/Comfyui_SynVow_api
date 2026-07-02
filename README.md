@@ -8,6 +8,14 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 
 ## Changelog
 
+### 2026-07-02
+- **Improved transparent PNG asset prompt generator**
+  - Optimized reference-image layer splitting prompts
+  - Added source-image description and layer alignment rules
+  - Removed `style_strength` and `complexity` UI parameters; scene presets now use internal defaults
+  - Improved text/logo layer handling to reduce unwanted style or material interference
+  - Removed generic decoration examples to reduce invented elements
+
 ### 2026-07-01
 - **Added transparent PNG asset workflow nodes**
   - `SynVow 透明素材提示词生成器`: generates reusable transparent asset prompts for ecommerce elements, UI icon sets, game props, holiday campaign assets, stickers and reference-image layer splitting
