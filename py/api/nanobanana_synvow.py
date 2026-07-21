@@ -15,6 +15,7 @@ import urllib3
 from PIL import Image
 
 from . import synvow_auth
+from .media_common import is_changed_by_inputs as _is_changed
 from .media_common import upload_image as _upload_image
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -22,6 +23,7 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 _MODEL_OPTIONS = [
     "nano-banana-2-低价",
     "nano-banana-2-2605",
+    "nano-banana-2-lite-2607",
     "nano-banana-2-稳定",
     "nano-banana-2-官方",
     "nano-banana-pro-低价",
@@ -29,6 +31,8 @@ _MODEL_OPTIONS = [
     "nano-banana-pro-稳定",
     "nano-banana-pro-官方",
 ]
+
+_DEFAULT_NANO_BANANA_MODEL = "nano-banana-2-稳定"
 
 
 def _tensor_to_pil(image_tensor):
@@ -293,12 +297,6 @@ def _run_tasks(tasks, model, aspect_ratio, image_size, is_img2img, api_key, head
     return image_urls
 
 
-def _is_changed(**kwargs):
-    import hashlib, json
-    key = json.dumps({k: str(v) for k, v in kwargs.items()}, sort_keys=True, ensure_ascii=False)
-    return hashlib.md5(key.encode()).hexdigest()
-
-
 class SynVowNanoBanana:
     FUNCTION = "generate"
     CATEGORY = "💫SynVow_api/api/图像"
@@ -308,7 +306,7 @@ class SynVowNanoBanana:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "model_type": (_MODEL_OPTIONS, {"default": "nano-banana-2-2605"}),
+                "model_type": (_MODEL_OPTIONS, {"default": _DEFAULT_NANO_BANANA_MODEL}),
                 "aspect_ratio": (_ASPECT_RATIOS, {"default": "1:1"}),
                 "image_size": (["1K", "2K", "4K"], {"default": "2K"}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
@@ -329,10 +327,9 @@ class SynVowNanoBanana:
     def generate(self, model_type=None, aspect_ratio=None, image_size=None, seed=None,
                  prompt=None, image1=None, image2=None, image3=None, image4=None,
                  image5=None, image6=None, image7=None, image8=None, image9=None):
-        model_type   = _unpack(model_type) or "nano-banana-2-2605"
+        model_type   = _unpack(model_type) or _DEFAULT_NANO_BANANA_MODEL
         aspect_ratio = _unpack(aspect_ratio) or "1:1"
         image_size   = _unpack(image_size) or "2K"
-        seed         = _unpack(seed)
         prompt       = _unpack(prompt)
         image1 = _unpack(image1); image2 = _unpack(image2)
         image3 = _unpack(image3); image4 = _unpack(image4)
@@ -377,7 +374,7 @@ class SynVowNanoBanana_TBatch:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "model_type": (_MODEL_OPTIONS, {"default": "nano-banana-2-2605"}),
+                "model_type": (_MODEL_OPTIONS, {"default": _DEFAULT_NANO_BANANA_MODEL}),
                 "aspect_ratio": (_ASPECT_RATIOS, {"default": "1:1"}),
                 "image_size": (["1K", "2K", "4K"], {"default": "2K"}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
@@ -398,10 +395,9 @@ class SynVowNanoBanana_TBatch:
     def process_batch(self, model_type=None, aspect_ratio=None, image_size=None, seed=None,
                       prompts_list=None, image1=None, image2=None, image3=None, image4=None,
                       image5=None, image6=None, image7=None, image8=None, image9=None):
-        model_type   = _unpack(model_type) or "nano-banana-2-2605"
+        model_type   = _unpack(model_type) or _DEFAULT_NANO_BANANA_MODEL
         aspect_ratio = _unpack(aspect_ratio) or "1:1"
         image_size   = _unpack(image_size) or "2K"
-        seed         = _unpack(seed)
         image1 = _unpack(image1); image2 = _unpack(image2)
         image3 = _unpack(image3); image4 = _unpack(image4)
         image5 = _unpack(image5); image6 = _unpack(image6)
@@ -447,7 +443,7 @@ class SynVowNanoBanana_IBatch:
         return {
             "required": {
                 "images_list1": ("IMAGE",),
-                "model_type": (_MODEL_OPTIONS, {"default": "nano-banana-2-2605"}),
+                "model_type": (_MODEL_OPTIONS, {"default": _DEFAULT_NANO_BANANA_MODEL}),
                 "aspect_ratio": (_ASPECT_RATIOS, {"default": "1:1"}),
                 "image_size": (["1K", "2K", "4K"], {"default": "2K"}),
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
@@ -469,11 +465,10 @@ class SynVowNanoBanana_IBatch:
     def process_batch(self, images_list1, model_type=None, aspect_ratio=None, image_size=None,
                       prompt=None, seed=None,
                       images_list2=None, images_list3=None, images_list4=None, images_list5=None):
-        model_type   = _unpack(model_type) or "nano-banana-2-2605"
+        model_type   = _unpack(model_type) or _DEFAULT_NANO_BANANA_MODEL
         aspect_ratio = _unpack(aspect_ratio) or "1:1"
         image_size   = _unpack(image_size) or "2K"
         prompt       = _unpack(prompt)
-        seed         = _unpack(seed)
 
         api_key = synvow_auth.read_api_key()
         headers = synvow_auth.make_api_headers(api_key)
@@ -530,7 +525,7 @@ class SynVowNanoBanana_TIBatch:
         return {
             "required": {
                 "images_list1": ("IMAGE",),
-                "model_type": (_MODEL_OPTIONS, {"default": "nano-banana-2-2605"}),
+                "model_type": (_MODEL_OPTIONS, {"default": _DEFAULT_NANO_BANANA_MODEL}),
                 "aspect_ratio": (_ASPECT_RATIOS, {"default": "1:1"}),
                 "image_size": (["1K", "2K", "4K"], {"default": "2K"}),
                 "prompt_order": (["sequential", "reverse", "random"], {"default": "sequential"}),
@@ -554,11 +549,10 @@ class SynVowNanoBanana_TIBatch:
                       prompt_order=None, seed=None,
                       prompts_list=None, images_list2=None, images_list3=None,
                       images_list4=None, images_list5=None):
-        model_type   = _unpack(model_type) or "nano-banana-2-2605"
+        model_type   = _unpack(model_type) or _DEFAULT_NANO_BANANA_MODEL
         aspect_ratio = _unpack(aspect_ratio) or "1:1"
         image_size   = _unpack(image_size) or "2K"
         prompt_order = _unpack(prompt_order) or "sequential"
-        seed         = _unpack(seed)
 
         api_key = synvow_auth.read_api_key()
         headers = synvow_auth.make_api_headers(api_key)

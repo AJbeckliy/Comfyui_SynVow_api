@@ -1,10 +1,32 @@
 ﻿# Comfyui_SynVow_api
 
-ComfyUI 用于 SynVow 集成的自定义节点。
+ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视频/音频生成、提示词工具和透明 PNG 素材生成。
 
 ---
 
 ## 更新日志
+
+### 2026-07-22
+- **视频 / 音频节点更新**
+  - 旧 Seedance 批量/720P 节点合并为单一 `SynVow Seedance`（全能 / mini / face / 分辨率 / 编辑 / 延长）
+  - 新增 `SynVow Grok Video`（`grok-1.5-video`）
+  - 新增 `SynVow Omni-Flash`（`Omni-Flash-Ext` / `omni-flash-preview`）
+  - 新增 `SynVow Veo31`（`veo3.1`）
+  - 新增 `SynVow Suno 灵感模式` / `SynVow Suno 自定义模式`（`suno5.5`）
+  - 视频节点输出 ComfyUI `VIDEO`；Suno 输出 `AUDIO` 及路径/链接/歌词
+  - 短视频解析模型对齐：抖音 / 小红书 / 视频号 / bilibili / YouTube
+- **图像模型**
+  - GPT-Image-2 新增 `gpt-image-2-2607`；NanoBanana 新增 `nano-banana-2-lite-2607`
+- **代码清理**
+  - 提交/轮询/下载/上传公共逻辑收敛到 `media_common.py`
+  - 删除重复下载重试与重复的 `IS_CHANGED` 实现
+  - 新视频/音频节点已注册取消轮询按钮
+
+### 2026-07-01
+- **新增透明 PNG 素材工作流节点**
+  - `SynVow 透明素材提示词生成器`：按场景生成可复用透明素材提示词
+  - `SynVow GPT-Image-2 Alpha (T_batch)`：URL 直出透明 PNG 生成（提示词列表批量）
+  - `SynVow 透明PNG保存预览`：按原始 URL 保存 RGBA PNG，保留真实透明通道
 
 ### 2026-06-30
 - **代码清理**：删除无用/重复/失效代码，统一逻辑，行为保持不变
@@ -98,13 +120,24 @@ ComfyUI 用于 SynVow 集成的自定义节点。
 | SynVow GPT-Image-2 (T_batch) | gpt-image-2 | 批量文生图 |
 | SynVow GPT-Image-2 (I_batch) | gpt-image-2 | 批量图生图 |
 | SynVow GPT-Image-2 (T_I_batch) | gpt-image-2 | 文生图 + 图生图混合批量 |
+| SynVow GPT-Image-2 Alpha (T_batch) | gpt-image-2 | URL 直出透明 PNG（提示词列表批量） |
 
 ### 💫SynVow_api/api/视频
 
 | 节点名称 | 模型 | 描述 |
 |----------|------|------|
-| SynVow Seedance2.0 视频生成 | seedance2 | 文生视频·图生视频 |
-| SynVow Seedance2.0 批量视频生成 | seedance2 | 批量视频生成 |
+| SynVow Seedance | seedance2.0-* | 文/图/视频/音频参考生视频 |
+| SynVow Grok Video | grok-1.5-video | 文/图生视频（最多 6 张参考图） |
+| SynVow Omni-Flash | Omni-Flash-Ext / omni-flash-preview | 图/视频参考生视频 |
+| SynVow Veo31 | veo3.1 | 文/图生视频（最多 2 张参考图，1080p） |
+| 短视频解析 | 平台解析 | 抖音 / 小红书 / 视频号 / bilibili / YouTube 无水印下载 |
+
+### 💫SynVow_api/api/音频
+
+| 节点名称 | 模型 | 描述 |
+|----------|------|------|
+| SynVow Suno 灵感模式 | suno5.5 | 灵感模式音乐生成（输出 `AUDIO`） |
+| SynVow Suno 自定义模式 | suno5.5 | 自定义模式音乐生成（标题/标签，输出 `AUDIO`） |
 
 ### 💫SynVow_api/api/文本
 
@@ -115,6 +148,11 @@ ComfyUI 用于 SynVow 集成的自定义节点。
 | GPT-Image-2 文生图提示词控制器 | gemini-* / gpt-* | 通过 LLM 优化图像生成提示词 |
 | 图生图提示词控制器 | gemini-* / gpt-* | 参考图提示词优化 |
 | 🛒 电商详情页提示词生成器 | gemini-* | 多屏电商详情页提示词生成，支持产品参考图与风格参考图 |
+| GPT-image2详情页规划 | gemini-* | 规划长卷详情页叙事与视觉母版 |
+| GPT-image2详情页结构 | gemini-* | 将叙事 JSON 转为分屏结构蓝图 |
+| GPT-image2详情页批量提示词 | gemini-* | 生成批量 GPT-image2 提示词列表 |
+| 详情页图像列表顺序拼接长图 | — | 按列表顺序纵向拼接长图 |
+| SynVow 透明素材提示词生成器 | gemini-* | 生成透明 PNG 素材提示词与素材规划 |
 
 ### 💫SynVow_api/api/文本 - YM 提示词节点
 
@@ -147,6 +185,7 @@ ComfyUI 用于 SynVow 集成的自定义节点。
 | 图像范围选择器 | — | 按索引范围从图像列表选取子集 |
 | 图像列表组合器 | — | 将最多 10 张图像组合为图像列表 |
 | 图像加载器 | — | 加载图像并输出文件名、路径、mask |
+| SynVow 透明PNG保存预览 | — | 按原始 URL 保存 RGBA PNG 并预览 |
 
 ### 💫SynVow_api/Utils
 

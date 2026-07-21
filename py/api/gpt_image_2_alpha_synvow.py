@@ -17,6 +17,7 @@ import requests
 from . import synvow_auth
 from .gpt_image_2_synvow import (
     _API_URL,
+    _DEFAULT_GPT_IMAGE_MODEL,
     _MODEL_TYPE_OPTIONS,
     _NEW_MODELS,
     _POLL_URL,
@@ -84,12 +85,17 @@ def _poll_alpha_task(task_id, consumption_id, headers, poll_url, model):
             poll_json = poll_res.json()
             consecutive_errors = 0
             data_field = poll_json.get("data", poll_json) if isinstance(poll_json, dict) else poll_json
-            status = data_field.get("status", "") if isinstance(data_field, dict) else ""
+            # 2607 用 state，其余模型用 status
+            status = ""
+            if isinstance(data_field, dict):
+                status = data_field.get("state") or data_field.get("status") or ""
             print(f"[GPT-Image-2 Alpha] ...{task_id[-8:]} status={status} ({elapsed}s)")
             if status in ("SUCCESS", "success", "succeeded", "completed", "done", "finished"):
                 return poll_json
             if status in ("FAILURE", "failed", "error", "EXCEPTION"):
-                msg = data_field.get("fail_reason", "任务失败") if isinstance(data_field, dict) else "任务失败"
+                msg = "任务失败"
+                if isinstance(data_field, dict):
+                    msg = data_field.get("error") or data_field.get("fail_reason", "任务失败")
                 print(f"[GPT-Image-2 Alpha] 失败: ...{task_id[-8:]} {msg}")
                 return None
         except AlphaPollingCancelled:
@@ -234,18 +240,6 @@ def _submit_alpha_task_with_retry(payload, headers, api_url):
     raise last_exc
 
 
-def _normalize_model_type(model_type):
-    aliases = {"gpt-image-2-official": "gpt-image-2-官方"}
-    return aliases.get(str(model_type), model_type)
-
-
-def _send_alpha_refresh():
-    try:
-        synvow_auth.refresh_balance()
-    except Exception:
-        pass
-
-
 def _run_tasks_with_background(
     tasks,
     model,
@@ -256,26 +250,28 @@ def _run_tasks_with_background(
     api_key,
     headers,
     seed=None,
+    aspect_ratio=None,
 ):
     total = len(tasks)
     pbar = comfy.utils.ProgressBar(total)
-    background = "transparent"
     _raise_if_alpha_cancelled()
 
     submitted = []
     for index, (prompt, images) in enumerate(tasks):
         _raise_if_alpha_cancelled()
-        payload = _build_payload(model, prompt, size, quality, resolution, is_img2img, images, api_key=api_key)
+        payload = _build_payload(
+            model, prompt, size, quality, resolution, is_img2img, images,
+            api_key=api_key, aspect_ratio=aspect_ratio,
+        )
         try:
             seed_value = int(seed) if seed is not None else 0
         except Exception:
             seed_value = 0
         if seed_value > 0:
             payload["seed"] = seed_value
-        if background:
-            payload["background"] = background
-            if model not in _NEW_MODELS:
-                payload["transparentBackground"] = background == "transparent"
+        payload["background"] = "transparent"
+        if model not in _NEW_MODELS:
+            payload["transparentBackground"] = True
         try:
             task_id, consumption_id = _submit_alpha_task_with_retry(payload, headers, _API_URL)
             submitted.append((task_id, consumption_id))
@@ -329,7 +325,7 @@ class SynVowGptImage2Alpha_TBatch:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "model_type": (_MODEL_TYPE_OPTIONS, {"default": "gpt-image-2-1k-2605"}),
+                "model_type": (_MODEL_TYPE_OPTIONS, {"default": _DEFAULT_GPT_IMAGE_MODEL}),
                 "quality": (["auto", "low", "medium", "high"], {"default": "auto"}),
                 "resolution": (["1K", "2K", "4K"], {"default": "1K"}),
                 "aspect_ratio": (list(_RATIO_TO_SIZE_1K.keys()), {"default": "1:1"}),
@@ -370,7 +366,7 @@ class SynVowGptImage2Alpha_TBatch:
         image8=None,
     ):
         _ALPHA_CANCEL_EVENT.clear()
-        model_type = _normalize_model_type(_unpack(model_type) or "gpt-image-2-1k-2605")
+        model_type = _unpack(model_type) or _DEFAULT_GPT_IMAGE_MODEL
         quality = _unpack(quality)
         resolution = _unpack(resolution) or "1K"
         aspect_ratio = _unpack(aspect_ratio)
@@ -386,7 +382,7 @@ class SynVowGptImage2Alpha_TBatch:
 
         api_key = synvow_auth.read_api_key()
         headers = synvow_auth.make_api_headers(api_key)
-        model = model_type or "gpt-image-2-1k-2605"
+        model = model_type or _DEFAULT_GPT_IMAGE_MODEL
         eff_resolution, size = _resolve_size_params(model, aspect_ratio, resolution)
 
         images = [item for item in [image1, image2, image3, image4, image5, image6, image7, image8] if item is not None]
@@ -406,6 +402,7 @@ class SynVowGptImage2Alpha_TBatch:
             api_key,
             headers,
             seed=seed,
+            aspect_ratio=aspect_ratio,
         )
         successful = sum(1 for url in image_urls if url)
         if successful == 0:
@@ -421,7 +418,7 @@ class SynVowGptImage2Alpha_TBatch:
         )
 
         print(f"[GPT-Image-2 Alpha TBatch] 完成: {successful}/{len(tasks)} urls={successful}/{len(image_urls)}")
-        _send_alpha_refresh()
+        synvow_auth.refresh_balance()
         return ("\n".join([url for url in image_urls if url]), status)
 
 

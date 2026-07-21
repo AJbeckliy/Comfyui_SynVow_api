@@ -5,8 +5,12 @@
 import { app } from "../../../scripts/app.js";
 
 const SYNVOW_NODE_TYPES = new Set([
-    "SynVowSeedance2Video",
-    "SynVowSeedance2VideoBatch",
+    "SynVowSeedance",
+    "SynVowGrokVideo",
+    "SynVowVeo31",
+    "SynVowOmniFlash",
+    "SynVowSunoInspire",
+    "SynVowSunoCustom",
     "SynVowGptImage2",
     "SynVowGptImage2_TBatch",
     "SynVowGptImage2_IBatch",
