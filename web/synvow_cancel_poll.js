@@ -6,6 +6,8 @@ import { app } from "../../../scripts/app.js";
 
 const SYNVOW_NODE_TYPES = new Set([
     "SynVowSeedance",
+    "SynVowSeedance2Video",
+    "SynVowSeedance2VideoBatch",
     "SynVowGrokVideo",
     "SynVowVeo31",
     "SynVowOmniFlash",
@@ -19,6 +21,10 @@ const SYNVOW_NODE_TYPES = new Set([
     "SynVowNanoBanana_TBatch",
     "SynVowNanoBanana_IBatch",
     "SynVowNanoBanana_TIBatch",
+    "SynVowJimeng",
+    "SynVowJimeng_TBatch",
+    "SynVowJimeng_IBatch",
+    "SynVowJimeng_TIBatch",
 ]);
 
 function addCancelWidget(node) {

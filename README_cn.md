@@ -8,14 +8,16 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 
 ### 2026-07-22
 - **视频 / 音频节点更新**
-  - 旧 Seedance 批量/720P 节点合并为单一 `SynVow Seedance`（全能 / mini / face / 分辨率 / 编辑 / 延长）
+  - 新增 `SynVow Seedance`（`/image/edit`：全能 / mini / face / 分辨率 / 编辑 / 延长）
+  - **保留**旧接口节点 `SynVow Seedance2.0 视频生成 (720P)` / 批量版（`/video/generate`，实际模型 `seedance_2_720p`）
   - 新增 `SynVow Grok Video`（`grok-1.5-video`）
   - 新增 `SynVow Omni-Flash`（`Omni-Flash-Ext` / `omni-flash-preview`）
   - 新增 `SynVow Veo31`（`veo3.1`）
   - 新增 `SynVow Suno 灵感模式` / `SynVow Suno 自定义模式`（`suno5.5`）
   - 视频节点输出 ComfyUI `VIDEO`；Suno 输出 `AUDIO` 及路径/链接/歌词
   - 短视频解析模型对齐：抖音 / 小红书 / 视频号 / bilibili / YouTube
-- **图像模型**
+- **图像节点**
+  - 新增 `SynVow 即梦` / `(T_batch)` / `(I_batch)` / `(T_I_batch)`（模型 `即梦5.0`，分辨率 `2K`/`3K`）
   - GPT-Image-2 新增 `gpt-image-2-2607`；NanoBanana 新增 `nano-banana-2-lite-2607`
 - **代码清理**
   - 提交/轮询/下载/上传公共逻辑收敛到 `media_common.py`
@@ -116,6 +118,10 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 | SynVow NanoBanana (T_batch) | nanobanana | 批量文生图 |
 | SynVow NanoBanana (I_batch) | nanobanana | 批量图生图 |
 | SynVow NanoBanana (T_I_batch) | nanobanana | 文生图 + 图生图混合批量 |
+| SynVow 即梦 | 即梦5.0 | 文生图·图生图（`web_search` + `2K`/`3K`） |
+| SynVow 即梦 (T_batch) | 即梦5.0 | 提示词列表批量 |
+| SynVow 即梦 (I_batch) | 即梦5.0 | 提示词 × 多组图批量 |
+| SynVow 即梦 (T_I_batch) | 即梦5.0 | 提示词与图像组配对批量 |
 | SynVow GPT-Image-2 | gpt-image-2 | 文生图·图生图 |
 | SynVow GPT-Image-2 (T_batch) | gpt-image-2 | 批量文生图 |
 | SynVow GPT-Image-2 (I_batch) | gpt-image-2 | 批量图生图 |
@@ -126,7 +132,9 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 
 | 节点名称 | 模型 | 描述 |
 |----------|------|------|
-| SynVow Seedance | seedance2.0-* | 文/图/视频/音频参考生视频 |
+| SynVow Seedance | seedance2.0-* | 新接口 `/image/edit`：文/图/视频/音频参考生视频 |
+| SynVow Seedance2.0 视频生成 (720P) | seedance_2_720p | 旧接口 `/video/generate`，固定 720P |
+| SynVow Seedance2.0 批量视频生成 (720P) | seedance_2_720p | 旧接口批量版 |
 | SynVow Grok Video | grok-1.5-video | 文/图生视频（最多 6 张参考图） |
 | SynVow Omni-Flash | Omni-Flash-Ext / omni-flash-preview | 图/视频参考生视频 |
 | SynVow Veo31 | veo3.1 | 文/图生视频（最多 2 张参考图，1080p） |

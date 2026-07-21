@@ -10,14 +10,16 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 
 ### 2026-07-22
 - **Video / audio nodes refreshed**
-  - Replaced legacy Seedance batch/720P nodes with a single `SynVow Seedance` node (全能 / mini / face / resolution / edit / extend)
+  - Added `SynVow Seedance` (`/image/edit`: 全能 / mini / face / resolution / edit / extend)
+  - **Kept** legacy `SynVow Seedance2.0 视频生成 (720P)` / batch (`/video/generate`, model `seedance_2_720p`)
   - Added `SynVow Grok Video` (`grok-1.5-video`)
   - Added `SynVow Omni-Flash` (`Omni-Flash-Ext` / `omni-flash-preview`)
   - Added `SynVow Veo31` (`veo3.1`)
   - Added `SynVow Suno 灵感模式` / `SynVow Suno 自定义模式` (`suno5.5`)
   - Video nodes output ComfyUI `VIDEO`; Suno outputs `AUDIO` plus path/url/lyrics
   - Short-video parse models aligned: Douyin / Xiaohongshu / Channels / bilibili / YouTube
-- **Image models**
+- **Image nodes**
+  - Added `SynVow 即梦` / `(T_batch)` / `(I_batch)` / `(T_I_batch)` (model `即梦5.0`, resolution `2K`/`3K`)
   - GPT-Image-2 adds `gpt-image-2-2607`; NanoBanana adds `nano-banana-2-lite-2607`
 - **Code cleanup**
   - Shared submit/poll/download/upload helpers in `media_common.py`
@@ -127,6 +129,10 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 | SynVow NanoBanana (T_batch) | nanobanana | Batch text-to-image |
 | SynVow NanoBanana (I_batch) | nanobanana | Batch image-to-image |
 | SynVow NanoBanana (T_I_batch) | nanobanana | Batch T2I + I2I |
+| SynVow 即梦 | 即梦5.0 | Text/image-to-image (`web_search`, `2K`/`3K`) |
+| SynVow 即梦 (T_batch) | 即梦5.0 | Prompt-list batch |
+| SynVow 即梦 (I_batch) | 即梦5.0 | Prompt × image-group batch |
+| SynVow 即梦 (T_I_batch) | 即梦5.0 | Paired prompt/image-group batch |
 | SynVow GPT-Image-2 | gpt-image-2 | Text-to-image & image-to-image |
 | SynVow GPT-Image-2 (T_batch) | gpt-image-2 | Batch text-to-image |
 | SynVow GPT-Image-2 (I_batch) | gpt-image-2 | Batch image-to-image |
@@ -137,7 +143,9 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 
 | Node | Model | Description |
 |------|-------|-------------|
-| SynVow Seedance | seedance2.0-* | Text/image/video/audio reference to video |
+| SynVow Seedance | seedance2.0-* | New `/image/edit` path: text/image/video/audio refs |
+| SynVow Seedance2.0 视频生成 (720P) | seedance_2_720p | Legacy `/video/generate`, fixed 720P |
+| SynVow Seedance2.0 批量视频生成 (720P) | seedance_2_720p | Legacy batch |
 | SynVow Grok Video | grok-1.5-video | Text/image to video (up to 6 refs) |
 | SynVow Omni-Flash | Omni-Flash-Ext / omni-flash-preview | Image/video reference to video |
 | SynVow Veo31 | veo3.1 | Text/image to video (up to 2 refs, 1080p) |
