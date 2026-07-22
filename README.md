@@ -21,6 +21,10 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 - **Image nodes**
   - Added `SynVow 即梦` / `(T_batch)` / `(I_batch)` / `(T_I_batch)` (model `即梦5.0`, resolution `2K`/`3K`)
   - GPT-Image-2 adds `gpt-image-2-2607`; NanoBanana adds `nano-banana-2-lite-2607`
+- **GPT-Image-2 product and prompt workflows**
+  - Added `SynVow GPT-Image-2 产品六合一`: product refinement, scene compositing, clarity restoration, object removal, mask-guided technology light effects, and outpainting
+  - Added the **One-Take Prompt Workflow (Beta)** with character setup, scene setup, route storyboard, and Seedance LLM prompt compiler nodes
+  - The One-Take workflow is currently a test version; prompt structure, parameters, and output behavior may continue to change based on real-world testing
 - **Code cleanup**
   - Shared submit/poll/download/upload helpers in `media_common.py`
   - Removed redundant outer download retries and duplicated `IS_CHANGED` helpers
