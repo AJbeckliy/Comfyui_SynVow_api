@@ -1,0 +1,559 @@
+{
+  "id": "561a8990-af99-487c-a575-ebe7ef40b7a7",
+  "revision": 0,
+  "last_node_id": 87,
+  "last_link_id": 80,
+  "nodes": [
+    {
+      "id": 70,
+      "type": "SaveImage",
+      "pos": [
+        1946.9161984591287,
+        2073.1412420695888
+      ],
+      "size": [
+        498.8303528275442,
+        514.2481726129427
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 64
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.30.0",
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 69,
+      "type": "SynVowMidjourneyText",
+      "pos": [
+        1482.4056963227647,
+        2048.8309834010506
+      ],
+      "size": [
+        400,
+        536
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "角色参考",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "风格参考",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "深度参考",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            64
+          ]
+        },
+        {
+          "name": "status",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "d945e9349b65e18110eb3c2cc5c79cfaece44857",
+        "Node name for S&R": "SynVowMidjourneyText"
+      },
+      "widgets_values": [
+        "8.2",
+        "1:1",
+        "1",
+        "relax",
+        100,
+        0,
+        0,
+        100,
+        100,
+        0,
+        false,
+        false,
+        false,
+        false,
+        0,
+        "randomize",
+        ""
+      ]
+    },
+    {
+      "id": 72,
+      "type": "LoadImage",
+      "pos": [
+        1445.401471569251,
+        2837.8501837361973
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            65
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.30.0",
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "03c8948870bd93789b5fb04d8f7743d3.jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 73,
+      "type": "LoadImage",
+      "pos": [
+        1750.9137467195596,
+        2829.2220392342324
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            66
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.30.0",
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "03c8948870bd93789b5fb04d8f7743d3.jpg",
+        "image"
+      ]
+    },
+    {
+      "id": 74,
+      "type": "SaveImage",
+      "pos": [
+        2429.889952032791,
+        2837.9202728083833
+      ],
+      "size": [
+        270,
+        58
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 67
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.30.0",
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 71,
+      "type": "SynVowMidjourneyBlend",
+      "pos": [
+        2098.5954195261565,
+        2883.6961059499263
+      ],
+      "size": [
+        270,
+        214
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 65
+        },
+        {
+          "name": "image2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 66
+        },
+        {
+          "name": "image3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            67
+          ]
+        },
+        {
+          "name": "status",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "d945e9349b65e18110eb3c2cc5c79cfaece44857",
+        "Node name for S&R": "SynVowMidjourneyBlend"
+      },
+      "widgets_values": [
+        "1:1",
+        "relax",
+        0,
+        "randomize"
+      ]
+    },
+    {
+      "id": 86,
+      "type": "LoadImage",
+      "pos": [
+        1478.090068461708,
+        3418.799099049046
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            79
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.30.0",
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "20260423_2512_000024.png",
+        "image"
+      ]
+    },
+    {
+      "id": 87,
+      "type": "SaveImage",
+      "pos": [
+        2192.026583172141,
+        3426.517331640508
+      ],
+      "size": [
+        415.6816401638862,
+        353.22239662350376
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "link": 80
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.30.0",
+        "Node name for S&R": "SaveImage"
+      },
+      "widgets_values": [
+        "ComfyUI"
+      ]
+    },
+    {
+      "id": 85,
+      "type": "SynVowMidjourneyEdit",
+      "pos": [
+        1766.21007027222,
+        3414.553772042229
+      ],
+      "size": [
+        400,
+        580
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 79
+        },
+        {
+          "name": "角色参考",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "风格参考",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "深度参考",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            80
+          ]
+        },
+        {
+          "name": "status",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "d945e9349b65e18110eb3c2cc5c79cfaece44857",
+        "Node name for S&R": "SynVowMidjourneyEdit"
+      },
+      "widgets_values": [
+        "8.2",
+        "1:1",
+        "1",
+        "relax",
+        100,
+        0,
+        0,
+        100,
+        100,
+        0,
+        false,
+        false,
+        false,
+        false,
+        0,
+        "randomize",
+        1,
+        ""
+      ]
+    }
+  ],
+  "links": [
+    [
+      64,
+      69,
+      0,
+      70,
+      0,
+      "IMAGE"
+    ],
+    [
+      65,
+      72,
+      0,
+      71,
+      0,
+      "IMAGE"
+    ],
+    [
+      66,
+      73,
+      0,
+      71,
+      1,
+      "IMAGE"
+    ],
+    [
+      67,
+      71,
+      0,
+      74,
+      0,
+      "IMAGE"
+    ],
+    [
+      79,
+      86,
+      0,
+      85,
+      0,
+      "IMAGE"
+    ],
+    [
+      80,
+      85,
+      0,
+      87,
+      0,
+      "IMAGE"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "文生图",
+      "bounding": [
+        1472.4056963227647,
+        1978.8309834010506,
+        983.3408549639082,
+        618.5584312814808
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "多图融合",
+      "bounding": [
+        1435.401471569251,
+        2759.2220392342324,
+        1274.4884804635399,
+        402.6281445019649
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "图像编辑",
+      "bounding": [
+        1468.090068461708,
+        3344.553772042229,
+        1149.618154874319,
+        660
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.4395800342596649,
+      "offset": [
+        68.63445448419117,
+        -1215.8636728995168
+      ]
+    },
+    "frontendVersion": "1.47.12",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}

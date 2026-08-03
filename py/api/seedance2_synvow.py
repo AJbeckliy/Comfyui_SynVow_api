@@ -6,7 +6,6 @@ import json
 
 from . import synvow_auth
 from .media_common import (
-    as_comfy_video,
     download_video,
     is_changed_by_inputs,
     poll_edit_task,
@@ -178,8 +177,8 @@ class SynVowSeedance:
             },
         }
 
-    RETURN_TYPES = ("VIDEO", "STRING", "STRING", "STRING")
-    RETURN_NAMES = ("video", "video_path", "video_url", "task_info")
+    RETURN_TYPES = ("STRING", "STRING", "STRING")
+    RETURN_NAMES = ("video_path", "video_url", "task_info")
 
     @classmethod
     def IS_CHANGED(cls, **kwargs):
@@ -202,11 +201,11 @@ class SynVowSeedance:
                 "model": used_model, "video_url": url, "video_path": path, "seed": seed,
             }, ensure_ascii=False)
             synvow_auth.refresh_balance()
-            return (as_comfy_video(path), path, url, info)
+            return (path, url, info)
         except Exception as e:
             print(f"[Seedance] Error: {e}")
             synvow_auth.refresh_balance()
-            return (as_comfy_video(""), "", "", json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
+            return ("", "", json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
 
 
 NODE_CLASS_MAPPINGS = {

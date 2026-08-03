@@ -7,7 +7,7 @@ import { showLoginDialog } from "./synvow_login.js";
 let recordsDialog = null;
 let currentPage = 1;
 
-// 消费记录资源 URL 提取：对齐 synmew core/media.ts，按 model_name 分类（音/视/图）优先取对应字段。
+// 消费记录资源 URL 提取：按 model_name 分类（音/视/图）优先取对应字段。
 const isHttpUrl = (v) => typeof v === "string" && /^https?:\/\//i.test(v);
 const dedupe = (urls) => [...new Set(urls)];
 
@@ -67,7 +67,7 @@ function extractImageUrls(d) {
         pushHttpUrls(urls, d.url);
         if (urls.length) return dedupe(urls);
     }
-    for (const key of ["data", "sourceData", "images", "result", "results", "output", "task_result", "items"]) {
+    for (const key of ["data", "sourceData", "images", "result", "results", "resultImages", "output", "task_result", "items"]) {
         if (d[key] != null) {
             const r = extractImageUrls(d[key]);
             if (r.length) return r;
@@ -89,9 +89,8 @@ function extractVideoUrls(d) {
         pushHttpUrls(out, data.video_url);
         pushHttpUrls(out, data.video);
         pushHttpUrls(out, data.result_file);
-        if (data.videos != null) walk(data.videos);
         pushHttpUrls(out, data.url);
-        for (const key of ["data", "result", "results", "output", "sourceData", "task_result", "videos"]) {
+        for (const key of ["content", "data", "result", "results", "output", "sourceData", "task_result", "videos"]) {
             if (data[key] != null) walk(data[key]);
         }
     };
@@ -127,13 +126,13 @@ function extractResourceUrls(source, modelName) {
     if (isHttpUrl(parsed)) return [parsed];
 
     const kind = consumptionResourceKind(modelName);
-    let urls = kind === "image" ? extractImageUrls(parsed)
-        : kind === "video" ? extractVideoUrls(parsed)
-        : extractAudioUrls(parsed);
+    let urls = [];
+    if (kind === "image") urls = extractImageUrls(parsed);
+    else if (kind === "video") urls = extractVideoUrls(parsed);
+    else urls = extractAudioUrls(parsed);
 
     if (!urls.length) {
-        urls = kind === "video" ? extractImageUrls(parsed) : extractVideoUrls(parsed);
-        if (!urls.length && kind !== "image") urls = extractImageUrls(parsed);
+        urls = kind === "image" ? extractVideoUrls(parsed) : extractImageUrls(parsed);
     }
     return urls;
 }
@@ -192,11 +191,11 @@ export function showConsumptionRecordsDialog() {
     document.body.appendChild(recordsDialog);
     loadPage(1);
 
-    let previewUrls = [], previewIdx = 0, previewEl = null;
+    let previewUrls = [], previewIdx = 0, previewKind = "image", previewEl = null;
 
-    function openPreview(urls, idx = 0) {
+    function openPreview(urls, kind = "image", idx = 0) {
         if (previewEl) previewEl.remove();
-        previewUrls = urls; previewIdx = idx;
+        previewUrls = urls; previewIdx = idx; previewKind = kind || "image";
         previewEl = $el("div.sv-cr-preview-overlay", {
             onclick: (e) => { if (e.target === previewEl) closePreview(); }
         });
@@ -204,17 +203,24 @@ export function showConsumptionRecordsDialog() {
         document.body.appendChild(previewEl);
     }
     function closePreview() { if (previewEl) { previewEl.remove(); previewEl = null; } }
+    function mediaKindFromUrl(url) {
+        const ext = (url.split("?")[0].split(".").pop() || "").toLowerCase();
+        if (["png","jpg","jpeg","webp","gif","bmp","svg","avif"].includes(ext)) return "image";
+        if (["mp4","webm","mov","avi","mkv","m4v"].includes(ext)) return "video";
+        if (["mp3","wav","ogg","flac","aac","m4a","opus"].includes(ext)) return "audio";
+        return null;
+    }
     function renderPreview() {
         if (!previewEl) return;
         previewEl.innerHTML = "";
         const url = previewUrls[previewIdx];
-        const ext = url.split("?")[0].split(".").pop().toLowerCase();
+        const kind = mediaKindFromUrl(url) || previewKind;
         let media;
-        if (["png","jpg","jpeg","webp","gif","bmp","svg"].includes(ext)) {
+        if (kind === "image") {
             media = $el("img.sv-cr-preview-media", { src: url });
-        } else if (["mp4","webm","mov","avi","mkv"].includes(ext)) {
+        } else if (kind === "video") {
             media = $el("video.sv-cr-preview-media", { src: url, controls: true, autoplay: true });
-        } else if (["mp3","wav","ogg","flac","aac","m4a"].includes(ext)) {
+        } else if (kind === "audio") {
             media = $el("audio", { src: url, controls: true, autoplay: true });
         } else {
             media = Object.assign(document.createElement("a"), { href: url, target: "_blank", textContent: url, style: "color:#2dd4bf;word-break:break-all;" });
@@ -245,12 +251,12 @@ export function showConsumptionRecordsDialog() {
         nextBtn.disabled = true;
 
         try {
-            const data = await authedGet(`/account/consumption-records?page=${page}&per_page=10`, token);
+            const data = await authedGet(`/account/consumption-records?page=${page}&page_size=20`, token);
             if (data.code === 200 && data.data) {
                 const d           = data.data;
                 const items       = d.list || [];
                 const total       = d.total || 0;
-                const totalPages  = d.total_pages ?? (Math.ceil(total / 10) || 1);
+                const totalPages  = d.total_pages ?? (Math.ceil(total / 20) || 1);
                 currentPage       = d.page ?? page;
 
                 if (items.length === 0) {
@@ -259,9 +265,11 @@ export function showConsumptionRecordsDialog() {
                     const tbody = $el("tbody");
                     for (const item of items) {
                         const ok  = item.status === 1 && parseFloat(item.amount || 0) !== 0;
-                        const urls = ok ? extractResourceUrls(item.source, item.model_name ?? "") : [];
+                        const modelName = item.model_name ?? "";
+                        const urls = ok ? extractResourceUrls(item.source, modelName) : [];
+                        const kind = consumptionResourceKind(modelName);
                         const resCell = urls.length
-                            ? $el("a.sv-cr-link", { textContent: "打开", href: "#", onclick: (e) => { e.preventDefault(); openPreview(urls); } })
+                            ? $el("a.sv-cr-link", { textContent: "打开", href: "#", onclick: (e) => { e.preventDefault(); openPreview(urls, kind); } })
                             : $el("span.sv-cr-none", { textContent: "无" });
                         tbody.appendChild($el("tr", {}, [
                             $el("td", { textContent: fmtTime(item.created_at) }),

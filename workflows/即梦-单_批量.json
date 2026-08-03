@@ -1,8 +1,8 @@
 {
-  "id": "6b2797e6-2716-4a62-beed-d05e212cf3b9",
+  "id": "2d5b9f0d-12f4-4b8b-b3e4-6eec76c2bc89",
   "revision": 0,
-  "last_node_id": 64,
-  "last_link_id": 55,
+  "last_node_id": 73,
+  "last_link_id": 89,
   "nodes": [
     {
       "id": 14,
@@ -22,7 +22,7 @@
         {
           "name": "images",
           "type": "IMAGE",
-          "link": 10
+          "link": 65
         }
       ],
       "outputs": [
@@ -206,8 +206,8 @@
           "shape": 6,
           "type": "STRING",
           "links": [
-            15,
-            16
+            16,
+            63
           ]
         }
       ],
@@ -293,7 +293,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            17
+            64
           ]
         }
       ],
@@ -375,7 +375,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            19
+            59
           ]
         }
       ],
@@ -410,7 +410,7 @@
           "name": "STRING",
           "type": "STRING",
           "links": [
-            8
+            56
           ]
         }
       ],
@@ -465,7 +465,7 @@
         {
           "name": "images",
           "type": "IMAGE",
-          "link": 31
+          "link": 89
         }
       ],
       "outputs": [
@@ -503,7 +503,7 @@
           "label": "文本",
           "name": "text",
           "type": "STRING",
-          "link": 11
+          "link": 66
         }
       ],
       "outputs": [
@@ -540,7 +540,7 @@
         {
           "name": "images",
           "type": "IMAGE",
-          "link": 4
+          "link": 61
         }
       ],
       "outputs": [
@@ -577,7 +577,7 @@
         {
           "name": "images",
           "type": "IMAGE",
-          "link": 7
+          "link": 57
         }
       ],
       "outputs": [
@@ -615,7 +615,7 @@
           "label": "文本",
           "name": "text",
           "type": "STRING",
-          "link": 28
+          "link": 62
         }
       ],
       "outputs": [
@@ -653,7 +653,7 @@
           "label": "文本",
           "name": "text",
           "type": "STRING",
-          "link": 29
+          "link": 58
         }
       ],
       "outputs": [
@@ -691,7 +691,7 @@
           "label": "文本",
           "name": "text",
           "type": "STRING",
-          "link": 32
+          "link": 88
         }
       ],
       "outputs": [
@@ -730,7 +730,7 @@
           "name": "STRING",
           "type": "STRING",
           "links": [
-            9
+            60
           ]
         }
       ],
@@ -990,131 +990,6 @@
       ]
     },
     {
-      "id": 39,
-      "type": "PrimitiveStringMultiline",
-      "pos": [
-        3166.7670411176377,
-        4370.2786689461755
-      ],
-      "size": [
-        323.84393072409785,
-        285.77971015627145
-      ],
-      "flags": {},
-      "order": 9,
-      "mode": 4,
-      "inputs": [],
-      "outputs": [
-        {
-          "name": "STRING",
-          "type": "STRING",
-          "links": [
-            33
-          ]
-        }
-      ],
-      "properties": {
-        "cnr_id": "comfy-core",
-        "ver": "0.22.0",
-        "Node name for S&R": "PrimitiveStringMultiline"
-      },
-      "widgets_values": [
-        "将图像转为黑夜"
-      ]
-    },
-    {
-      "id": 40,
-      "type": "SynVowImageListCompose",
-      "pos": [
-        2931.0476988084383,
-        4399.86342731307
-      ],
-      "size": [
-        145.517578125,
-        206
-      ],
-      "flags": {},
-      "order": 35,
-      "mode": 4,
-      "inputs": [
-        {
-          "name": "image1",
-          "type": "IMAGE",
-          "link": 37
-        },
-        {
-          "name": "image2",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": 38
-        },
-        {
-          "name": "image3",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": 39
-        },
-        {
-          "name": "image4",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image5",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image6",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image7",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image8",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image9",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image10",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "image list",
-          "shape": 6,
-          "type": "IMAGE",
-          "links": [
-            34
-          ]
-        }
-      ],
-      "properties": {
-        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
-        "ver": "2e1e10fafa840289cd4dbd241f693103f968c3bb",
-        "Node name for S&R": "SynVowImageListCompose"
-      },
-      "widgets_values": []
-    },
-    {
       "id": 46,
       "type": "SynVowImageListValidator",
       "pos": [
@@ -1126,7 +1001,7 @@
         106
       ],
       "flags": {},
-      "order": 10,
+      "order": 9,
       "mode": 4,
       "inputs": [
         {
@@ -1209,7 +1084,7 @@
         157.95575906248177
       ],
       "flags": {},
-      "order": 11,
+      "order": 10,
       "mode": 4,
       "inputs": [],
       "outputs": [],
@@ -1239,7 +1114,7 @@
         {
           "name": "images",
           "type": "IMAGE",
-          "link": 55
+          "link": 80
         }
       ],
       "outputs": [
@@ -1277,7 +1152,7 @@
           "label": "文本",
           "name": "text",
           "type": "STRING",
-          "link": 54
+          "link": 81
         }
       ],
       "outputs": [
@@ -1351,7 +1226,7 @@
         314
       ],
       "flags": {},
-      "order": 12,
+      "order": 11,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -1433,7 +1308,7 @@
         314
       ],
       "flags": {},
-      "order": 13,
+      "order": 12,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -1515,7 +1390,7 @@
         314
       ],
       "flags": {},
-      "order": 14,
+      "order": 13,
       "mode": 4,
       "inputs": [],
       "outputs": [
@@ -1623,7 +1498,7 @@
           "shape": 6,
           "type": "IMAGE",
           "links": [
-            50
+            78
           ]
         }
       ],
@@ -1684,7 +1559,7 @@
         324
       ],
       "flags": {},
-      "order": 15,
+      "order": 14,
       "mode": 4,
       "inputs": [
         {
@@ -1800,7 +1675,7 @@
           "type": "STRING",
           "links": [
             51,
-            53
+            79
           ]
         }
       ],
@@ -1831,7 +1706,7 @@
         106
       ],
       "flags": {},
-      "order": 16,
+      "order": 15,
       "mode": 4,
       "inputs": [
         {
@@ -1914,7 +1789,7 @@
         157.95575906248177
       ],
       "flags": {},
-      "order": 17,
+      "order": 16,
       "mode": 4,
       "inputs": [],
       "outputs": [],
@@ -1927,51 +1802,15 @@
       "bgcolor": "#653"
     },
     {
-      "id": 64,
-      "type": "Fast Groups Bypasser (rgthree)",
+      "id": 65,
+      "type": "SynVowJimeng",
       "pos": [
-        1643.5501619124573,
-        2615.6765405892725
-      ],
-      "size": [
-        358.7277286136996,
-        154
-      ],
-      "flags": {},
-      "order": 18,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "label": "可选连接",
-          "name": "OPT_CONNECTION",
-          "type": "*",
-          "links": null
-        }
-      ],
-      "title": "根据功能选择，尽量先少量测试",
-      "properties": {
-        "matchColors": "",
-        "matchTitle": "",
-        "showNav": true,
-        "showAllGraphs": true,
-        "sort": "position",
-        "customSortAlphabet": "",
-        "toggleRestriction": "always one"
-      },
-      "color": "#322",
-      "bgcolor": "#533"
-    },
-    {
-      "id": 8,
-      "type": "SynVowGptImage2",
-      "pos": [
-        2325.7176824869953,
-        2618.9661988705802
+        2333.849471992546,
+        2627.021661924622
       ],
       "size": [
         400,
-        396
+        392
       ],
       "flags": {},
       "order": 22,
@@ -2026,13 +1865,19 @@
           "link": null
         },
         {
+          "name": "image9",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
           "name": "prompt",
           "shape": 7,
           "type": "STRING",
           "widget": {
             "name": "prompt"
           },
-          "link": 8
+          "link": 56
         }
       ],
       "outputs": [
@@ -2040,42 +1885,41 @@
           "name": "images",
           "type": "IMAGE",
           "links": [
-            7
+            57
           ]
         },
         {
           "name": "status",
           "type": "STRING",
           "links": [
-            29
+            58
           ]
         }
       ],
       "properties": {
         "aux_id": "AJbeckliy/Comfyui_SynVow_api",
-        "ver": "2e1e10fafa840289cd4dbd241f693103f968c3bb",
-        "Node name for S&R": "SynVowGptImage2"
+        "ver": "d945e9349b65e18110eb3c2cc5c79cfaece44857",
+        "Node name for S&R": "SynVowJimeng"
       },
       "widgets_values": [
-        "gpt-image-2-1k-qy",
-        "auto",
-        "1K",
-        "9:16",
+        "即梦5.0-pro",
+        "1:1",
+        "2K",
         0,
         "randomize",
         ""
       ]
     },
     {
-      "id": 5,
-      "type": "SynVowGptImage2",
+      "id": 66,
+      "type": "SynVowJimeng",
       "pos": [
-        2715.9858036420105,
-        3132.753354818339
+        2708.062667567767,
+        3132.858722834195
       ],
       "size": [
         400,
-        396
+        392
       ],
       "flags": {},
       "order": 32,
@@ -2085,7 +1929,7 @@
           "name": "image1",
           "shape": 7,
           "type": "IMAGE",
-          "link": 19
+          "link": 59
         },
         {
           "name": "image2",
@@ -2130,13 +1974,19 @@
           "link": null
         },
         {
+          "name": "image9",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
           "name": "prompt",
           "shape": 7,
           "type": "STRING",
           "widget": {
             "name": "prompt"
           },
-          "link": 9
+          "link": 60
         }
       ],
       "outputs": [
@@ -2144,42 +1994,248 @@
           "name": "images",
           "type": "IMAGE",
           "links": [
-            4
+            61
           ]
         },
         {
           "name": "status",
           "type": "STRING",
           "links": [
-            28
+            62
           ]
         }
       ],
       "properties": {
         "aux_id": "AJbeckliy/Comfyui_SynVow_api",
-        "ver": "2e1e10fafa840289cd4dbd241f693103f968c3bb",
-        "Node name for S&R": "SynVowGptImage2"
+        "ver": "d945e9349b65e18110eb3c2cc5c79cfaece44857",
+        "Node name for S&R": "SynVowJimeng"
       },
       "widgets_values": [
-        "gpt-image-2-1k-qy",
-        "auto",
-        "1K",
-        "9:16",
+        "即梦5.0-pro",
+        "1:1",
+        "2K",
         0,
         "randomize",
         ""
       ]
     },
     {
-      "id": 13,
-      "type": "SynVowGptImage2_TBatch",
+      "id": 40,
+      "type": "SynVowImageListCompose",
       "pos": [
-        3573.215843467415,
-        3661.409498137469
+        2931.0476988084383,
+        4399.86342731307
       ],
       "size": [
-        312.30625,
-        362
+        145.517578125,
+        206
+      ],
+      "flags": {},
+      "order": 35,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "image1",
+          "type": "IMAGE",
+          "link": 37
+        },
+        {
+          "name": "image2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 38
+        },
+        {
+          "name": "image3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 39
+        },
+        {
+          "name": "image4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image5",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image6",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image7",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image8",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image9",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image10",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "image list",
+          "shape": 6,
+          "type": "IMAGE",
+          "links": [
+            86
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "2e1e10fafa840289cd4dbd241f693103f968c3bb",
+        "Node name for S&R": "SynVowImageListCompose"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 39,
+      "type": "PrimitiveStringMultiline",
+      "pos": [
+        3114.765449032649,
+        4354.359814226282
+      ],
+      "size": [
+        323.84393072409785,
+        285.77971015627145
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 4,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "STRING",
+          "type": "STRING",
+          "links": [
+            87
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.22.0",
+        "Node name for S&R": "PrimitiveStringMultiline"
+      },
+      "widgets_values": [
+        "将图像转为黑夜"
+      ]
+    },
+    {
+      "id": 70,
+      "type": "SynVowJimeng_TIBatch",
+      "pos": [
+        3512.7091550926148,
+        5079.639159213907
+      ],
+      "size": [
+        270,
+        302
+      ],
+      "flags": {},
+      "order": 43,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "images_list1",
+          "type": "IMAGE",
+          "link": 78
+        },
+        {
+          "name": "images_list2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "images_list3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "images_list4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "images_list5",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "prompts_list",
+          "shape": 7,
+          "type": "STRING",
+          "link": 79
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "shape": 6,
+          "type": "IMAGE",
+          "links": [
+            80
+          ]
+        },
+        {
+          "name": "status",
+          "type": "STRING",
+          "links": [
+            81
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "d945e9349b65e18110eb3c2cc5c79cfaece44857",
+        "Node name for S&R": "SynVowJimeng_TIBatch"
+      },
+      "widgets_values": [
+        "即梦5.0-pro",
+        "1:1",
+        "2K",
+        "sequential",
+        0,
+        "randomize"
+      ]
+    },
+    {
+      "id": 67,
+      "type": "SynVowJimeng_TBatch",
+      "pos": [
+        3605.4481214561392,
+        3693.1262163270735
+      ],
+      "size": [
+        270,
+        358
       ],
       "flags": {},
       "order": 31,
@@ -2189,13 +2245,13 @@
           "name": "prompts_list",
           "shape": 7,
           "type": "STRING",
-          "link": 15
+          "link": 63
         },
         {
           "name": "image1",
           "shape": 7,
           "type": "IMAGE",
-          "link": 17
+          "link": 64
         },
         {
           "name": "image2",
@@ -2238,6 +2294,12 @@
           "shape": 7,
           "type": "IMAGE",
           "link": null
+        },
+        {
+          "name": "image9",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
         }
       ],
       "outputs": [
@@ -2246,41 +2308,40 @@
           "shape": 6,
           "type": "IMAGE",
           "links": [
-            10
+            65
           ]
         },
         {
           "name": "status",
           "type": "STRING",
           "links": [
-            11
+            66
           ]
         }
       ],
       "properties": {
         "aux_id": "AJbeckliy/Comfyui_SynVow_api",
-        "ver": "2e1e10fafa840289cd4dbd241f693103f968c3bb",
-        "Node name for S&R": "SynVowGptImage2_TBatch"
+        "ver": "d945e9349b65e18110eb3c2cc5c79cfaece44857",
+        "Node name for S&R": "SynVowJimeng_TBatch"
       },
       "widgets_values": [
-        "gpt-image-2-1k-qy",
-        "auto",
-        "1K",
-        "9:16",
+        "即梦5.0",
+        "1:1",
+        "2K",
         0,
         "randomize"
       ]
     },
     {
-      "id": 38,
-      "type": "SynVowGptImage2_IBatch",
+      "id": 72,
+      "type": "SynVowJimeng_IBatch",
       "pos": [
-        3507.0991799380145,
-        4329.31611797365
+        3493.562831383132,
+        4336.040645615978
       ],
       "size": [
         400,
-        336
+        312
       ],
       "flags": {},
       "order": 42,
@@ -2289,7 +2350,7 @@
         {
           "name": "images_list1",
           "type": "IMAGE",
-          "link": 34
+          "link": 86
         },
         {
           "name": "images_list2",
@@ -2321,7 +2382,7 @@
           "widget": {
             "name": "prompt"
           },
-          "link": 33
+          "link": 87
         }
       ],
       "outputs": [
@@ -2330,165 +2391,69 @@
           "shape": 6,
           "type": "IMAGE",
           "links": [
-            31
+            89
           ]
         },
         {
           "name": "status",
           "type": "STRING",
           "links": [
-            32
+            88
           ]
         }
       ],
       "properties": {
         "aux_id": "AJbeckliy/Comfyui_SynVow_api",
-        "ver": "2e1e10fafa840289cd4dbd241f693103f968c3bb",
-        "Node name for S&R": "SynVowGptImage2_IBatch"
+        "ver": "d945e9349b65e18110eb3c2cc5c79cfaece44857",
+        "Node name for S&R": "SynVowJimeng_IBatch"
       },
       "widgets_values": [
-        "gpt-image-2-1k-qy",
-        "auto",
-        "1K",
-        "9:16",
+        "即梦5.0",
+        "1:1",
+        "2K",
         "",
         0,
         "randomize"
       ]
     },
     {
-      "id": 60,
-      "type": "SynVowGptImage2_TIBatch",
+      "id": 64,
+      "type": "Fast Groups Bypasser (rgthree)",
       "pos": [
-        3571.547830545613,
-        5060.1327223625685
+        1643.5501619124573,
+        2615.6765405892725
       ],
       "size": [
-        322.9224609375,
-        326
+        358.7277286136996,
+        154
       ],
       "flags": {},
-      "order": 43,
-      "mode": 4,
-      "inputs": [
-        {
-          "name": "images_list1",
-          "type": "IMAGE",
-          "link": 50
-        },
-        {
-          "name": "images_list2",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "images_list3",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "images_list4",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "images_list5",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "prompts_list",
-          "shape": 7,
-          "type": "STRING",
-          "link": 53
-        }
-      ],
+      "order": 18,
+      "mode": 0,
+      "inputs": [],
       "outputs": [
         {
-          "name": "images",
-          "shape": 6,
-          "type": "IMAGE",
-          "links": [
-            55
-          ]
-        },
-        {
-          "name": "status",
-          "type": "STRING",
-          "links": [
-            54
-          ]
+          "label": "可选连接",
+          "name": "OPT_CONNECTION",
+          "type": "*",
+          "links": null
         }
       ],
+      "title": "根据功能选择，尽量先少量测试",
       "properties": {
-        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
-        "ver": "2e1e10fafa840289cd4dbd241f693103f968c3bb",
-        "Node name for S&R": "SynVowGptImage2_TIBatch"
+        "matchColors": "",
+        "matchTitle": "",
+        "showNav": true,
+        "showAllGraphs": true,
+        "sort": "position",
+        "customSortAlphabet": "",
+        "toggleRestriction": "always one"
       },
-      "widgets_values": [
-        "gpt-image-2-1k-qy",
-        "auto",
-        "1K",
-        "1:1",
-        "sequential",
-        0,
-        "randomize"
-      ]
+      "color": "#322",
+      "bgcolor": "#533"
     }
   ],
   "links": [
-    [
-      4,
-      5,
-      0,
-      6,
-      0,
-      "IMAGE"
-    ],
-    [
-      7,
-      8,
-      0,
-      9,
-      0,
-      "IMAGE"
-    ],
-    [
-      8,
-      11,
-      0,
-      8,
-      8,
-      "STRING"
-    ],
-    [
-      9,
-      12,
-      0,
-      5,
-      8,
-      "STRING"
-    ],
-    [
-      10,
-      13,
-      0,
-      14,
-      0,
-      "IMAGE"
-    ],
-    [
-      11,
-      13,
-      1,
-      15,
-      0,
-      "STRING"
-    ],
     [
       14,
       18,
@@ -2496,14 +2461,6 @@
       19,
       0,
       "LIST"
-    ],
-    [
-      15,
-      19,
-      1,
-      13,
-      0,
-      "STRING"
     ],
     [
       16,
@@ -2514,26 +2471,10 @@
       "STRING"
     ],
     [
-      17,
-      23,
-      0,
-      13,
-      1,
-      "IMAGE"
-    ],
-    [
       18,
       16,
       0,
       23,
-      0,
-      "IMAGE"
-    ],
-    [
-      19,
-      24,
-      0,
-      5,
       0,
       "IMAGE"
     ],
@@ -2550,54 +2491,6 @@
       32,
       0,
       33,
-      0,
-      "IMAGE"
-    ],
-    [
-      28,
-      5,
-      1,
-      36,
-      0,
-      "STRING"
-    ],
-    [
-      29,
-      8,
-      1,
-      37,
-      0,
-      "STRING"
-    ],
-    [
-      31,
-      38,
-      0,
-      26,
-      0,
-      "IMAGE"
-    ],
-    [
-      32,
-      38,
-      1,
-      31,
-      0,
-      "STRING"
-    ],
-    [
-      33,
-      39,
-      0,
-      38,
-      5,
-      "STRING"
-    ],
-    [
-      34,
-      40,
-      0,
-      38,
       0,
       "IMAGE"
     ],
@@ -2690,14 +2583,6 @@
       "IMAGE"
     ],
     [
-      50,
-      57,
-      0,
-      60,
-      0,
-      "IMAGE"
-    ],
-    [
       51,
       63,
       1,
@@ -2714,26 +2599,154 @@
       "LIST"
     ],
     [
-      53,
+      56,
+      11,
+      0,
+      65,
+      9,
+      "STRING"
+    ],
+    [
+      57,
+      65,
+      0,
+      9,
+      0,
+      "IMAGE"
+    ],
+    [
+      58,
+      65,
+      1,
+      37,
+      0,
+      "STRING"
+    ],
+    [
+      59,
+      24,
+      0,
+      66,
+      0,
+      "IMAGE"
+    ],
+    [
+      60,
+      12,
+      0,
+      66,
+      9,
+      "STRING"
+    ],
+    [
+      61,
+      66,
+      0,
+      6,
+      0,
+      "IMAGE"
+    ],
+    [
+      62,
+      66,
+      1,
+      36,
+      0,
+      "STRING"
+    ],
+    [
+      63,
+      19,
+      1,
+      67,
+      0,
+      "STRING"
+    ],
+    [
+      64,
+      23,
+      0,
+      67,
+      1,
+      "IMAGE"
+    ],
+    [
+      65,
+      67,
+      0,
+      14,
+      0,
+      "IMAGE"
+    ],
+    [
+      66,
+      67,
+      1,
+      15,
+      0,
+      "STRING"
+    ],
+    [
+      78,
+      57,
+      0,
+      70,
+      0,
+      "IMAGE"
+    ],
+    [
+      79,
       63,
       1,
-      60,
+      70,
       5,
       "STRING"
     ],
     [
-      54,
-      60,
+      80,
+      70,
+      0,
+      47,
+      0,
+      "IMAGE"
+    ],
+    [
+      81,
+      70,
       1,
       48,
       0,
       "STRING"
     ],
     [
-      55,
-      60,
+      86,
+      40,
       0,
-      47,
+      72,
+      0,
+      "IMAGE"
+    ],
+    [
+      87,
+      39,
+      0,
+      72,
+      5,
+      "STRING"
+    ],
+    [
+      88,
+      72,
+      1,
+      31,
+      0,
+      "STRING"
+    ],
+    [
+      89,
+      72,
+      0,
+      26,
       0,
       "IMAGE"
     ]
@@ -2803,10 +2816,10 @@
   "config": {},
   "extra": {
     "ds": {
-      "scale": 0.2729446164628998,
+      "scale": 1.0365067267922783,
       "offset": [
-        1015.853261887108,
-        -1200.0551755414635
+        -1306.4143340072071,
+        -2366.823725957782
       ]
     },
     "frontendVersion": "1.47.12",

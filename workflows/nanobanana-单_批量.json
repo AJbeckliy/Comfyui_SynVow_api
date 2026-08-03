@@ -25,7 +25,13 @@
           "link": 66
         }
       ],
-      "outputs": [],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
       "properties": {
         "cnr_id": "comfy-core",
         "ver": "0.22.0",
@@ -462,7 +468,13 @@
           "link": 70
         }
       ],
-      "outputs": [],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
       "properties": {
         "cnr_id": "comfy-core",
         "ver": "0.22.0",
@@ -531,7 +543,13 @@
           "link": 61
         }
       ],
-      "outputs": [],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
       "properties": {
         "cnr_id": "comfy-core",
         "ver": "0.22.0",
@@ -562,7 +580,13 @@
           "link": 57
         }
       ],
-      "outputs": [],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
       "properties": {
         "cnr_id": "comfy-core",
         "ver": "0.22.0",
@@ -1218,7 +1242,13 @@
           "link": 73
         }
       ],
-      "outputs": [],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": null
+        }
+      ],
       "properties": {
         "cnr_id": "comfy-core",
         "ver": "0.22.0",
@@ -1897,6 +1927,42 @@
       "bgcolor": "#653"
     },
     {
+      "id": 64,
+      "type": "Fast Groups Bypasser (rgthree)",
+      "pos": [
+        1643.5501619124573,
+        2615.6765405892725
+      ],
+      "size": [
+        358.7277286136996,
+        154
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "label": "可选连接",
+          "name": "OPT_CONNECTION",
+          "type": "*",
+          "links": null
+        }
+      ],
+      "title": "根据功能选择，尽量先少量测试",
+      "properties": {
+        "matchColors": "",
+        "matchTitle": "",
+        "showNav": true,
+        "showAllGraphs": true,
+        "sort": "position",
+        "customSortAlphabet": "",
+        "toggleRestriction": "always one"
+      },
+      "color": "#322",
+      "bgcolor": "#533"
+    },
+    {
       "id": 65,
       "type": "SynVowNanoBanana",
       "pos": [
@@ -1905,7 +1971,7 @@
       ],
       "size": [
         400,
-        372
+        392
       ],
       "flags": {},
       "order": 22,
@@ -1960,6 +2026,12 @@
           "link": null
         },
         {
+          "name": "image9",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
           "name": "prompt",
           "shape": 7,
           "type": "STRING",
@@ -1991,7 +2063,7 @@
         "Node name for S&R": "SynVowNanoBanana"
       },
       "widgets_values": [
-        "nano-banana-2-低价",
+        "nanobanana2-qy",
         "9:16",
         "2K",
         0,
@@ -2008,7 +2080,7 @@
       ],
       "size": [
         400,
-        372
+        392
       ],
       "flags": {},
       "order": 32,
@@ -2063,6 +2135,12 @@
           "link": null
         },
         {
+          "name": "image9",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
           "name": "prompt",
           "shape": 7,
           "type": "STRING",
@@ -2094,7 +2172,7 @@
         "Node name for S&R": "SynVowNanoBanana"
       },
       "widgets_values": [
-        "nano-banana-2-低价",
+        "nanobanana2-qy",
         "9:16",
         "2K",
         0,
@@ -2111,7 +2189,7 @@
       ],
       "size": [
         307.698828125,
-        338
+        358
       ],
       "flags": {},
       "order": 31,
@@ -2170,6 +2248,12 @@
           "shape": 7,
           "type": "IMAGE",
           "link": null
+        },
+        {
+          "name": "image9",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
         }
       ],
       "outputs": [
@@ -2195,7 +2279,7 @@
         "Node name for S&R": "SynVowNanoBanana_TBatch"
       },
       "widgets_values": [
-        "nano-banana-2-低价",
+        "nanobanana2-qy",
         "9:16",
         "2K",
         0,
@@ -2278,49 +2362,13 @@
         "Node name for S&R": "SynVowNanoBanana_IBatch"
       },
       "widgets_values": [
-        "nano-banana-2-低价",
+        "nanobanana2-qy",
         "9:16",
         "2K",
         "",
         0,
         "randomize"
       ]
-    },
-    {
-      "id": 64,
-      "type": "Fast Groups Bypasser (rgthree)",
-      "pos": [
-        1643.5501619124573,
-        2615.6765405892725
-      ],
-      "size": [
-        358.7277286136996,
-        154
-      ],
-      "flags": {},
-      "order": 18,
-      "mode": 0,
-      "inputs": [],
-      "outputs": [
-        {
-          "label": "可选连接",
-          "name": "OPT_CONNECTION",
-          "type": "*",
-          "links": null
-        }
-      ],
-      "title": "根据功能选择，尽量先少量测试",
-      "properties": {
-        "matchColors": "",
-        "matchTitle": "",
-        "showNav": true,
-        "showAllGraphs": true,
-        "sort": "position",
-        "customSortAlphabet": "",
-        "toggleRestriction": "always one"
-      },
-      "color": "#322",
-      "bgcolor": "#533"
     },
     {
       "id": 69,
@@ -2396,7 +2444,7 @@
         "Node name for S&R": "SynVowNanoBanana_TIBatch"
       },
       "widgets_values": [
-        "nano-banana-2-低价",
+        "nanobanana2-qy",
         "9:16",
         "2K",
         "sequential",
@@ -2555,7 +2603,7 @@
       11,
       0,
       65,
-      8,
+      9,
       "STRING"
     ],
     [
@@ -2587,7 +2635,7 @@
       12,
       0,
       66,
-      8,
+      9,
       "STRING"
     ],
     [
@@ -2768,13 +2816,13 @@
   "config": {},
   "extra": {
     "ds": {
-      "scale": 0.4395800342596654,
+      "scale": 0.3002390781091906,
       "offset": [
-        110.71928366132909,
-        -1367.471138122577
+        512.7355501195882,
+        -1412.377138563967
       ]
     },
-    "frontendVersion": "1.44.19",
+    "frontendVersion": "1.47.12",
     "VHS_latentpreview": false,
     "VHS_latentpreviewrate": 0,
     "VHS_MetadataImage": true,

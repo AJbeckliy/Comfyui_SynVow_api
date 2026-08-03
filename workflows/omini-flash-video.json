@@ -1,0 +1,926 @@
+{
+  "id": "40f619f4-f0ff-4823-b523-a4044498941f",
+  "revision": 0,
+  "last_node_id": 98,
+  "last_link_id": 108,
+  "nodes": [
+    {
+      "id": 76,
+      "type": "ShowText|pysssss",
+      "pos": [
+        910.884785898048,
+        37.66349779538453
+      ],
+      "size": [
+        336.8444778362134,
+        74.83546205860253
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 93
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 77,
+      "type": "ShowText|pysssss",
+      "pos": [
+        922.1545079115714,
+        353.2157141740468
+      ],
+      "size": [
+        324.0721262208863,
+        122.16829451540195
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 94
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 78,
+      "type": "SynVowApiVideoPreview",
+      "pos": [
+        554.5584068978835,
+        99.69880959102693
+      ],
+      "size": [
+        320.29663478470127,
+        349.08264462809916
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video_path",
+          "type": "STRING",
+          "link": 92
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "d945e9349b65e18110eb3c2cc5c79cfaece44857",
+        "Node name for S&R": "SynVowApiVideoPreview"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 75,
+      "type": "ShowText|pysssss",
+      "pos": [
+        924.4084523142759,
+        177.40805076307788
+      ],
+      "size": [
+        327.07738542449283,
+        112.40120210368138
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 91
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 79,
+      "type": "ShowText|pysssss",
+      "pos": [
+        1347.6335305889834,
+        673.6974466233332
+      ],
+      "size": [
+        336.8444778362134,
+        74.83546205860253
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 98
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 80,
+      "type": "ShowText|pysssss",
+      "pos": [
+        1358.9032526025069,
+        989.2496630019957
+      ],
+      "size": [
+        324.0721262208863,
+        122.16829451540195
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 99
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 82,
+      "type": "SynVowApiVideoPreview",
+      "pos": [
+        991.3071515888195,
+        735.7327584189757
+      ],
+      "size": [
+        320.29663478470127,
+        349.08264462809916
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video_path",
+          "type": "STRING",
+          "link": 96
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "d945e9349b65e18110eb3c2cc5c79cfaece44857",
+        "Node name for S&R": "SynVowApiVideoPreview"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 83,
+      "type": "ShowText|pysssss",
+      "pos": [
+        1361.1571970052114,
+        813.4419995910266
+      ],
+      "size": [
+        327.07738542449283,
+        112.40120210368138
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 97
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 85,
+      "type": "LoadImage",
+      "pos": [
+        146.60205321576655,
+        707.7515459650242
+      ],
+      "size": [
+        312.97520661157023,
+        375.9834710743802
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            100
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.30.0",
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "20260423_2512_000024.png",
+        "image"
+      ]
+    },
+    {
+      "id": 84,
+      "type": "SynVowOmniFlash",
+      "pos": [
+        135.1698454622858,
+        64.79750337014003
+      ],
+      "size": [
+        400,
+        392
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image_1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "video_path",
+          "type": "STRING",
+          "links": [
+            91,
+            92
+          ]
+        },
+        {
+          "name": "video_url",
+          "type": "STRING",
+          "links": [
+            93
+          ]
+        },
+        {
+          "name": "task_info",
+          "type": "STRING",
+          "links": [
+            94
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "d945e9349b65e18110eb3c2cc5c79cfaece44857",
+        "Node name for S&R": "SynVowOmniFlash"
+      },
+      "widgets_values": [
+        "",
+        "omni-flash-preview",
+        "single",
+        "16:9",
+        "6",
+        "720p",
+        0,
+        "randomize",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "id": 87,
+      "type": "ShowText|pysssss",
+      "pos": [
+        1346.0681607391582,
+        1313.5922691881656
+      ],
+      "size": [
+        336.8444778362134,
+        74.83546205860253
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 101
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 88,
+      "type": "ShowText|pysssss",
+      "pos": [
+        1357.3378827526817,
+        1629.1444855668283
+      ],
+      "size": [
+        324.0721262208863,
+        122.16829451540195
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 102
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 90,
+      "type": "ShowText|pysssss",
+      "pos": [
+        1359.5918271553862,
+        1453.336822155859
+      ],
+      "size": [
+        327.07738542449283,
+        112.40120210368138
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 104
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 92,
+      "type": "SynVowOmniFlash",
+      "pos": [
+        538.5965180766858,
+        1350.6667817529965
+      ],
+      "size": [
+        400,
+        392
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image_1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "video_path",
+          "shape": 7,
+          "type": "STRING",
+          "widget": {
+            "name": "video_path"
+          },
+          "link": 107
+        }
+      ],
+      "outputs": [
+        {
+          "name": "video_path",
+          "type": "STRING",
+          "links": [
+            103,
+            104
+          ]
+        },
+        {
+          "name": "video_url",
+          "type": "STRING",
+          "links": [
+            101
+          ]
+        },
+        {
+          "name": "task_info",
+          "type": "STRING",
+          "links": [
+            102
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "d945e9349b65e18110eb3c2cc5c79cfaece44857",
+        "Node name for S&R": "SynVowOmniFlash"
+      },
+      "widgets_values": [
+        "",
+        "omni-flash-preview",
+        "single",
+        "16:9",
+        "6",
+        "720p",
+        0,
+        "randomize",
+        "",
+        "",
+        ""
+      ]
+    },
+    {
+      "id": 94,
+      "type": "SynVowApiVideoLoader",
+      "pos": [
+        190.29159057523623,
+        1335.980541171262
+      ],
+      "size": [
+        282.72727272727275,
+        410.36363636363603
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "links": []
+        },
+        {
+          "name": "video_path",
+          "type": "STRING",
+          "links": [
+            107
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "d945e9349b65e18110eb3c2cc5c79cfaece44857",
+        "Node name for S&R": "SynVowApiVideoLoader"
+      },
+      "widgets_values": [
+        "2.mp4",
+        0,
+        0,
+        null,
+        ""
+      ]
+    },
+    {
+      "id": 89,
+      "type": "SynVowApiVideoPreview",
+      "pos": [
+        985.3417817389947,
+        1369.0275809838079
+      ],
+      "size": [
+        320.29663478470127,
+        349.08264462809916
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video_path",
+          "type": "STRING",
+          "link": 103
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "d945e9349b65e18110eb3c2cc5c79cfaece44857",
+        "Node name for S&R": "SynVowApiVideoPreview"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 86,
+      "type": "SynVowOmniFlash",
+      "pos": [
+        540.1618879265105,
+        710.7719591881641
+      ],
+      "size": [
+        400,
+        392
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image_1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 100
+        },
+        {
+          "name": "image_2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "video_path",
+          "type": "STRING",
+          "links": [
+            96,
+            97
+          ]
+        },
+        {
+          "name": "video_url",
+          "type": "STRING",
+          "links": [
+            98
+          ]
+        },
+        {
+          "name": "task_info",
+          "type": "STRING",
+          "links": [
+            99
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "d945e9349b65e18110eb3c2cc5c79cfaece44857",
+        "Node name for S&R": "SynVowOmniFlash"
+      },
+      "widgets_values": [
+        "",
+        "omni-flash-preview",
+        "single",
+        "16:9",
+        "6",
+        "720p",
+        0,
+        "randomize",
+        "",
+        "",
+        ""
+      ]
+    }
+  ],
+  "links": [
+    [
+      91,
+      84,
+      0,
+      75,
+      0,
+      "STRING"
+    ],
+    [
+      92,
+      84,
+      0,
+      78,
+      0,
+      "STRING"
+    ],
+    [
+      93,
+      84,
+      1,
+      76,
+      0,
+      "STRING"
+    ],
+    [
+      94,
+      84,
+      2,
+      77,
+      0,
+      "STRING"
+    ],
+    [
+      96,
+      86,
+      0,
+      82,
+      0,
+      "STRING"
+    ],
+    [
+      97,
+      86,
+      0,
+      83,
+      0,
+      "STRING"
+    ],
+    [
+      98,
+      86,
+      1,
+      79,
+      0,
+      "STRING"
+    ],
+    [
+      99,
+      86,
+      2,
+      80,
+      0,
+      "STRING"
+    ],
+    [
+      100,
+      85,
+      0,
+      86,
+      0,
+      "IMAGE"
+    ],
+    [
+      101,
+      92,
+      1,
+      87,
+      0,
+      "STRING"
+    ],
+    [
+      102,
+      92,
+      2,
+      88,
+      0,
+      "STRING"
+    ],
+    [
+      103,
+      92,
+      0,
+      89,
+      0,
+      "STRING"
+    ],
+    [
+      104,
+      92,
+      0,
+      90,
+      0,
+      "STRING"
+    ],
+    [
+      107,
+      94,
+      1,
+      92,
+      3,
+      "STRING"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "T2V",
+      "bounding": [
+        114.7217630853994,
+        -32.33650220461547,
+        1146.7640746533693,
+        521.1014241513557
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "I2V",
+      "bounding": [
+        122.88850777633505,
+        605.0284466233333,
+        1677.8330746533693,
+        534.4114241513554
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "v2V",
+      "bounding": [
+        121.32313792651009,
+        1244.9232691881657,
+        1677.8330746533693,
+        534.4114241513554
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 1.2100000000000002,
+      "offset": [
+        303.0135355578144,
+        -275.5634662935215
+      ]
+    },
+    "frontendVersion": "1.47.12",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}

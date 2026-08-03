@@ -1,0 +1,756 @@
+{
+  "id": "b49fb077-e87d-44d3-b1a7-e5e43cd5ac83",
+  "revision": 0,
+  "last_node_id": 16,
+  "last_link_id": 19,
+  "nodes": [
+    {
+      "id": 4,
+      "type": "ShowText|pysssss",
+      "pos": [
+        4025.798694178054,
+        1791.6513057150505
+      ],
+      "size": [
+        316.8640826744231,
+        115.88174693290352
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 3
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 6,
+      "type": "ShowText|pysssss",
+      "pos": [
+        4370.321228994262,
+        1785.9249686120668
+      ],
+      "size": [
+        334.40552038229634,
+        450.76373953775305
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 5
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 5,
+      "type": "ShowText|pysssss",
+      "pos": [
+        4023.4791652249473,
+        1974.8940930105177
+      ],
+      "size": [
+        316.8640826744231,
+        115.88174693290352
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 7,
+      "type": "ShowText|pysssss",
+      "pos": [
+        4741.629787090036,
+        1786.4955437404208
+      ],
+      "size": [
+        316.8640826744231,
+        115.88174693290352
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 6
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 1,
+      "type": "SynVowSunoInspire",
+      "pos": [
+        3163.996441487301,
+        1823.261596350881
+      ],
+      "size": [
+        400,
+        356
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            2
+          ]
+        },
+        {
+          "name": "audio_path",
+          "type": "STRING",
+          "links": [
+            3
+          ]
+        },
+        {
+          "name": "audio_url",
+          "type": "STRING",
+          "links": [
+            4
+          ]
+        },
+        {
+          "name": "lyrics",
+          "type": "STRING",
+          "links": [
+            5
+          ]
+        },
+        {
+          "name": "title",
+          "type": "STRING",
+          "links": [
+            6
+          ]
+        },
+        {
+          "name": "task_info",
+          "type": "STRING",
+          "links": [
+            7
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "d945e9349b65e18110eb3c2cc5c79cfaece44857",
+        "Node name for S&R": "SynVowSunoInspire"
+      },
+      "widgets_values": [
+        "",
+        "suno5.5",
+        false,
+        0,
+        "randomize",
+        "",
+        ""
+      ]
+    },
+    {
+      "id": 8,
+      "type": "ShowText|pysssss",
+      "pos": [
+        4745.131935128415,
+        2053.826177336521
+      ],
+      "size": [
+        316.8640826744231,
+        115.88174693290352
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 7
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 3,
+      "type": "SaveAudioAdvanced",
+      "pos": [
+        3610.1979847015314,
+        1821.420629236799
+      ],
+      "size": [
+        377.39920651022385,
+        160
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 2
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.30.0",
+        "Node name for S&R": "SaveAudioAdvanced"
+      },
+      "widgets_values": [
+        "audio/ComfyUI",
+        "mp3",
+        "V0"
+      ]
+    },
+    {
+      "id": 9,
+      "type": "ShowText|pysssss",
+      "pos": [
+        4054.0284350928923,
+        2412.0749009482256
+      ],
+      "size": [
+        316.8640826744231,
+        115.88174693290352
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 15
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 10,
+      "type": "ShowText|pysssss",
+      "pos": [
+        4398.550969909103,
+        2406.348563845242
+      ],
+      "size": [
+        334.40552038229634,
+        450.76373953775305
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 17
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 11,
+      "type": "ShowText|pysssss",
+      "pos": [
+        4051.7089061397855,
+        2595.3176882436933
+      ],
+      "size": [
+        316.8640826744231,
+        115.88174693290352
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 16
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 12,
+      "type": "ShowText|pysssss",
+      "pos": [
+        4769.859528004877,
+        2406.919138973596
+      ],
+      "size": [
+        316.8640826744231,
+        115.88174693290352
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 18
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 14,
+      "type": "ShowText|pysssss",
+      "pos": [
+        4773.361676043255,
+        2674.2497725696962
+      ],
+      "size": [
+        316.8640826744231,
+        115.88174693290352
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 19
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": []
+    },
+    {
+      "id": 15,
+      "type": "SaveAudioAdvanced",
+      "pos": [
+        3638.4277256163696,
+        2441.844224469974
+      ],
+      "size": [
+        377.39920651022385,
+        160
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 14
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.30.0",
+        "Node name for S&R": "SaveAudioAdvanced"
+      },
+      "widgets_values": [
+        "audio/ComfyUI",
+        "mp3",
+        "V0"
+      ]
+    },
+    {
+      "id": 16,
+      "type": "SynVowSunoCustom",
+      "pos": [
+        3160.009875950656,
+        2415.4109420655714
+      ],
+      "size": [
+        400,
+        434
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            14
+          ]
+        },
+        {
+          "name": "audio_path",
+          "type": "STRING",
+          "links": [
+            15
+          ]
+        },
+        {
+          "name": "audio_url",
+          "type": "STRING",
+          "links": [
+            16
+          ]
+        },
+        {
+          "name": "lyrics",
+          "type": "STRING",
+          "links": [
+            17
+          ]
+        },
+        {
+          "name": "title",
+          "type": "STRING",
+          "links": [
+            18
+          ]
+        },
+        {
+          "name": "task_info",
+          "type": "STRING",
+          "links": [
+            19
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "d945e9349b65e18110eb3c2cc5c79cfaece44857",
+        "Node name for S&R": "SynVowSunoCustom"
+      },
+      "widgets_values": [
+        "",
+        "suno5.5",
+        false,
+        "",
+        "",
+        0,
+        "randomize",
+        "",
+        ""
+      ]
+    }
+  ],
+  "links": [
+    [
+      2,
+      1,
+      0,
+      3,
+      0,
+      "AUDIO"
+    ],
+    [
+      3,
+      1,
+      1,
+      4,
+      0,
+      "STRING"
+    ],
+    [
+      4,
+      1,
+      2,
+      5,
+      0,
+      "STRING"
+    ],
+    [
+      5,
+      1,
+      3,
+      6,
+      0,
+      "STRING"
+    ],
+    [
+      6,
+      1,
+      4,
+      7,
+      0,
+      "STRING"
+    ],
+    [
+      7,
+      1,
+      5,
+      8,
+      0,
+      "STRING"
+    ],
+    [
+      14,
+      16,
+      0,
+      15,
+      0,
+      "AUDIO"
+    ],
+    [
+      15,
+      16,
+      1,
+      9,
+      0,
+      "STRING"
+    ],
+    [
+      16,
+      16,
+      2,
+      11,
+      0,
+      "STRING"
+    ],
+    [
+      17,
+      16,
+      3,
+      10,
+      0,
+      "STRING"
+    ],
+    [
+      18,
+      16,
+      4,
+      12,
+      0,
+      "STRING"
+    ],
+    [
+      19,
+      16,
+      5,
+      14,
+      0,
+      "STRING"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "SUNO灵感模式",
+      "bounding": [
+        3153.996441487301,
+        1715.9249686120668,
+        1917.9995763155366,
+        530.763739537753
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "SUNO自定义模式",
+      "bounding": [
+        3150.009875950656,
+        2336.348563845242,
+        1950.21588276702,
+        530.7637395377528
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.3632892845121197,
+      "offset": [
+        -1727.9887207044994,
+        -1022.7815081698345
+      ]
+    },
+    "frontendVersion": "1.47.12",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}

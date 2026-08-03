@@ -8,7 +8,15 @@ import requests as _requests
 from . import synvow_auth
 from .media_common import upload_image as _upload_image, DIRECT_API_BASE
 
-GPT_MODEL_OPTIONS = ["gpt-5.5-2606", "gpt-5.4-2606", "gpt-5.5-2605", "gpt-5.4-2605"]
+GPT_MODEL_OPTIONS = [
+    "gpt-5.5-2607",
+    "gpt-5.6-sol-2607",
+    "gpt-5.5-2606",
+    "gpt-5.4-2606",
+    "gpt-5.5-2605",
+    "gpt-5.4-2605",
+]
+DEFAULT_GPT_MODEL = GPT_MODEL_OPTIONS[0]
 
 
 class SynVowGPTAPI:
@@ -20,7 +28,7 @@ class SynVowGPTAPI:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "模型": (GPT_MODEL_OPTIONS, {"default": "gpt-5.5-2606"}),
+                "模型": (GPT_MODEL_OPTIONS, {"default": DEFAULT_GPT_MODEL}),
                 "user_prompt": ("STRING", {"multiline": True, "default": ""}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
@@ -82,7 +90,7 @@ class SynVowGPTAPI:
                  image_5=None, image_6=None, image_7=None, image_8=None,
                  image_9=None, image_10=None):
         api_key = synvow_auth.read_api_key()
-        model_name = 模型 or "gpt-5.5-2606"
+        model_name = 模型 or DEFAULT_GPT_MODEL
 
         single_imgs = [img for img in [image_1, image_2, image_3, image_4, image_5,
                                        image_6, image_7, image_8, image_9, image_10]

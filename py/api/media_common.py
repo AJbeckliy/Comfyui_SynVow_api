@@ -1,17 +1,19 @@
 """
-SynVow 媒体公共工具：上传、下载、异步任务提交/轮询、Comfy 媒体包装
+SynVow 媒体公共工具：上传、下载、异步任务提交/轮询
 """
+import concurrent.futures
 import hashlib
 import io
 import json
 import os
 import time
 
+import comfy.model_management as mm
 import folder_paths
 import numpy as np
 import requests
+import torch
 from PIL import Image
-from comfy_api.input_impl import VideoFromFile
 
 from . import synvow_auth
 
@@ -20,18 +22,12 @@ EDIT_SUBMIT_URL = f"{DIRECT_API_BASE}/api/models/image/edit"
 EDIT_POLL_URL = f"{DIRECT_API_BASE}/api/models/tasks"
 
 _SUCCESS = ("SUCCESS", "SUCCEED", "SUCCEEDED", "COMPLETED", "DONE", "FINISH", "FINISHED")
-_FAILURE = ("FAILURE", "FAILED", "ERROR")
+_FAILURE = ("FAILURE", "FAILED", "ERROR", "EXCEPTION")
 
 
 def is_changed_by_inputs(**kwargs):
     key = json.dumps({k: str(v) for k, v in kwargs.items()}, sort_keys=True, ensure_ascii=False)
     return hashlib.md5(key.encode()).hexdigest()
-
-
-def as_comfy_video(path):
-    if path and os.path.isfile(path):
-        return VideoFromFile(path)
-    return VideoFromFile(io.BytesIO())
 
 
 def upload_image(api_key, img_tensor):
@@ -182,32 +178,125 @@ def parse_task_id(data):
     )
 
 
-def extract_video_url(value):
-    if not value:
-        return ""
-    if isinstance(value, str) and value.startswith(("http://", "https://")):
-        return value
-    if isinstance(value, list):
-        for item in value:
-            found = extract_video_url(item)
-            if found:
-                return found
-        return ""
-    if isinstance(value, dict):
-        for key in ("result_url", "url", "video_url", "video"):
-            val = value.get(key)
-            if isinstance(val, str) and val.startswith(("http://", "https://")):
-                return val
-            if isinstance(val, list):
-                found = extract_video_url(val)
-                if found:
-                    return found
-        for key in ("data", "result", "output", "sourceData", "task_result", "videos"):
-            if key in value:
-                found = extract_video_url(value.get(key))
-                if found:
-                    return found
-    return ""
+_URL_FIELD_KEYS = (
+    "result_url", "url", "image_url", "imageUrl", "video_url", "video",
+    "cld2VideoUrl", "result_file",
+)
+_NEST_FIELD_KEYS = (
+    "content", "images", "results", "data", "result", "output", "outputs",
+    "sourceData", "task_result", "videos", "resultImages", "items",
+)
+
+
+def extract_result_urls(value):
+    """从任务结果里取出全部 http(s) 资源 URL（图/视通用，去重保序）。"""
+    out, seen = [], set()
+
+    def add(u):
+        if isinstance(u, str) and u.startswith(("http://", "https://")) and u not in seen:
+            seen.add(u)
+            out.append(u)
+
+    def walk(v):
+        if not v:
+            return
+        if isinstance(v, str):
+            add(v)
+            return
+        if isinstance(v, list):
+            for item in v:
+                walk(item)
+            return
+        if not isinstance(v, dict):
+            return
+        for key in _URL_FIELD_KEYS:
+            val = v.get(key)
+            if isinstance(val, str):
+                add(val)
+            elif isinstance(val, list):
+                for item in val:
+                    if isinstance(item, str):
+                        add(item)
+                    else:
+                        walk(item)
+        for key in _NEST_FIELD_KEYS:
+            if v.get(key) is not None:
+                walk(v.get(key))
+
+    walk(value)
+    return out
+
+
+def extract_result_url(value):
+    urls = extract_result_urls(value)
+    return urls[0] if urls else ""
+
+
+def unpack_list_input(v):
+    return v[0] if isinstance(v, list) else v
+
+
+def normalize_prompts(prompts_list, fallback=""):
+    if isinstance(prompts_list, list):
+        prompts = [str(p).strip() for p in prompts_list if p is not None and str(p).strip()]
+    elif prompts_list and str(prompts_list).strip():
+        prompts = [str(prompts_list).strip()]
+    else:
+        prompts = []
+    if not prompts and fallback is not None and str(fallback).strip():
+        prompts = [str(fallback).strip()]
+    return prompts or [""]
+
+
+def blank_image(h=1024, w=1024):
+    return torch.zeros((1, h, w, 3), dtype=torch.float32)
+
+
+def download_image_tensor(img_url, tag="image", retries=3):
+    short = f"...{img_url[-24:]}" if len(img_url) > 24 else img_url
+    print(f"[{tag}] 开始下载: {short}")
+    for attempt in range(retries):
+        try:
+            r = requests.get(img_url, timeout=120, verify=False)
+            r.raise_for_status()
+            img = Image.open(io.BytesIO(r.content)).convert("RGB")
+            arr = np.array(img).astype(np.float32) / 255.0
+            print(f"[{tag}] 下载成功 ({attempt + 1}/{retries}): {short} 尺寸={img.width}x{img.height}")
+            return torch.from_numpy(arr).unsqueeze(0)
+        except Exception as e:
+            print(f"[{tag}] 下载失败 ({attempt + 1}/{retries}): {short} 错误={e}")
+            if attempt < retries - 1:
+                time.sleep(3 * (attempt + 1))
+    print(f"[{tag}] {retries}次重试均失败，使用黑图占位: {short}")
+    return blank_image()
+
+
+def download_image_tensors(image_urls, tag="image"):
+    valid = [(i, u) for i, u in enumerate(image_urls) if u]
+    print(f"[{tag}] 并发下载 {len(valid)}/{len(image_urls)} 张...")
+    with concurrent.futures.ThreadPoolExecutor(max_workers=max(len(image_urls), 1)) as ex:
+        futures = {i: ex.submit(download_image_tensor, u, tag) for i, u in valid}
+    downloaded = {i: f.result() for i, f in futures.items()}
+    ref_h, ref_w = next(((t.shape[1], t.shape[2]) for t in downloaded.values()), (1024, 1024))
+    return [
+        downloaded[i] if i in downloaded else blank_image(ref_h, ref_w)
+        for i in range(len(image_urls))
+    ]
+
+
+def stack_image_tensors(image_urls, tag="image"):
+    tensors = download_image_tensors(image_urls, tag=tag)
+    if not tensors:
+        return blank_image()
+    h, w = tensors[0].shape[1], tensors[0].shape[2]
+    resized = []
+    for t in tensors:
+        if t.shape[1] != h or t.shape[2] != w:
+            pil = Image.fromarray((t[0].cpu().numpy() * 255).clip(0, 255).astype(np.uint8))
+            pil = pil.resize((w, h), Image.LANCZOS)
+            t = torch.from_numpy(np.array(pil).astype(np.float32) / 255.0).unsqueeze(0)
+        resized.append(t)
+    return torch.cat(resized, dim=0)
 
 
 def submit_edit_async(api_key, body, tag):
@@ -230,40 +319,61 @@ def submit_edit_async(api_key, body, tag):
     return str(task_id), str(consumption_id)
 
 
+def _poll_status_label(inner):
+    raw = inner.get("state") or inner.get("status") or inner.get("task_status") or ""
+    if raw in (1, "1"):
+        return "SUCCESS"
+    if raw in (2, "2", -1, "-1"):
+        return "FAILURE"
+    text = str(raw)
+    if text in ("已完成", "成功"):
+        return "SUCCESS"
+    if text in ("失败",):
+        return "FAILURE"
+    return text.upper()
+
+
 def _default_poll_success(inner):
-    status = str(inner.get("state") or inner.get("status") or inner.get("task_status") or "").upper()
+    status = _poll_status_label(inner)
     return status in _SUCCESS, status
 
 
 def _default_poll_failed(inner):
-    status = str(inner.get("state") or inner.get("status") or inner.get("task_status") or "").upper()
+    status = _poll_status_label(inner)
     return status in _FAILURE, status
 
 
 def poll_edit_task(api_key, task_id, model, tag, consumption_id="", timeout=1800, interval=5,
-                   check_success=None, check_failed=None, pick_url=None):
+                   check_success=None, check_failed=None, pick_url=None, fail_soft=False,
+                   extra_body=None):
     """
     check_success(inner) -> (done: bool, label: str)
     check_failed(inner) -> (failed: bool, label: str)
     pick_url(inner, data) -> url str
+    fail_soft=True 时超时/失败/无 URL 返回 None，不抛异常。
     """
-    import comfy.model_management as mm
     check_success = check_success or _default_poll_success
     check_failed = check_failed or _default_poll_failed
-    pick_url = pick_url or (lambda inner, data: extract_video_url(inner) or extract_video_url(data))
+    pick_url = pick_url or (lambda inner, data: extract_result_url(inner) or extract_result_url(data))
     headers = synvow_auth.make_api_headers(api_key)
     start = time.time()
     while True:
         mm.throw_exception_if_processing_interrupted()
         elapsed = int(time.time() - start)
         if elapsed >= timeout:
-            raise Exception(f"[{tag}] 轮询超时 ({timeout}s)")
+            msg = f"[{tag}] 轮询超时 ({timeout}s)"
+            if fail_soft:
+                print(msg)
+                return None
+            raise Exception(msg)
         time.sleep(interval)
         mm.throw_exception_if_processing_interrupted()
         try:
             body = {"task_id": task_id, "model": model}
             if consumption_id:
                 body["consumption_id"] = consumption_id
+            if extra_body:
+                body.update(extra_body)
             res = requests.post(EDIT_POLL_URL, headers=headers, json=body, verify=False, timeout=30)
             if res.status_code in (429, 500, 503):
                 print(f"[{tag}] ...{task_id[-8:]} HTTP {res.status_code}, 退避10秒")
@@ -271,19 +381,32 @@ def poll_edit_task(api_key, task_id, model, tag, consumption_id="", timeout=1800
                 continue
             data = res.json() if res.status_code == 200 else {}
             inner = data.get("data") if isinstance(data.get("data"), dict) else (data if isinstance(data, dict) else {})
+            if not isinstance(inner, dict):
+                inner = {}
             done, label = check_success(inner)
             failed, fail_label = check_failed(inner)
             print(f"[{tag}] ...{task_id[-8:]} status={label or fail_label or '(无状态)'} ({elapsed}s)")
             if done:
                 url = pick_url(inner, data)
                 if not url:
-                    raise Exception(f"{tag} 任务成功但无视频 URL")
+                    msg = f"{tag} 任务成功但无结果 URL"
+                    if fail_soft:
+                        print(msg)
+                        return None
+                    raise Exception(msg)
                 return url
             if failed:
                 err = inner.get("fail_reason") or inner.get("error") or fail_label
-                raise Exception(f"{tag} 任务失败: {err}")
+                msg = f"{tag} 任务失败: {err}"
+                if fail_soft:
+                    print(f"[{tag}] 失败: ...{task_id[-8:]} {err}")
+                    return None
+                raise Exception(msg)
         except Exception as e:
             msg = str(e)
-            if msg.startswith(tag) or "超时" in msg:
+            is_fatal = msg.startswith(f"[{tag}]") or msg.startswith(tag) or "超时" in msg
+            if is_fatal:
+                if fail_soft:
+                    return None
                 raise
             print(f"[{tag}] 轮询异常: {e}")

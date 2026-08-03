@@ -9,7 +9,7 @@ import urllib3
 
 from . import synvow_auth
 from .gemini_synvow import GEMINI_MODEL_OPTIONS
-from .gpt_synvow import GPT_MODEL_OPTIONS
+from .gpt_synvow import DEFAULT_GPT_MODEL, GPT_MODEL_OPTIONS
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
@@ -87,7 +87,7 @@ class GptImage2PromptOptimizer:
                 ),
                 "model": (
                     list(GPT_MODEL_OPTIONS) + list(GEMINI_MODEL_OPTIONS),
-                    {"default": "gpt-5.5-2606"},
+                    {"default": DEFAULT_GPT_MODEL},
                 ),
                 "optimize_strength": (
                     ["标准", "增强"],
@@ -125,7 +125,7 @@ class GptImage2PromptOptimizer:
         api_key = synvow_auth.read_api_key()
         headers = synvow_auth.make_api_headers(api_key)
         exact_text = exact_text or ""
-        actual_model = model or "gpt-5.5-2606"
+        actual_model = model or DEFAULT_GPT_MODEL
         text_policy_en = self._TEXT_POLICY_MAP.get(text_policy, text_policy)
 
         payload = build_input_payload(layout_type, optimize_strength, aspect_ratio, user_prompt, exact_text, text_policy_en)

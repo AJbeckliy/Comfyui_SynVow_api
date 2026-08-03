@@ -12,6 +12,8 @@ from .media_common import upload_image as _upload_image, DIRECT_API_BASE
 GEMINI_MODEL_OPTIONS = [
     "gemini-3.1-pro-稳定",
     "gemini-3.5-flash-稳定",
+    "gemini-3.5-flash-lite-稳定",
+    "gemini-3.6-flash-稳定",
     "gemini-3-pro-2606",
     "gemini-3.1-pro-2606",
     "gemini-3.1-flash-2606",

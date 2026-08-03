@@ -10,19 +10,16 @@ import torch.nn.functional as F
 
 from . import synvow_auth
 from .gpt_image_2_synvow import (
-    _API_URL,
     _MODEL_TYPE_OPTIONS,
-    _POLL_URL,
     _RATIO_TO_SIZE_1K,
-    _collect_image_tensors,
     _is_changed,
     _resolve_size_params,
     _run_tasks,
     _unpack,
 )
 from .gemini_synvow import GEMINI_MODEL_OPTIONS
-from .gpt_synvow import GPT_MODEL_OPTIONS
-from .media_common import DIRECT_API_BASE, upload_image as _upload_image
+from .gpt_synvow import DEFAULT_GPT_MODEL, GPT_MODEL_OPTIONS
+from .media_common import DIRECT_API_BASE, stack_image_tensors, upload_image as _upload_image
 
 
 CATEGORY = "💫SynVow_api/api/图像"
@@ -33,7 +30,6 @@ MODE_CLARITY_RESTORE = "模糊图片高清"
 MODE_OBJECT_REMOVE = "移除物品"
 MODE_ADD_LIGHT_EFFECT = "增加光效"
 MODE_OUTPAINT = "扩图"
-LEGACY_MODE_CYBER_LIGHT = "赛博科技光效"
 
 MODES = [
     MODE_PRODUCT_REFINE,
@@ -56,9 +52,8 @@ _PROMPT_FILES = {
 }
 
 _LLM_PROMPT_FILE = "gpt_image2_product_studio_llm_enhancer.txt"
-_DEFAULT_LLM_MODEL = "gpt-5.5-2606"
+_DEFAULT_LLM_MODEL = DEFAULT_GPT_MODEL
 _LLM_OFF = "关闭"
-_LEGACY_LLM_AUTO = "自动增强"
 _LLM_URL = f"{DIRECT_API_BASE}/api/models/completions"
 _MODEL_LIST_URL = f"{DIRECT_API_BASE}/models/public-list"
 _LLM_MODEL_CACHE_SECONDS = 300
@@ -122,13 +117,6 @@ def _llm_model_input():
     return models, {"default": default}
 
 
-def _normalize_mode(mode):
-    mode = str(mode or MODE_PRODUCT_REFINE).strip()
-    if mode == LEGACY_MODE_CYBER_LIGHT:
-        return MODE_ADD_LIGHT_EFFECT
-    return mode
-
-
 def _load_mode_prompt(mode):
     prompt_path = _PROMPT_DIR / _PROMPT_FILES[mode]
     try:
@@ -158,7 +146,7 @@ def build_product_studio_prompt(
     has_mask=False,
 ):
     """Build the base English edit prompt for one of the six product workflows."""
-    mode = _normalize_mode(mode)
+    mode = str(mode or MODE_PRODUCT_REFINE).strip()
     if mode not in _PROMPT_FILES:
         raise ValueError(f"不支持的场景模式：{mode}")
 
@@ -508,7 +496,7 @@ class SynVowGptImage2ProductStudio:
         if image is None:
             raise ValueError("请连接主输入图片 image。")
 
-        mode = _normalize_mode(_unpack(mode) or MODE_PRODUCT_REFINE)
+        mode = str(_unpack(mode) or MODE_PRODUCT_REFINE).strip()
         model_type = _unpack(model_type) or "gpt-image-2-稳定"
         quality = _unpack(quality) or "auto"
         resolution = _unpack(resolution) or "1K"
@@ -517,8 +505,6 @@ class SynVowGptImage2ProductStudio:
             aspect_ratio = _closest_supported_aspect_ratio(image)
         seed = int(_unpack(seed) or 0)
         llm_model = _unpack(llm_model) or _DEFAULT_LLM_MODEL
-        if llm_model == _LEGACY_LLM_AUTO:
-            llm_model = _DEFAULT_LLM_MODEL
         reference_image = _unpack(reference_image)
         outpaint_coverage = None
         if mode == MODE_OUTPAINT:
@@ -537,7 +523,6 @@ class SynVowGptImage2ProductStudio:
         )
 
         api_key = synvow_auth.read_api_key()
-        headers = synvow_auth.make_api_headers(api_key)
         final_prompt = base_prompt
         llm_status = "off"
         if llm_model != _LLM_OFF:
@@ -580,9 +565,7 @@ class SynVowGptImage2ProductStudio:
             effective_resolution,
             True,
             api_key,
-            headers,
-            _API_URL,
-            _POLL_URL,
+            aspect_ratio=aspect_ratio,
         )
         successful = sum(1 for url in image_urls if url)
         mask_status = "yes" if mask_guide is not None else "no"
@@ -602,7 +585,7 @@ class SynVowGptImage2ProductStudio:
                 f"seed={seed} mask={mask_status} llm={llm_status}{coverage_status}"
             )
 
-        output = _collect_image_tensors(image_urls)
+        output = stack_image_tensors(image_urls, tag="GPT-Image-2")
         synvow_auth.refresh_balance()
         return output, final_prompt, status
 

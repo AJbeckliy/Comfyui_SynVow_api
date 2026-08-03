@@ -2,9 +2,8 @@
 """
 Alpha-aware SynVow GPT-Image-2 batch node.
 
-This file only adds new nodes. It reuses the existing GPT-Image-2 request,
-auth, submit, poll, and URL parsing helpers, and returns original image URLs
-so transparent PNGs can be saved directly with their alpha channel.
+Returns original image URLs so transparent PNGs can be saved directly with
+their alpha channel.
 """
 
 import concurrent.futures
@@ -16,18 +15,16 @@ import requests
 
 from . import synvow_auth
 from .gpt_image_2_synvow import (
-    _API_URL,
     _DEFAULT_GPT_IMAGE_MODEL,
     _MODEL_TYPE_OPTIONS,
     _NEW_MODELS,
-    _POLL_URL,
     _RATIO_TO_SIZE_1K,
     _build_payload,
-    _extract_urls,
     _is_changed,
     _resolve_size_params,
     _unpack,
 )
+from .media_common import EDIT_POLL_URL, EDIT_SUBMIT_URL, extract_result_urls
 
 
 CATEGORY = "💫SynVow_api/api/图像"
@@ -161,18 +158,6 @@ def _post_generation_payload(api_url, headers, payload):
     )
 
 
-def _official_image_payload_fallbacks(payload):
-    image_urls = payload.get("image_urls")
-    if payload.get("model") != "gpt-image-2-官方" or not image_urls:
-        return []
-
-    base = {key: value for key, value in payload.items() if key != "image_urls"}
-    return [
-        ("images", {**base, "images": image_urls}),
-        ("files", {**base, "files": [{"url": url, "type": "image"} for url in image_urls]}),
-    ]
-
-
 def _submit_alpha_task(payload, headers, api_url):
     model = payload.get("model")
     img_key = "image_urls" if "image_urls" in payload else "images"
@@ -180,25 +165,7 @@ def _submit_alpha_task(payload, headers, api_url):
     print(f"[GPT-Image-2 Alpha] 提交: model={model} images={img_count}")
     response = _post_generation_payload(api_url, headers, payload)
     if response.status_code >= 400:
-        first_error = _response_error_text(response)
-        fallback_success = False
-        if not _is_balance_or_auth_error(first_error):
-            for field_name, fallback_payload in _official_image_payload_fallbacks(payload):
-                print(
-                    f"[GPT-Image-2 Alpha] 官方模型参考图提交失败，尝试兼容字段 {field_name}: "
-                    f"HTTP {response.status_code} {first_error}"
-                )
-                response = _post_generation_payload(api_url, headers, fallback_payload)
-                if response.status_code < 400:
-                    fallback_success = True
-                    print(f"[GPT-Image-2 Alpha] 官方模型参考图兼容字段 {field_name} 提交成功")
-                    break
-                print(
-                    f"[GPT-Image-2 Alpha] 官方模型参考图兼容字段 {field_name} 仍失败: "
-                    f"HTTP {response.status_code} {_response_error_text(response)}"
-                )
-        if not fallback_success:
-            raise RuntimeError(f"提交失败 HTTP {response.status_code}: {_response_error_text(response) or first_error}")
+        raise RuntimeError(f"提交失败 HTTP {response.status_code}: {_response_error_text(response)}")
 
     data = response.json() if isinstance(response.json(), dict) else {}
     data_field = data.get("data")
@@ -273,7 +240,7 @@ def _run_tasks_with_background(
         if model not in _NEW_MODELS:
             payload["transparentBackground"] = True
         try:
-            task_id, consumption_id = _submit_alpha_task_with_retry(payload, headers, _API_URL)
+            task_id, consumption_id = _submit_alpha_task_with_retry(payload, headers, EDIT_SUBMIT_URL)
             submitted.append((task_id, consumption_id))
             print(f"[GPT-Image-2 Alpha] [{index + 1}/{total}] 提交成功 task_id=...{task_id[-8:]}")
         except Exception as exc:
@@ -293,7 +260,7 @@ def _run_tasks_with_background(
             pbar.update(1)
             return None
         task_id, consumption_id = item
-        result = _poll_alpha_task(task_id, consumption_id, headers, _POLL_URL, model)
+        result = _poll_alpha_task(task_id, consumption_id, headers, EDIT_POLL_URL, model)
         pbar.update(1)
         return result
 
@@ -304,7 +271,7 @@ def _run_tasks_with_background(
     image_urls = []
     for index, result in enumerate(poll_results):
         if result is not None:
-            urls = _extract_urls(result)
+            urls = extract_result_urls(result)
             if urls:
                 image_urls.extend(urls)
             else:

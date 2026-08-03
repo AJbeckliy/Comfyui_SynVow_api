@@ -7,17 +7,31 @@ let loginDialog = null;
 let wechatDialog = null;
 let wechatPollTimer = null;
 let wechatMessageListener = null;
+let loginKind = "phone";
+let registerKind = "phone";
 const wechatIcon = `<svg viewBox="0 0 1024 1024"><path d="M690.1 377.4c5.9 0 11.8.2 17.6.5-24.4-128.7-158.3-227.1-319.9-227.1C209 150.8 64 271.4 64 420.2c0 81.1 43.6 154.2 111.9 203.6 5.5 3.9 9.1 10.3 9.1 17.6 0 2.4-.5 4.6-1.1 6.9-5.5 20.3-14.2 52.8-14.6 54.3-.7 2.6-1.7 5.2-1.7 7.9 0 5.9 4.8 10.8 10.8 10.8 2.3 0 4.2-.9 6.2-2l70.9-40.9c5.3-3.1 11-5 17.2-5 3.2 0 6.4.5 9.5 1.4 33.1 9.5 68.8 14.8 105.7 14.8 6 0 11.9-.1 17.8-.4-7.1-21-10.9-43.1-10.9-66 0-135.8 132.2-245.8 295.3-245.8zm-194.3-86.5c23.8 0 43.2 19.3 43.2 43.1s-19.3 43.1-43.2 43.1c-23.8 0-43.2-19.3-43.2-43.1s19.4-43.1 43.2-43.1zm-215.9 86.2c-23.8 0-43.2-19.3-43.2-43.1s19.3-43.1 43.2-43.1 43.2 19.3 43.2 43.1-19.4 43.1-43.2 43.1zm586.8 415.6c56.9-41.2 93.2-102 93.2-169.7 0-124-108.1-224.8-241.4-224.8-133.4 0-241.4 100.8-241.4 224.8S585 847.1 718.3 847.1c30.8 0 60.6-4.4 88.1-12.3 2.6-.8 5.2-1.2 7.9-1.2 5.2 0 9.9 1.6 14.3 4.1l59.1 34c1.7 1 3.3 1.7 5.2 1.7a9 9 0 0 0 6.4-2.6 9 9 0 0 0 2.6-6.4c0-2.2-.9-4.4-1.4-6.6-.3-1.2-7.6-28.3-12.2-45.3-.5-1.9-.9-3.8-.9-5.7.1-5.9 3.1-11.2 7.6-14.5zM600.2 587.2c-19.9 0-36-16.1-36-35.9 0-19.8 16.1-35.9 36-35.9s36 16.1 36 35.9c0 19.8-16.2 35.9-36 35.9zm179.9 0c-19.9 0-36-16.1-36-35.9 0-19.8 16.1-35.9 36-35.9s36 16.1 36 35.9a36.08 36.08 0 0 1-36 35.9z" fill="white"/></svg>`;
 
 export function showLoginDialog() {
-    if (loginDialog) { loginDialog.style.display = "flex"; return; }
+    if (loginDialog) {
+        if (!loginDialog.querySelector(".sv-mode-tabs")) {
+            loginDialog.remove();
+            loginDialog = null;
+            loginKind = "phone";
+            registerKind = "phone";
+        } else {
+            loginDialog.style.display = "flex";
+            return;
+        }
+    }
 
-    const style = document.createElement('style');
-    style.textContent = `
+    if (!document.getElementById("sv-login-style")) {
+        const style = document.createElement('style');
+        style.id = "sv-login-style";
+        style.textContent = `
         .sv-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:10000; }
         .sv-dialog { background:linear-gradient(180deg,#1a2a3a,#0d1a24); border-radius:12px; padding:40px; width:400px; position:relative; }
         .sv-title { color:#2dd4bf; font-size:28px; font-weight:bold; margin-bottom:10px; }
-        .sv-subtitle { color:#8899aa; font-size:14px; margin-bottom:30px; }
+        .sv-subtitle { color:#8899aa; font-size:14px; margin-bottom:14px; }
         .sv-input { width:100%; background:transparent; border:1px solid #334455; border-radius:8px; padding:14px 16px; color:white; font-size:14px; margin-bottom:16px; box-sizing:border-box; }
         .sv-input::placeholder { color:#667788; }
         .sv-input:focus { outline:none; border-color:#2dd4bf; }
@@ -63,8 +77,13 @@ export function showLoginDialog() {
         .sv-wechat-close { position:absolute; top:10px; right:12px; border:none; background:none; color:#667788; font-size:24px; cursor:pointer; }
         .sv-wechat-close:hover { color:white; }
         .sv-wechat-status { color:#a7f3d0; font-size:12px; margin:6px 0 10px 0; min-height:18px; }
+        .sv-mode-tabs { display:flex; gap:20px; margin-bottom:14px; }
+        .sv-mode-tab { border:none; padding:0 0 8px; background:none; font-size:14px; color:#8899aa; cursor:pointer; border-bottom:2px solid transparent; }
+        .sv-mode-tab:hover { color:#dbe7f0; }
+        .sv-mode-tab.active { color:#2dd4bf; border-bottom-color:#2dd4bf; }
     `;
-    document.head.appendChild(style);
+        document.head.appendChild(style);
+    }
 
     const views = {};
     const switchView = (name) => Object.keys(views).forEach(k => views[k].classList.toggle('active', k === name));
@@ -84,10 +103,21 @@ export function showLoginDialog() {
 
     const createWechat = () => $el("div.sv-wechat", {}, [$el("div.sv-wechat-icon", { innerHTML: wechatIcon, onclick: handleWechatLogin })]);
 
+    const loginAccountInput = $el("input.sv-input", { type: "text", placeholder: "手机号", id: "sv-username" });
+    const loginPhoneTab = $el("button.sv-mode-tab.active", {
+        type: "button", textContent: "手机登录",
+        onclick: () => setLoginKind("phone", loginPhoneTab, loginEmailTab, loginAccountInput),
+    });
+    const loginEmailTab = $el("button.sv-mode-tab", {
+        type: "button", textContent: "邮箱登录",
+        onclick: () => setLoginKind("email", loginPhoneTab, loginEmailTab, loginAccountInput),
+    });
+
     views.login = $el("div.sv-view.active", {}, [
         $el("div.sv-title", { textContent: "欢迎回来!" }),
         $el("div.sv-subtitle", { textContent: "登录您的账户，继续使用 AI 服务" }),
-        $el("input.sv-input", { type: "text", placeholder: "手机号/用户名", id: "sv-username" }),
+        $el("div.sv-mode-tabs", {}, [loginPhoneTab, loginEmailTab]),
+        loginAccountInput,
         createPwdInput("sv-password", "密码"),
         $el("div.sv-forgot", {}, [$el("a", { href: "#", textContent: "忘记密码?", onclick: (e) => { e.preventDefault(); switchView('forgot'); } })]),
         $el("button.sv-btn", { textContent: "登录", onclick: handleLogin }),
@@ -120,27 +150,34 @@ export function showLoginDialog() {
         $el("div.sv-footer", {}, ["想起密码了？ ", $el("a", { textContent: "返回登录", onclick: () => switchView('login') })])
     ]);
 
-    const regPhoneInput = $el("input.sv-input", { type: "text", placeholder: "手机号", id: "sv-reg-phone", oninput: validateRegForm });
-    const regPhoneErr = $el("div.sv-error-msg", { id: "sv-reg-phone-err" });
+    const regAccountInput = $el("input.sv-input", { type: "text", placeholder: "手机号", id: "sv-reg-account", oninput: validateRegForm });
+    const regAccountErr = $el("div.sv-error-msg", { id: "sv-reg-account-err" });
     const regPwdWrap = createPwdInput("sv-reg-password", "密码");
     const regCpwdWrap = createPwdInput("sv-reg-confirmpwd", "确认密码");
     const regPwdErr = $el("div.sv-error-msg", { id: "sv-reg-pwd-err" });
     regPwdWrap.querySelector('input').oninput = validateRegForm;
     regCpwdWrap.querySelector('input').oninput = validateRegForm;
+    const regCodeInput = $el("input.sv-input", { type: "text", placeholder: "短信验证码", id: "sv-reg-code" });
     const regCodeBtn = $el("button.sv-code-btn", { id: "sv-reg-code-btn", textContent: "发送验证码", disabled: true, onclick: () => handleGetCode('register') });
+    const regPhoneTab = $el("button.sv-mode-tab.active", {
+        type: "button", textContent: "手机注册",
+        onclick: () => setRegisterKind("phone", regPhoneTab, regEmailTab, regAccountInput, regCodeInput),
+    });
+    const regEmailTab = $el("button.sv-mode-tab", {
+        type: "button", textContent: "邮箱注册",
+        onclick: () => setRegisterKind("email", regPhoneTab, regEmailTab, regAccountInput, regCodeInput),
+    });
 
     views.register = $el("div.sv-view", {}, [
         $el("div.sv-title", { textContent: "欢迎加入!" }),
         $el("div.sv-subtitle", { textContent: "只需一点点时间，就能与我们继续一起创造精彩" }),
-        regPhoneInput,
-        regPhoneErr,
+        $el("div.sv-mode-tabs", {}, [regPhoneTab, regEmailTab]),
+        regAccountInput,
+        regAccountErr,
         regPwdWrap,
         regCpwdWrap,
         regPwdErr,
-        $el("div.sv-row", {}, [
-            $el("input.sv-input", { type: "text", placeholder: "短信验证码", id: "sv-reg-code" }),
-            regCodeBtn
-        ]),
+        $el("div.sv-row", {}, [regCodeInput, regCodeBtn]),
         $el("button.sv-btn", { textContent: "注册并登录", onclick: handleRegister }),
         createWechat(),
         $el("div.sv-footer", {}, ["已有账户？ ", $el("a", { textContent: "立即登录", onclick: () => switchView('login') })])
@@ -161,6 +198,30 @@ export function showLoginDialog() {
 function getVal(id) { return document.getElementById(id)?.value; }
 
 function isValidMobile(phone) { return /^1\d{10}$/.test(phone); }
+function isValidEmail(email) { return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(String(email || "").trim()); }
+
+function authAccountBody(account, kind) {
+    return kind === "email" ? { email: account } : { phone_number: account };
+}
+
+function setLoginKind(kind, phoneTab, emailTab, accountInput) {
+    loginKind = kind;
+    phoneTab.classList.toggle("active", kind === "phone");
+    emailTab.classList.toggle("active", kind === "email");
+    accountInput.placeholder = kind === "email" ? "邮箱号" : "手机号";
+    accountInput.value = "";
+}
+
+function setRegisterKind(kind, phoneTab, emailTab, accountInput, codeInput) {
+    registerKind = kind;
+    phoneTab.classList.toggle("active", kind === "phone");
+    emailTab.classList.toggle("active", kind === "email");
+    accountInput.placeholder = kind === "email" ? "邮箱号" : "手机号";
+    accountInput.value = "";
+    codeInput.placeholder = kind === "email" ? "邮箱验证码" : "短信验证码";
+    codeInput.value = "";
+    validateRegForm();
+}
 
 function showToast(msg, type = '') {
     const toast = document.createElement('div');
@@ -170,50 +231,57 @@ function showToast(msg, type = '') {
     setTimeout(() => toast.remove(), 3000);
 }
 
-function validateForm(phoneId, pwdId, cpwdId, phoneErrId, pwdErrId, codeBtnId) {
-    const phone = getVal(phoneId) || '';
+function validateForm(accountId, pwdId, cpwdId, accountErrId, pwdErrId, codeBtnId, kind) {
+    const account = getVal(accountId) || '';
     const pwd = getVal(pwdId) || '';
     const cpwd = getVal(cpwdId) || '';
-    
-    const phoneErr = document.getElementById(phoneErrId);
+    const accountErr = document.getElementById(accountErrId);
     const pwdErr = document.getElementById(pwdErrId);
-    const phoneInput = document.getElementById(phoneId);
+    const accountInput = document.getElementById(accountId);
     const codeBtn = document.getElementById(codeBtnId);
-    
+    const isEmail = kind === "email";
     let valid = true;
-    
-    if (phone && !isValidMobile(phone)) {
-        if (phoneErr) phoneErr.textContent = '请输入正确的11位手机号';
-        phoneInput?.classList.add('sv-error');
+
+    if (account && !(isEmail ? isValidEmail(account) : isValidMobile(account))) {
+        if (accountErr) accountErr.textContent = isEmail ? "请输入正确的邮箱" : "请输入正确的11位手机号";
+        accountInput?.classList.add("sv-error");
         valid = false;
     } else {
-        if (phoneErr) phoneErr.textContent = '';
-        phoneInput?.classList.remove('sv-error');
-        if (!phone) valid = false;
+        if (accountErr) accountErr.textContent = "";
+        accountInput?.classList.remove("sv-error");
+        if (!account) valid = false;
     }
-    
+
     if (pwd && cpwd && pwd !== cpwd) {
-        if (pwdErr) pwdErr.textContent = '两次密码不一致';
+        if (pwdErr) pwdErr.textContent = "两次密码不一致";
         valid = false;
     } else if (pwd && pwd.length < 6) {
-        if (pwdErr) pwdErr.textContent = '密码至少6位';
+        if (pwdErr) pwdErr.textContent = "密码至少6位";
         valid = false;
     } else {
-        if (pwdErr) pwdErr.textContent = '';
+        if (pwdErr) pwdErr.textContent = "";
         if (!pwd || !cpwd) valid = false;
     }
-    
+
     if (codeBtn && !codeBtn.dataset.counting) {
         codeBtn.disabled = !valid;
     }
 }
 
 function validateRegForm() {
-    validateForm('sv-reg-phone', 'sv-reg-password', 'sv-reg-confirmpwd', 'sv-reg-phone-err', 'sv-reg-pwd-err', 'sv-reg-code-btn');
+    validateForm(
+        "sv-reg-account", "sv-reg-password", "sv-reg-confirmpwd",
+        "sv-reg-account-err", "sv-reg-pwd-err", "sv-reg-code-btn",
+        registerKind,
+    );
 }
 
 function validateForgotForm() {
-    validateForm('sv-forgot-phone', 'sv-forgot-newpwd', 'sv-forgot-confirmpwd', 'sv-forgot-phone-err', 'sv-forgot-pwd-err', 'sv-forgot-code-btn');
+    validateForm(
+        "sv-forgot-phone", "sv-forgot-newpwd", "sv-forgot-confirmpwd",
+        "sv-forgot-phone-err", "sv-forgot-pwd-err", "sv-forgot-code-btn",
+        "phone",
+    );
 }
 
 function saveAuth(data) {
@@ -250,19 +318,31 @@ async function clearAuthFile() {
 }
 
 async function handleLogin() {
-    const phone = getVal("sv-username");
+    const account = (getVal("sv-username") || "").trim();
     const password = getVal("sv-password");
-    if (!phone || !password) { showToast("请输入手机号和密码", 'error'); return; }
+    const isEmail = loginKind === "email";
+    if (!account || !password) {
+        showToast(isEmail ? "请输入邮箱和密码" : "请输入手机号和密码", "error");
+        return;
+    }
+    if (isEmail ? !isValidEmail(account) : !isValidMobile(account)) {
+        showToast(isEmail ? "请输入正确的邮箱" : "请输入正确的手机号", "error");
+        return;
+    }
     try {
-        const data = await postJson("/auth/login", { phone_number: phone, password });
+        const data = await postJson("/auth/login", {
+            ...authAccountBody(account, loginKind),
+            password,
+            login_source: "comfyui",
+        });
         if (data.code === 200) {
             saveAuth(data.data);
             hideLoginDialog();
         } else {
-            showToast(data.message || "登录失败", 'error');
+            showToast(data.message || "登录失败", "error");
         }
     } catch (e) {
-        showToast("网络错误，请稍后重试", 'error');
+        showToast("网络错误，请稍后重试", "error");
     }
 }
 
@@ -272,22 +352,31 @@ let codeCountdown = 0;
 let codeTimer = null;
 
 async function handleGetCode(type) {
-    const isReg = type === 'register';
-    const phone = getVal(isReg ? 'sv-reg-phone' : 'sv-forgot-phone');
-    if (!phone) { showToast("请输入手机号", 'error'); return; }
-    if (!isValidMobile(phone)) { showToast("请输入正确的手机号", 'error'); return; }
+    const isReg = type === "register";
+    const kind = isReg ? registerKind : "phone";
+    const account = (getVal(isReg ? "sv-reg-account" : "sv-forgot-phone") || "").trim();
+    const isEmail = kind === "email";
+    if (!account) {
+        showToast(isEmail ? "请输入邮箱" : "请输入手机号", "error");
+        return;
+    }
+    if (isEmail ? !isValidEmail(account) : !isValidMobile(account)) {
+        showToast(isEmail ? "请输入正确的邮箱" : "请输入正确的手机号", "error");
+        return;
+    }
     if (codeCountdown > 0) return;
-    
-    const btn = document.getElementById(isReg ? 'sv-reg-code-btn' : 'sv-forgot-code-btn');
-    
+
+    const btn = document.getElementById(isReg ? "sv-reg-code-btn" : "sv-forgot-code-btn");
+    const path = isEmail ? "/auth/send-email-code" : "/auth/send-code";
+
     try {
-        const data = await postJson("/auth/send-code", { phone_number: phone });
+        const data = await postJson(path, authAccountBody(account, kind));
         if (data.code === 200) {
-            showToast("验证码已发送", 'success');
+            showToast("验证码已发送", "success");
             codeCountdown = 60;
             btn.textContent = `${codeCountdown}s`;
             btn.disabled = true;
-            btn.dataset.counting = 'true';
+            btn.dataset.counting = "true";
             codeTimer = setInterval(() => {
                 if (--codeCountdown <= 0) {
                     clearInterval(codeTimer);
@@ -299,43 +388,56 @@ async function handleGetCode(type) {
                 }
             }, 1000);
         } else {
-            showToast(data.message || "发送失败", 'error');
+            showToast(data.message || "发送失败", "error");
         }
     } catch (e) {
-        showToast("网络错误，请稍后重试", 'error');
+        showToast("网络错误，请稍后重试", "error");
     }
 }
 
 async function handleRegister() {
-    const [phone, pwd, cpwd, code] = ['sv-reg-phone', 'sv-reg-password', 'sv-reg-confirmpwd', 'sv-reg-code'].map(getVal);
-    if (!phone || !pwd || !cpwd || !code) { showToast("请填写完整信息", 'error'); return; }
-    if (!isValidMobile(phone)) { showToast("请输入正确的手机号", 'error'); return; }
-    if (pwd.length < 6) { showToast("密码至少6位", 'error'); return; }
-    if (pwd !== cpwd) { showToast("两次密码不一致", 'error'); return; }
-    
+    const account = (getVal("sv-reg-account") || "").trim();
+    const [pwd, cpwd, code] = ["sv-reg-password", "sv-reg-confirmpwd", "sv-reg-code"].map(getVal);
+    const isEmail = registerKind === "email";
+    if (!account || !pwd || !cpwd || !code) { showToast("请填写完整信息", "error"); return; }
+    if (isEmail ? !isValidEmail(account) : !isValidMobile(account)) {
+        showToast(isEmail ? "请输入正确的邮箱" : "请输入正确的手机号", "error");
+        return;
+    }
+    if (pwd.length < 6) { showToast("密码至少6位", "error"); return; }
+    if (pwd !== cpwd) { showToast("两次密码不一致", "error"); return; }
+
     try {
-        const data = await postJson("/auth/register", { phone_number: phone, password: pwd, code: code });
-        
+        const data = await postJson("/auth/register", {
+            ...authAccountBody(account, registerKind),
+            password: pwd,
+            code,
+        });
+
         if (data.code === 200) {
             if (data.data && data.data.token) {
                 saveAuth(data.data);
             } else {
-                const loginData = await postJson("/auth/login", { phone_number: phone, password: pwd });
+                const loginData = await postJson("/auth/login", {
+                    ...authAccountBody(account, registerKind),
+                    password: pwd,
+                    login_source: "comfyui",
+                });
                 if (loginData.code === 200 && loginData.data && loginData.data.token) {
                     saveAuth(loginData.data);
                 } else {
-                    showToast("注册成功，请手动登录", 'success');
+                    showToast("注册成功，请手动登录", "success");
                     hideLoginDialog();
                     return;
                 }
             }
-            showToast("注册成功", 'success');
+            showToast("注册成功", "success");
             hideLoginDialog();
         } else {
-            showToast(data.message || "注册失败", 'error');
+            showToast(data.message || "注册失败", "error");
         }
     } catch (e) {
-        showToast("网络错误，请稍后重试", 'error');
+        showToast("网络错误，请稍后重试", "error");
     }
 }
 

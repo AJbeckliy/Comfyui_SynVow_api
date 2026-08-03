@@ -7,7 +7,6 @@ import { app } from "../../../scripts/app.js";
 const SYNVOW_NODE_TYPES = new Set([
     "SynVowSeedance",
     "SynVowSeedance2Video",
-    "SynVowSeedance2VideoBatch",
     "SynVowGrokVideo",
     "SynVowVeo31",
     "SynVowOmniFlash",
@@ -25,6 +24,13 @@ const SYNVOW_NODE_TYPES = new Set([
     "SynVowJimeng_TBatch",
     "SynVowJimeng_IBatch",
     "SynVowJimeng_TIBatch",
+    "SynVowGkImage",
+    "SynVowGkImage_TBatch",
+    "SynVowGkImage_IBatch",
+    "SynVowGkImage_TIBatch",
+    "SynVowMidjourneyText",
+    "SynVowMidjourneyBlend",
+    "SynVowMidjourneyEdit",
 ]);
 
 function addCancelWidget(node) {

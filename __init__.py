@@ -56,6 +56,7 @@ _JWT_ROUTES = [
     ("POST", "/sv_api/auth/login",                  "/auth/login",                  True),
     ("POST", "/sv_api/auth/register",               "/auth/register",               True),
     ("POST", "/sv_api/auth/send-code",              "/auth/send-code",              True),
+    ("POST", "/sv_api/auth/send-email-code",        "/auth/send-email-code",        True),
     ("POST", "/sv_api/auth/reset-password",         "/auth/reset-password",         True),
     ("POST", "/sv_api/auth/change-password",        "/auth/change-password",        True),
     ("POST", "/sv_api/auth/wechat/login-url",       "/auth/wechat/login-url",       True),
@@ -164,8 +165,8 @@ async def _sv_consumption_records(request):
     try:
         token = request.headers.get("Authorization", "").replace("Bearer ", "")
         page = request.query.get("page", "1")
-        per_page = request.query.get("per_page", "10")
-        url = f"{API_BASE}/account/consumption-records?page={page}&per_page={per_page}"
+        page_size = request.query.get("page_size", "20")
+        url = f"{API_BASE}/account/consumption-records?page={page}&page_size={page_size}"
         async with aiohttp.ClientSession() as sess:
             async with sess.get(url, headers={"Authorization": f"Bearer {token}"}) as resp:
                 return web.json_response(await resp.json())

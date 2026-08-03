@@ -22,27 +22,29 @@ export function showModelPriceDialog(modelId = "") {
     if (priceDialog) { priceDialog.remove(); priceDialog = null; }
     currentPage = 1;
 
+    const oldStyle = document.getElementById("sv-price-style");
+    if (oldStyle) oldStyle.remove();
     injectStyle("sv-price-style", `
         .sv-mp-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:10001; }
-        .sv-mp-dialog { background:linear-gradient(180deg,#1a2a3a,#0d1a24); border-radius:14px; padding:28px; width:920px; max-height:82vh; position:relative; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,.45); border:1px solid rgba(45,212,191,.16); }
-        .sv-mp-title { color:#2dd4bf; font-size:18px; font-weight:bold; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
-        .sv-mp-close { position:absolute; top:16px; right:16px; background:none; border:none; color:#667788; font-size:24px; cursor:pointer; }
+        .sv-mp-dialog { background:linear-gradient(180deg,#1a2a3a,#0d1a24); border-radius:14px; padding:20px 22px 16px; width:min(1180px,92vw); max-height:82vh; position:relative; display:flex; flex-direction:column; box-shadow:0 24px 80px rgba(0,0,0,.45); border:1px solid rgba(45,212,191,.16); }
+        .sv-mp-title { color:#2dd4bf; font-size:17px; font-weight:bold; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+        .sv-mp-close { position:absolute; top:12px; right:14px; background:none; border:none; color:#667788; font-size:22px; cursor:pointer; }
         .sv-mp-close:hover { color:white; }
-        .sv-mp-content { flex:1; overflow-y:auto; margin-bottom:16px; }
-        .sv-mp-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:14px; }
+        .sv-mp-content { flex:1; overflow-y:auto; margin-bottom:10px; }
+        .sv-mp-grid { display:grid; grid-template-columns:repeat(5,1fr); gap:8px; }
         .sv-mp-grid.loading { opacity:0.45; pointer-events:none; transition:opacity .15s; }
-        .sv-mp-card { background:rgba(16,41,56,.55); border:1px solid rgba(80,105,125,.35); border-radius:10px; padding:14px 16px; display:flex; flex-direction:column; gap:10px; }
-        .sv-mp-card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:8px; }
-        .sv-mp-name { color:#fff; font-weight:700; font-size:14px; line-height:1.35; }
-        .sv-mp-tags-cell { color:#8899aa; font-size:12px; margin-top:4px; }
-        .sv-mp-price-list { display:flex; flex-direction:column; gap:4px; }
-        .sv-mp-price-row { display:flex; align-items:center; justify-content:space-between; gap:6px; background:rgba(45,212,191,.05); border-radius:6px; padding:5px 9px; line-height:1.6; }
-        .sv-mp-price-name { color:#9aabba; font-size:12px; }
-        .sv-mp-price-val { color:#2dd4bf; font-weight:700; font-size:13px; white-space:nowrap; }
-        .sv-mp-price-empty { color:#667788; font-size:12px; }
-        .sv-mp-status-on  { color:#22c55e; font-size:12px; flex-shrink:0; }
-        .sv-mp-status-off { color:#ef4444; font-size:12px; flex-shrink:0; }
-        .sv-mp-empty { text-align:center; color:#667788; padding:40px; }
+        .sv-mp-card { background:rgba(16,41,56,.55); border:1px solid rgba(80,105,125,.35); border-radius:8px; padding:8px 10px; display:flex; flex-direction:column; gap:5px; }
+        .sv-mp-card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:6px; }
+        .sv-mp-name { color:#fff; font-weight:700; font-size:13px; line-height:1.25; }
+        .sv-mp-tags-cell { color:#8899aa; font-size:11px; margin-top:2px; line-height:1.2; }
+        .sv-mp-price-list { display:flex; flex-direction:column; gap:3px; }
+        .sv-mp-price-row { display:flex; align-items:center; justify-content:space-between; gap:4px; background:rgba(45,212,191,.05); border-radius:4px; padding:2px 7px; line-height:1.35; }
+        .sv-mp-price-name { color:#9aabba; font-size:11px; }
+        .sv-mp-price-val { color:#2dd4bf; font-weight:700; font-size:12px; white-space:nowrap; }
+        .sv-mp-price-empty { color:#667788; font-size:11px; }
+        .sv-mp-status-on  { color:#22c55e; font-size:11px; flex-shrink:0; }
+        .sv-mp-status-off { color:#ef4444; font-size:11px; flex-shrink:0; }
+        .sv-mp-empty { text-align:center; color:#667788; padding:28px; }
     ` + paginationCss("sv-mp"));
 
     const contentDiv = $el("div.sv-mp-content", {}, [
@@ -75,7 +77,7 @@ export function showModelPriceDialog(modelId = "") {
         nextBtn.disabled = true;
 
         try {
-            const pageSize = 21;
+            const pageSize = 25;
             const params = new URLSearchParams({ page: String(page), page_size: String(pageSize), sort_by: "sort", sort_order: "ASC" });
             if (modelId) params.set("model_id", modelId);
             const res  = await fetch(`${API_BASE}/models/public-list?${params.toString()}`);

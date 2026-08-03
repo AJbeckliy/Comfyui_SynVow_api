@@ -1,8 +1,8 @@
 {
-  "id": "6b2797e6-2716-4a62-beed-d05e212cf3b9",
+  "id": "5f5a134e-f899-450b-9f2a-486b2ef68e7e",
   "revision": 0,
-  "last_node_id": 64,
-  "last_link_id": 55,
+  "last_node_id": 69,
+  "last_link_id": 74,
   "nodes": [
     {
       "id": 14,
@@ -22,7 +22,7 @@
         {
           "name": "images",
           "type": "IMAGE",
-          "link": 10
+          "link": 65
         }
       ],
       "outputs": [
@@ -206,8 +206,8 @@
           "shape": 6,
           "type": "STRING",
           "links": [
-            15,
-            16
+            16,
+            63
           ]
         }
       ],
@@ -293,7 +293,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            17
+            64
           ]
         }
       ],
@@ -375,7 +375,7 @@
           "name": "IMAGE",
           "type": "IMAGE",
           "links": [
-            19
+            59
           ]
         }
       ],
@@ -410,7 +410,7 @@
           "name": "STRING",
           "type": "STRING",
           "links": [
-            8
+            56
           ]
         }
       ],
@@ -465,7 +465,7 @@
         {
           "name": "images",
           "type": "IMAGE",
-          "link": 31
+          "link": 69
         }
       ],
       "outputs": [
@@ -503,7 +503,7 @@
           "label": "文本",
           "name": "text",
           "type": "STRING",
-          "link": 11
+          "link": 66
         }
       ],
       "outputs": [
@@ -540,7 +540,7 @@
         {
           "name": "images",
           "type": "IMAGE",
-          "link": 4
+          "link": 62
         }
       ],
       "outputs": [
@@ -577,7 +577,7 @@
         {
           "name": "images",
           "type": "IMAGE",
-          "link": 7
+          "link": 57
         }
       ],
       "outputs": [
@@ -615,7 +615,7 @@
           "label": "文本",
           "name": "text",
           "type": "STRING",
-          "link": 28
+          "link": 61
         }
       ],
       "outputs": [
@@ -653,7 +653,7 @@
           "label": "文本",
           "name": "text",
           "type": "STRING",
-          "link": 29
+          "link": 58
         }
       ],
       "outputs": [
@@ -691,7 +691,7 @@
           "label": "文本",
           "name": "text",
           "type": "STRING",
-          "link": 32
+          "link": 70
         }
       ],
       "outputs": [
@@ -730,7 +730,7 @@
           "name": "STRING",
           "type": "STRING",
           "links": [
-            9
+            60
           ]
         }
       ],
@@ -1009,7 +1009,7 @@
           "name": "STRING",
           "type": "STRING",
           "links": [
-            33
+            68
           ]
         }
       ],
@@ -1103,7 +1103,7 @@
           "shape": 6,
           "type": "IMAGE",
           "links": [
-            34
+            67
           ]
         }
       ],
@@ -1239,7 +1239,7 @@
         {
           "name": "images",
           "type": "IMAGE",
-          "link": 55
+          "link": 73
         }
       ],
       "outputs": [
@@ -1277,7 +1277,7 @@
           "label": "文本",
           "name": "text",
           "type": "STRING",
-          "link": 54
+          "link": 74
         }
       ],
       "outputs": [
@@ -1623,7 +1623,7 @@
           "shape": 6,
           "type": "IMAGE",
           "links": [
-            50
+            71
           ]
         }
       ],
@@ -1800,7 +1800,7 @@
           "type": "STRING",
           "links": [
             51,
-            53
+            72
           ]
         }
       ],
@@ -1927,6 +1927,295 @@
       "bgcolor": "#653"
     },
     {
+      "id": 65,
+      "type": "SynVowGkImage",
+      "pos": [
+        2335.641631264039,
+        2646.132719834548
+      ],
+      "size": [
+        400,
+        228
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "prompt",
+          "shape": 7,
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 56
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            57
+          ]
+        },
+        {
+          "name": "status",
+          "type": "STRING",
+          "links": [
+            58
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "d945e9349b65e18110eb3c2cc5c79cfaece44857",
+        "Node name for S&R": "SynVowGkImage"
+      },
+      "widgets_values": [
+        "grok-image-1.5-稳定",
+        "1:1",
+        0,
+        "randomize",
+        ""
+      ]
+    },
+    {
+      "id": 66,
+      "type": "SynVowGkImage",
+      "pos": [
+        2691.3135763726427,
+        3145.1521536984405
+      ],
+      "size": [
+        400,
+        228
+      ],
+      "flags": {},
+      "order": 32,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "image1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 59
+        },
+        {
+          "name": "prompt",
+          "shape": 7,
+          "type": "STRING",
+          "widget": {
+            "name": "prompt"
+          },
+          "link": 60
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "type": "IMAGE",
+          "links": [
+            62
+          ]
+        },
+        {
+          "name": "status",
+          "type": "STRING",
+          "links": [
+            61
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "d945e9349b65e18110eb3c2cc5c79cfaece44857",
+        "Node name for S&R": "SynVowGkImage"
+      },
+      "widgets_values": [
+        "grok-image-1.5-稳定",
+        "1:1",
+        0,
+        "randomize",
+        ""
+      ]
+    },
+    {
+      "id": 67,
+      "type": "SynVowGkImage_TBatch",
+      "pos": [
+        3602.3396174259697,
+        3705.742017970206
+      ],
+      "size": [
+        270,
+        174
+      ],
+      "flags": {},
+      "order": 31,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "prompts_list",
+          "shape": 7,
+          "type": "STRING",
+          "link": 63
+        },
+        {
+          "name": "image1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 64
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "shape": 6,
+          "type": "IMAGE",
+          "links": [
+            65
+          ]
+        },
+        {
+          "name": "status",
+          "type": "STRING",
+          "links": [
+            66
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "d945e9349b65e18110eb3c2cc5c79cfaece44857",
+        "Node name for S&R": "SynVowGkImage_TBatch"
+      },
+      "widgets_values": [
+        "grok-image-1.5-稳定",
+        "1:1",
+        0,
+        "randomize"
+      ]
+    },
+    {
+      "id": 68,
+      "type": "SynVowGkImage_IBatch",
+      "pos": [
+        3514.6531421048553,
+        4338.085459354897
+      ],
+      "size": [
+        400,
+        204
+      ],
+      "flags": {},
+      "order": 42,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "images_list1",
+          "type": "IMAGE",
+          "link": 67
+        },
+        {
+          "name": "prompts_list",
+          "shape": 7,
+          "type": "STRING",
+          "link": 68
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "shape": 6,
+          "type": "IMAGE",
+          "links": [
+            69
+          ]
+        },
+        {
+          "name": "status",
+          "type": "STRING",
+          "links": [
+            70
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "d945e9349b65e18110eb3c2cc5c79cfaece44857",
+        "Node name for S&R": "SynVowGkImage_IBatch"
+      },
+      "widgets_values": [
+        "grok-image-1.5-稳定",
+        "",
+        0,
+        "randomize"
+      ]
+    },
+    {
+      "id": 69,
+      "type": "SynVowGkImage_TIBatch",
+      "pos": [
+        3497.129347661292,
+        5061.9342115070685
+      ],
+      "size": [
+        271.6392578125,
+        174
+      ],
+      "flags": {},
+      "order": 43,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "images_list1",
+          "type": "IMAGE",
+          "link": 71
+        },
+        {
+          "name": "prompts_list",
+          "shape": 7,
+          "type": "STRING",
+          "link": 72
+        }
+      ],
+      "outputs": [
+        {
+          "name": "images",
+          "shape": 6,
+          "type": "IMAGE",
+          "links": [
+            73
+          ]
+        },
+        {
+          "name": "status",
+          "type": "STRING",
+          "links": [
+            74
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "d945e9349b65e18110eb3c2cc5c79cfaece44857",
+        "Node name for S&R": "SynVowGkImage_TIBatch"
+      },
+      "widgets_values": [
+        "grok-image-1.5-稳定",
+        "sequential",
+        0,
+        "randomize"
+      ]
+    },
+    {
       "id": 64,
       "type": "Fast Groups Bypasser (rgthree)",
       "pos": [
@@ -1961,534 +2250,9 @@
       },
       "color": "#322",
       "bgcolor": "#533"
-    },
-    {
-      "id": 8,
-      "type": "SynVowGptImage2",
-      "pos": [
-        2325.7176824869953,
-        2618.9661988705802
-      ],
-      "size": [
-        400,
-        396
-      ],
-      "flags": {},
-      "order": 22,
-      "mode": 0,
-      "inputs": [
-        {
-          "name": "image1",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image2",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image3",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image4",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image5",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image6",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image7",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image8",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "prompt",
-          "shape": 7,
-          "type": "STRING",
-          "widget": {
-            "name": "prompt"
-          },
-          "link": 8
-        }
-      ],
-      "outputs": [
-        {
-          "name": "images",
-          "type": "IMAGE",
-          "links": [
-            7
-          ]
-        },
-        {
-          "name": "status",
-          "type": "STRING",
-          "links": [
-            29
-          ]
-        }
-      ],
-      "properties": {
-        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
-        "ver": "2e1e10fafa840289cd4dbd241f693103f968c3bb",
-        "Node name for S&R": "SynVowGptImage2"
-      },
-      "widgets_values": [
-        "gpt-image-2-1k-qy",
-        "auto",
-        "1K",
-        "9:16",
-        0,
-        "randomize",
-        ""
-      ]
-    },
-    {
-      "id": 5,
-      "type": "SynVowGptImage2",
-      "pos": [
-        2715.9858036420105,
-        3132.753354818339
-      ],
-      "size": [
-        400,
-        396
-      ],
-      "flags": {},
-      "order": 32,
-      "mode": 4,
-      "inputs": [
-        {
-          "name": "image1",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": 19
-        },
-        {
-          "name": "image2",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image3",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image4",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image5",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image6",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image7",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image8",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "prompt",
-          "shape": 7,
-          "type": "STRING",
-          "widget": {
-            "name": "prompt"
-          },
-          "link": 9
-        }
-      ],
-      "outputs": [
-        {
-          "name": "images",
-          "type": "IMAGE",
-          "links": [
-            4
-          ]
-        },
-        {
-          "name": "status",
-          "type": "STRING",
-          "links": [
-            28
-          ]
-        }
-      ],
-      "properties": {
-        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
-        "ver": "2e1e10fafa840289cd4dbd241f693103f968c3bb",
-        "Node name for S&R": "SynVowGptImage2"
-      },
-      "widgets_values": [
-        "gpt-image-2-1k-qy",
-        "auto",
-        "1K",
-        "9:16",
-        0,
-        "randomize",
-        ""
-      ]
-    },
-    {
-      "id": 13,
-      "type": "SynVowGptImage2_TBatch",
-      "pos": [
-        3573.215843467415,
-        3661.409498137469
-      ],
-      "size": [
-        312.30625,
-        362
-      ],
-      "flags": {},
-      "order": 31,
-      "mode": 4,
-      "inputs": [
-        {
-          "name": "prompts_list",
-          "shape": 7,
-          "type": "STRING",
-          "link": 15
-        },
-        {
-          "name": "image1",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": 17
-        },
-        {
-          "name": "image2",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image3",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image4",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image5",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image6",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image7",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "image8",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        }
-      ],
-      "outputs": [
-        {
-          "name": "images",
-          "shape": 6,
-          "type": "IMAGE",
-          "links": [
-            10
-          ]
-        },
-        {
-          "name": "status",
-          "type": "STRING",
-          "links": [
-            11
-          ]
-        }
-      ],
-      "properties": {
-        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
-        "ver": "2e1e10fafa840289cd4dbd241f693103f968c3bb",
-        "Node name for S&R": "SynVowGptImage2_TBatch"
-      },
-      "widgets_values": [
-        "gpt-image-2-1k-qy",
-        "auto",
-        "1K",
-        "9:16",
-        0,
-        "randomize"
-      ]
-    },
-    {
-      "id": 38,
-      "type": "SynVowGptImage2_IBatch",
-      "pos": [
-        3507.0991799380145,
-        4329.31611797365
-      ],
-      "size": [
-        400,
-        336
-      ],
-      "flags": {},
-      "order": 42,
-      "mode": 4,
-      "inputs": [
-        {
-          "name": "images_list1",
-          "type": "IMAGE",
-          "link": 34
-        },
-        {
-          "name": "images_list2",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "images_list3",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "images_list4",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "images_list5",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "prompt",
-          "type": "STRING",
-          "widget": {
-            "name": "prompt"
-          },
-          "link": 33
-        }
-      ],
-      "outputs": [
-        {
-          "name": "images",
-          "shape": 6,
-          "type": "IMAGE",
-          "links": [
-            31
-          ]
-        },
-        {
-          "name": "status",
-          "type": "STRING",
-          "links": [
-            32
-          ]
-        }
-      ],
-      "properties": {
-        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
-        "ver": "2e1e10fafa840289cd4dbd241f693103f968c3bb",
-        "Node name for S&R": "SynVowGptImage2_IBatch"
-      },
-      "widgets_values": [
-        "gpt-image-2-1k-qy",
-        "auto",
-        "1K",
-        "9:16",
-        "",
-        0,
-        "randomize"
-      ]
-    },
-    {
-      "id": 60,
-      "type": "SynVowGptImage2_TIBatch",
-      "pos": [
-        3571.547830545613,
-        5060.1327223625685
-      ],
-      "size": [
-        322.9224609375,
-        326
-      ],
-      "flags": {},
-      "order": 43,
-      "mode": 4,
-      "inputs": [
-        {
-          "name": "images_list1",
-          "type": "IMAGE",
-          "link": 50
-        },
-        {
-          "name": "images_list2",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "images_list3",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "images_list4",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "images_list5",
-          "shape": 7,
-          "type": "IMAGE",
-          "link": null
-        },
-        {
-          "name": "prompts_list",
-          "shape": 7,
-          "type": "STRING",
-          "link": 53
-        }
-      ],
-      "outputs": [
-        {
-          "name": "images",
-          "shape": 6,
-          "type": "IMAGE",
-          "links": [
-            55
-          ]
-        },
-        {
-          "name": "status",
-          "type": "STRING",
-          "links": [
-            54
-          ]
-        }
-      ],
-      "properties": {
-        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
-        "ver": "2e1e10fafa840289cd4dbd241f693103f968c3bb",
-        "Node name for S&R": "SynVowGptImage2_TIBatch"
-      },
-      "widgets_values": [
-        "gpt-image-2-1k-qy",
-        "auto",
-        "1K",
-        "1:1",
-        "sequential",
-        0,
-        "randomize"
-      ]
     }
   ],
   "links": [
-    [
-      4,
-      5,
-      0,
-      6,
-      0,
-      "IMAGE"
-    ],
-    [
-      7,
-      8,
-      0,
-      9,
-      0,
-      "IMAGE"
-    ],
-    [
-      8,
-      11,
-      0,
-      8,
-      8,
-      "STRING"
-    ],
-    [
-      9,
-      12,
-      0,
-      5,
-      8,
-      "STRING"
-    ],
-    [
-      10,
-      13,
-      0,
-      14,
-      0,
-      "IMAGE"
-    ],
-    [
-      11,
-      13,
-      1,
-      15,
-      0,
-      "STRING"
-    ],
     [
       14,
       18,
@@ -2496,14 +2260,6 @@
       19,
       0,
       "LIST"
-    ],
-    [
-      15,
-      19,
-      1,
-      13,
-      0,
-      "STRING"
     ],
     [
       16,
@@ -2514,26 +2270,10 @@
       "STRING"
     ],
     [
-      17,
-      23,
-      0,
-      13,
-      1,
-      "IMAGE"
-    ],
-    [
       18,
       16,
       0,
       23,
-      0,
-      "IMAGE"
-    ],
-    [
-      19,
-      24,
-      0,
-      5,
       0,
       "IMAGE"
     ],
@@ -2550,54 +2290,6 @@
       32,
       0,
       33,
-      0,
-      "IMAGE"
-    ],
-    [
-      28,
-      5,
-      1,
-      36,
-      0,
-      "STRING"
-    ],
-    [
-      29,
-      8,
-      1,
-      37,
-      0,
-      "STRING"
-    ],
-    [
-      31,
-      38,
-      0,
-      26,
-      0,
-      "IMAGE"
-    ],
-    [
-      32,
-      38,
-      1,
-      31,
-      0,
-      "STRING"
-    ],
-    [
-      33,
-      39,
-      0,
-      38,
-      5,
-      "STRING"
-    ],
-    [
-      34,
-      40,
-      0,
-      38,
       0,
       "IMAGE"
     ],
@@ -2690,14 +2382,6 @@
       "IMAGE"
     ],
     [
-      50,
-      57,
-      0,
-      60,
-      0,
-      "IMAGE"
-    ],
-    [
       51,
       63,
       1,
@@ -2714,28 +2398,156 @@
       "LIST"
     ],
     [
-      53,
-      63,
+      56,
+      11,
+      0,
+      65,
       1,
-      60,
-      5,
       "STRING"
     ],
     [
-      54,
-      60,
+      57,
+      65,
+      0,
+      9,
+      0,
+      "IMAGE"
+    ],
+    [
+      58,
+      65,
       1,
-      48,
+      37,
       0,
       "STRING"
     ],
     [
-      55,
+      59,
+      24,
+      0,
+      66,
+      0,
+      "IMAGE"
+    ],
+    [
       60,
+      12,
+      0,
+      66,
+      1,
+      "STRING"
+    ],
+    [
+      61,
+      66,
+      1,
+      36,
+      0,
+      "STRING"
+    ],
+    [
+      62,
+      66,
+      0,
+      6,
+      0,
+      "IMAGE"
+    ],
+    [
+      63,
+      19,
+      1,
+      67,
+      0,
+      "STRING"
+    ],
+    [
+      64,
+      23,
+      0,
+      67,
+      1,
+      "IMAGE"
+    ],
+    [
+      65,
+      67,
+      0,
+      14,
+      0,
+      "IMAGE"
+    ],
+    [
+      66,
+      67,
+      1,
+      15,
+      0,
+      "STRING"
+    ],
+    [
+      67,
+      40,
+      0,
+      68,
+      0,
+      "IMAGE"
+    ],
+    [
+      68,
+      39,
+      0,
+      68,
+      1,
+      "STRING"
+    ],
+    [
+      69,
+      68,
+      0,
+      26,
+      0,
+      "IMAGE"
+    ],
+    [
+      70,
+      68,
+      1,
+      31,
+      0,
+      "STRING"
+    ],
+    [
+      71,
+      57,
+      0,
+      69,
+      0,
+      "IMAGE"
+    ],
+    [
+      72,
+      63,
+      1,
+      69,
+      1,
+      "STRING"
+    ],
+    [
+      73,
+      69,
       0,
       47,
       0,
       "IMAGE"
+    ],
+    [
+      74,
+      69,
+      1,
+      48,
+      0,
+      "STRING"
     ]
   ],
   "groups": [
@@ -2803,10 +2615,10 @@
   "config": {},
   "extra": {
     "ds": {
-      "scale": 0.2729446164628998,
+      "scale": 0.9422788425384347,
       "offset": [
-        1015.853261887108,
-        -1200.0551755414635
+        -1254.971961777345,
+        -2345.235205681135
       ]
     },
     "frontendVersion": "1.47.12",

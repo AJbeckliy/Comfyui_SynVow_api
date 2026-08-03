@@ -12,7 +12,7 @@ import urllib3
 
 from . import synvow_auth
 from .gemini_synvow import GEMINI_MODEL_OPTIONS
-from .gpt_synvow import GPT_MODEL_OPTIONS
+from .gpt_synvow import DEFAULT_GPT_MODEL, GPT_MODEL_OPTIONS
 from .media_common import upload_image as _upload_image, DIRECT_API_BASE as _DIRECT_API_BASE
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
@@ -82,7 +82,7 @@ class PromptOptimizeBReferenceImage:
                 ),
                 "model": (
                     _MODEL_OPTIONS,
-                    {"default": "gpt-5.5-2606"},
+                    {"default": DEFAULT_GPT_MODEL},
                 ),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
@@ -109,7 +109,7 @@ class PromptOptimizeBReferenceImage:
 
         ref_mode_en = _REFERENCE_MODE_MAP.get(reference_mode, reference_mode)
         ratio_en = target_aspect_ratio
-        actual_model = model or "gpt-5.5-2606"
+        actual_model = model or DEFAULT_GPT_MODEL
 
         has_subject = subject_image is not None
         ref_url = _upload_image(api_key, reference_image)

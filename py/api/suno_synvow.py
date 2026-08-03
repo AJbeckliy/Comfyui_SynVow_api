@@ -10,11 +10,8 @@ import requests
 import torch
 
 from . import synvow_auth
-from .media_common import DIRECT_API_BASE, download_audio, is_changed_by_inputs
+from .media_common import EDIT_POLL_URL, EDIT_SUBMIT_URL, download_audio, is_changed_by_inputs
 from comfy_extras.nodes_audio import load as load_audio_file
-
-_SUBMIT_URL = f"{DIRECT_API_BASE}/api/models/image/edit"
-_POLL_URL = f"{DIRECT_API_BASE}/api/models/tasks"
 
 _MODEL_TO_MV = {"suno5.5": "chirp-v5"}
 _MODELS = list(_MODEL_TO_MV.keys())
@@ -74,7 +71,7 @@ def _submit(api_key, body):
     headers = synvow_auth.make_api_headers(api_key)
     print(f"[Suno] 提交: model={body.get('model')} mv={body.get('mv')}")
     res = requests.post(
-        _SUBMIT_URL, headers=headers, params={"async": "true"},
+        EDIT_SUBMIT_URL, headers=headers, params={"async": "true"},
         json=body, verify=False, timeout=120,
     )
     data = res.json() if res.text.strip() else {}
@@ -152,7 +149,7 @@ def _poll(api_key, task_id, model, timeout=1800, interval=5, consumption_id=""):
             body = {"task_id": task_id, "model": model}
             if consumption_id:
                 body["consumption_id"] = consumption_id
-            res = requests.post(_POLL_URL, headers=headers, json=body, verify=False, timeout=30)
+            res = requests.post(EDIT_POLL_URL, headers=headers, json=body, verify=False, timeout=30)
             if res.status_code in (429, 500, 503):
                 print(f"[Suno] ...{task_id[-8:]} HTTP {res.status_code}, 退避10秒")
                 time.sleep(10)
