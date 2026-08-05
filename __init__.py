@@ -78,6 +78,7 @@ _JWT_ROUTES = [
     ("GET",  "/sv_api/api-key",                     "/api-key",                     False),
     ("GET",  "/sv_api/models",                      "/models",                      False),
     ("GET",  "/sv_api/models/public-list",          "/models/public-list",          False),
+    ("GET",  "/sv_api/content/announcements",       "/content/announcements",       False),
 ]
 
 _APIKEY_ROUTES = [
@@ -124,6 +125,11 @@ _register_routes()
 # ---------------------------------------------------------------------------
 #  特殊路由（有自定义逻辑，不能用通用代理）
 # ---------------------------------------------------------------------------
+
+@server.PromptServer.instance.routes.get("/sv_api/content/announcements/{article_id}")
+async def _sv_announcement_detail(request):
+    return await _proxy("GET", f"/content/announcements/{request.match_info['article_id']}", request)
+
 
 @server.PromptServer.instance.routes.get("/sv_api/auth/wechat/check-session")
 async def _sv_wechat_check_session(request):

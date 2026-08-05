@@ -113,7 +113,13 @@ export async function authedGet(path, token) {
     const res = await fetch(`${API_BASE}${path}`, {
         headers: token ? { "Authorization": `Bearer ${token}` } : {},
     });
-    return res.json();
+    const text = await res.text();
+    if (!text) throw new Error(`接口无响应(${res.status})`);
+    try {
+        return JSON.parse(text);
+    } catch {
+        throw new Error(`接口返回格式错误(${res.status})`);
+    }
 }
 
 /** 统一时间格式化（zh-CN 本地时间）。 */

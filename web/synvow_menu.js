@@ -1,6 +1,6 @@
 ﻿/**
  * SynVow 菜单按钮扩展 - 独立悬浮框
- * 布局: ⠿ | SV主按钮 | 👤用户按钮 | ⚙设置按钮
+ * 布局: ⠿ | SV主按钮 | 👤用户按钮 | 公告 | ⚙设置按钮
  */
 import { app } from "../../../scripts/app.js";
 import { api } from "../../../scripts/api.js";
@@ -11,6 +11,7 @@ import { showRechargeRecordsDialog } from "./synvow_recharge_records.js";
 import { showConsumptionRecordsDialog } from "./synvow_consumption_records.js";
 import { showProfileDialog } from "./synvow_profile.js";
 import { showModelPriceDialog } from "./synvow_model_price.js";
+import { checkAnnouncementUnread, showAnnouncementDialog } from "./synvow_announcement.js";
 
 function loadPos() {
     try { return JSON.parse(localStorage.getItem("sv_float_pos") || "null"); } catch { return null; }
@@ -78,6 +79,16 @@ app.registerExtension({
                 border-radius: 6px; line-height: 1; position: relative;
             }
             .sv-settings-btn:hover { background: #484848; color: white; }
+            .sv-announcement-btn {
+                background: #3a3a3a; color: #ddd; border: none;
+                padding: 7px 11px; font-size: 13px; cursor: pointer;
+                border-radius: 6px; position: relative;
+            }
+            .sv-announcement-btn:hover { background: #484848; color: white; }
+            .sv-announcement-dot {
+                position: absolute; top: 2px; right: 2px; width: 7px; height: 7px;
+                border-radius: 50%; background: #ef4444; box-shadow: 0 0 0 1.5px #2a2a2a;
+            }
             /* 下拉通用 */
             .sv-dropdown {
                 position: absolute; top: calc(100% + 6px);
@@ -148,10 +159,18 @@ app.registerExtension({
         settingsMenu.style.right = "0";
 
         const userBtnWrap = $el("div", { style: "position:relative" }, [userBtn, userMenu]);
+        const announcementBtn = $el("button.sv-announcement-btn", {
+            id: "sv-announcement-btn",
+            textContent: "公告",
+            onclick: () => {
+                hideMenus();
+                showAnnouncementDialog(announcementBtn);
+            },
+        });
         const settingsBtnWrap = $el("div", { style: "position:relative" }, [settingsBtn, settingsMenu]);
 
         const float = $el("div", { id: "synvow-float" }, [
-            dragHandle, mainBtnWrap, userBtnWrap, settingsBtnWrap
+            dragHandle, mainBtnWrap, userBtnWrap, announcementBtn, settingsBtnWrap
         ]);
         document.body.appendChild(float);
 
@@ -285,5 +304,6 @@ app.registerExtension({
         if (getToken()) {
             setTimeout(() => window.synvowRefreshAccount?.(), 0);
         }
+        checkAnnouncementUnread(announcementBtn);
     }
 });
