@@ -99,7 +99,7 @@ _NESTED_PARAM_MODELS = {"gpt-image-2-2607"}
 
 
 def _is_qy_model(model):
-    return str(model or "").endswith(("-qy", "-qy-t2v"))
+    return str(model or "").endswith(("-qy", "-qy-t2i"))
 
 
 def _locked_resolution(model):
@@ -187,7 +187,7 @@ def _poll_urls(api_key, task_id, model, consumption_id=""):
 def _run_tasks(tasks, model, size, quality, resolution, is_img2img, api_key, aspect_ratio=None):
     total = len(tasks)
     pbar = comfy.utils.ProgressBar(total)
-    request_model = "gpt-image-2-4k-qy-t2v" if model == "gpt-image-2-4k-qy" and not is_img2img else model
+    request_model = "gpt-image-2-4k-qy-t2i" if model == "gpt-image-2-4k-qy" and not is_img2img else model
 
     submitted = []
     for i, (p, imgs) in enumerate(tasks):

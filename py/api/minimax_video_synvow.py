@@ -13,7 +13,7 @@ from .media_common import (
 )
 
 _MODEL = "MiniMax-H3"
-_RESOLUTION = "2K"
+_RESOLUTIONS = ["2K", "768P"]
 _DURATIONS = [str(i) for i in range(4, 16)]
 _ASPECT_RATIOS = ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"]
 _R2V_ASPECT_RATIOS = ["adaptive", *_ASPECT_RATIOS]
@@ -36,12 +36,16 @@ def _pick_ratio(ratio, allowed, default):
     return ratio if ratio in allowed else default
 
 
-def _base_body(prompt, duration, **extra):
+def _pick_resolution(raw):
+    return raw if raw in _RESOLUTIONS else "2K"
+
+
+def _base_body(prompt, duration, resolution, **extra):
     body = {
         "model": _MODEL,
         "prompt": prompt,
         "duration": _clamp_duration(duration),
-        "resolution": _RESOLUTION,
+        "resolution": _pick_resolution(resolution),
     }
     body.update(extra)
     return body
@@ -86,14 +90,15 @@ class SynVowMiniMaxTextToVideo(_MiniMaxNode):
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
                 "aspect_ratio": (_ASPECT_RATIOS, {"default": "16:9"}),
                 "duration": (_DURATIONS, {"default": "5"}),
+                "resolution": (_RESOLUTIONS, {"default": "2K"}),
             },
             "optional": dict(_OPTIONAL_SAVE),
         }
 
-    def generate_video(self, prompt, aspect_ratio, duration, filename="", save_path=""):
+    def generate_video(self, prompt, aspect_ratio, duration, resolution="2K", filename="", save_path=""):
         return _generate(
             lambda _api_key: _base_body(
-                prompt, duration,
+                prompt, duration, resolution,
                 aspect_ratio=_pick_ratio(aspect_ratio, _ASPECT_RATIOS, "16:9"),
             ),
             save_path, filename,
@@ -109,6 +114,7 @@ class SynVowMiniMaxFirstLastFrame(_MiniMaxNode):
             "required": {
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
                 "duration": (_DURATIONS, {"default": "5"}),
+                "resolution": (_RESOLUTIONS, {"default": "2K"}),
             },
             "optional": {
                 "first_frame": ("IMAGE",),
@@ -117,7 +123,7 @@ class SynVowMiniMaxFirstLastFrame(_MiniMaxNode):
             },
         }
 
-    def generate_video(self, prompt, duration, first_frame=None, last_frame=None,
+    def generate_video(self, prompt, duration, resolution="2K", first_frame=None, last_frame=None,
                        filename="", save_path=""):
         def build(api_key):
             roles = []
@@ -127,7 +133,7 @@ class SynVowMiniMaxFirstLastFrame(_MiniMaxNode):
                 roles.append({"url": upload_image(api_key, last_frame), "role": "last_frame"})
             if not roles:
                 raise ValueError("请至少传入首帧或末帧图像")
-            return _base_body(prompt, duration, image_with_roles=roles)
+            return _base_body(prompt, duration, resolution, image_with_roles=roles)
 
         return _generate(build, save_path, filename)
 
@@ -142,6 +148,7 @@ class SynVowMiniMaxReferenceToVideo(_MiniMaxNode):
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
                 "aspect_ratio": (_R2V_ASPECT_RATIOS, {"default": "adaptive"}),
                 "duration": (_DURATIONS, {"default": "5"}),
+                "resolution": (_RESOLUTIONS, {"default": "2K"}),
             },
             "optional": {
                 "image_1": ("IMAGE",),
@@ -152,7 +159,7 @@ class SynVowMiniMaxReferenceToVideo(_MiniMaxNode):
             },
         }
 
-    def generate_video(self, prompt, aspect_ratio, duration, image_1=None, image_2=None,
+    def generate_video(self, prompt, aspect_ratio, duration, resolution="2K", image_1=None, image_2=None,
                        video_path="", audio_path="", filename="", save_path=""):
         def build(api_key):
             image_urls = [upload_image(api_key, image) for image in (image_1, image_2) if image is not None]
@@ -167,7 +174,7 @@ class SynVowMiniMaxReferenceToVideo(_MiniMaxNode):
                 extra["video_urls"] = [video_url]
             if audio_url:
                 extra["audio_urls"] = [audio_url]
-            return _base_body(prompt, duration, **extra)
+            return _base_body(prompt, duration, resolution, **extra)
 
         return _generate(build, save_path, filename)
 

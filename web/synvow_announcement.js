@@ -3,14 +3,22 @@
  */
 import { $el, authedGet, getToken, injectStyle, paginationCss } from "./dom.js";
 
-const READ_KEY = "synvow_announcement_read_id";
 const CATEGORY_ID = 2;
 const PAGE_SIZE = 10;
 let dialog = null;
-let latestId = 0;
 
 function listPath(page, perPage = PAGE_SIZE) {
     return `/content/announcements?page=${page}&per_page=${perPage}&category_id=${CATEGORY_ID}`;
+}
+
+function itemDate(item) {
+    return String(item?.created_at || "").slice(0, 10);
+}
+
+function todayDate() {
+    const d = new Date();
+    const p = (n) => String(n).padStart(2, "0");
+    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
 }
 
 async function fetchAnnouncement(path) {
@@ -45,14 +53,10 @@ function ensureDialogStyle() {
 }
 
 function setUnread(button, unread) {
+    if (!button) return;
     const dot = button.querySelector(".sv-announcement-dot");
     if (unread && !dot) button.appendChild($el("span.sv-announcement-dot"));
     if (!unread && dot) dot.remove();
-}
-
-function markRead(button) {
-    if (latestId > 0) localStorage.setItem(READ_KEY, String(latestId));
-    setUnread(button, false);
 }
 
 function showMessage(container, message) {
@@ -63,8 +67,7 @@ export async function checkAnnouncementUnread(button) {
     try {
         const data = await fetchAnnouncement(listPath(1, 1));
         if (data?.code !== 200) return;
-        latestId = Number(data.data?.list?.[0]?.id ?? 0) || 0;
-        setUnread(button, latestId > (Number(localStorage.getItem(READ_KEY) ?? 0) || 0));
+        setUnread(button, itemDate(data.data?.list?.[0]) === todayDate());
     } catch (_) {}
 }
 
@@ -141,11 +144,7 @@ export function showAnnouncementDialog(button) {
                     ]));
                 });
             }
-            if (currentPage === 1) {
-                const firstId = Number(items[0]?.id ?? 0) || 0;
-                if (firstId > latestId) latestId = firstId;
-                markRead(button);
-            }
+            if (currentPage === 1) setUnread(button, false);
             pageInfo.textContent = `${currentPage} / ${totalPages}`;
             prev.disabled = currentPage <= 1;
             next.disabled = currentPage >= totalPages;

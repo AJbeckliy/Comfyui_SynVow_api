@@ -6,6 +6,7 @@ import hashlib
 import io
 import json
 import os
+import re
 import time
 
 import comfy.model_management as mm
@@ -20,6 +21,9 @@ from . import synvow_auth
 DIRECT_API_BASE = "https://service.synvow.com/api/v1"
 EDIT_SUBMIT_URL = f"{DIRECT_API_BASE}/api/models/image/edit"
 EDIT_POLL_URL = f"{DIRECT_API_BASE}/api/models/tasks"
+RH_UPLOAD_URL = "https://www.runninghub.cn/openapi/v2/media/upload/binary"
+RH_MEDIA_UPLOAD_KEY = "ea54df10603e41eea4fb5f0b7610ad92"
+_RH_RETRY_DELAYS = (0.8, 1.6)
 
 _SUCCESS = ("SUCCESS", "SUCCEED", "SUCCEEDED", "COMPLETED", "DONE", "FINISH", "FINISHED")
 _FAILURE = ("FAILURE", "FAILED", "ERROR", "EXCEPTION")
@@ -30,39 +34,87 @@ def is_changed_by_inputs(**kwargs):
     return hashlib.md5(key.encode()).hexdigest()
 
 
-def upload_image(api_key, img_tensor):
-    arr = (img_tensor[0].cpu().numpy() * 255).clip(0, 255).astype(np.uint8)
-    buf = io.BytesIO()
-    Image.fromarray(arr).convert("RGB").save(buf, format="JPEG", quality=90)
-    buf.seek(0)
-    res = requests.post(
-        f"{DIRECT_API_BASE}/api/upload/images",
-        headers={"X-API-Key": api_key},
-        files=[("files", ("image.jpg", buf, "image/jpeg"))],
-        verify=False, timeout=60,
+def _mime_for_name(fname):
+    ext = os.path.splitext(fname or "")[1].lower().lstrip(".")
+    return {
+        "png": "image/png", "jpg": "image/jpeg", "jpeg": "image/jpeg",
+        "webp": "image/webp", "bmp": "image/bmp", "gif": "image/gif",
+        "mp3": "audio/mpeg", "wav": "audio/wav", "ogg": "audio/ogg",
+        "flac": "audio/flac", "aac": "audio/aac", "m4a": "audio/mp4",
+        "mp4": "video/mp4", "mov": "video/quicktime", "avi": "video/x-msvideo",
+        "mkv": "video/x-matroska", "webm": "video/webm", "flv": "video/x-flv",
+    }.get(ext, "application/octet-stream")
+
+
+def _is_transient_upload_error(err):
+    msg = str(err).lower()
+    return any(s in msg for s in ("timeout", "timed out", "deadline", "network", "connection", "temporar")) or bool(
+        re.search(r"status(?: code)?[=: ]+5\d\d|\b5\d\d\b", msg)
     )
-    data = res.json()
-    if res.status_code != 200 or data.get("code") != 200:
-        raise RuntimeError(f"Image upload failed: {data}")
-    urls = data.get("data", {}).get("urls", [])
-    if not urls:
-        raise RuntimeError(f"Image upload returned no URL: {data}")
-    return urls[0]
+
+
+def _parse_rh_download_url(payload):
+    if not isinstance(payload, dict):
+        return ""
+    code = payload.get("code")
+    if code is not None and int(code) != 0:
+        raise RuntimeError(payload.get("message") or payload.get("msg") or f"上传文件失败: code={code}")
+    data = payload.get("data") if isinstance(payload.get("data"), dict) else {}
+    return str(data.get("download_url") or data.get("downloadUrl") or "")
+
+
+def _rh_upload_bytes(fname, content, mime):
+    last_error = None
+    for attempt in range(len(_RH_RETRY_DELAYS) + 1):
+        try:
+            res = requests.post(
+                RH_UPLOAD_URL,
+                headers={"Authorization": f"Bearer {RH_MEDIA_UPLOAD_KEY}"},
+                files={"file": (fname, content, mime)},
+                timeout=180,
+            )
+            if res.status_code >= 500:
+                raise RuntimeError(f"HTTP {res.status_code}")
+            payload = res.json() if res.text.strip() else {}
+            if res.status_code != 200:
+                raise RuntimeError(f"HTTP {res.status_code} | {str(payload)[:200]}")
+            url = _parse_rh_download_url(payload)
+            if not url:
+                raise RuntimeError(f"上传响应中无 download_url: {str(payload)[:200]}")
+            return url
+        except Exception as e:
+            last_error = e
+            if attempt >= len(_RH_RETRY_DELAYS) or not _is_transient_upload_error(e):
+                raise
+            time.sleep(_RH_RETRY_DELAYS[attempt])
+    raise last_error
+
+
+def _image_tensor_to_upload(img_tensor):
+    arr = (img_tensor[0].cpu().numpy() * 255).clip(0, 255).astype(np.uint8)
+    if arr.ndim == 2:
+        im = Image.fromarray(arr, mode="L")
+    elif arr.shape[-1] == 4:
+        im = Image.fromarray(arr, mode="RGBA")
+    else:
+        im = Image.fromarray(arr[..., :3], mode="RGB")
+    buf = io.BytesIO()
+    if im.mode in ("RGBA", "LA", "P"):
+        im.save(buf, format="PNG")
+        return buf.getvalue(), "image.png", "image/png"
+    im.convert("RGB").save(buf, format="JPEG", quality=90)
+    return buf.getvalue(), "image.jpg", "image/jpeg"
+
+
+def upload_image(api_key, img_tensor):
+    content, fname, mime = _image_tensor_to_upload(img_tensor)
+    return _rh_upload_bytes(fname, content, mime)
 
 
 def upload_images(api_key, image_bytes_list):
-    url = f"{DIRECT_API_BASE}/api/upload/images"
-    headers = {"X-API-Key": api_key}
-    files = [("files", (f"image_{i}.jpg", b, "image/jpeg")) for i, b in enumerate(image_bytes_list)]
-    print(f"[upload] 图像上传: {len(image_bytes_list)} 张 -> {url}")
-    res = requests.post(url, headers=headers, files=files, verify=False, timeout=60)
-    data = res.json()
-    print(f"[upload] 图像上传响应: HTTP {res.status_code} | {str(data)[:200]}")
-    if res.status_code != 200 or data.get("code") != 200:
-        raise Exception(f"Image upload failed: {data}")
-    urls = data.get("data", {}).get("urls", [])
-    if not urls:
-        raise Exception(f"Image upload returned no URL: {data}")
+    urls = []
+    for i, raw in enumerate(image_bytes_list):
+        urls.append(_rh_upload_bytes(f"image_{i}.jpg", raw, "image/jpeg"))
     return urls
 
 
@@ -74,26 +126,11 @@ def upload_media_file(api_key, file_path, media_type="video"):
         return path
     if not os.path.isfile(path):
         raise FileNotFoundError(f"{media_type} 文件不存在: {path}")
-    endpoint = "videos" if media_type == "video" else "audios"
-    mime = "video/mp4" if media_type == "video" else "audio/mpeg"
-    default_name = "ref.mp4" if media_type == "video" else "ref.mp3"
-    fname = os.path.basename(path) or default_name
+    fname = os.path.basename(path) or ("ref.mp4" if media_type == "video" else "ref.mp3")
+    mime = _mime_for_name(fname)
     with open(path, "rb") as f:
         content = f.read()
-    res = requests.post(
-        f"{DIRECT_API_BASE}/api/upload/{endpoint}",
-        headers={"X-API-Key": api_key},
-        files=[("files", (fname, content, mime))],
-        verify=False,
-        timeout=180,
-    )
-    data = res.json() if res.text.strip() else {}
-    if res.status_code != 200 or data.get("code") != 200:
-        raise RuntimeError(f"{media_type} 上传失败: {data or res.text[:200]}")
-    urls = (data.get("data") or {}).get("urls") or []
-    if not urls:
-        raise RuntimeError(f"{media_type} 上传无 URL: {data}")
-    return urls[0]
+    return _rh_upload_bytes(fname, content, mime)
 
 
 def _resolve_output_dir(save_path=""):

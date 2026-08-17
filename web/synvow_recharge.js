@@ -9,23 +9,32 @@ let pollTimer = null;
 let expireTimer = null;
 let expireSeconds = 120;
 let selectedAmount = null;
+let customAmount = null;
 let selectedPayment = "wechat";
+let submitting = false;
 
-const AMOUNTS = [5, 10, 20, 50, 100, 200];
+const AMOUNTS = [5, 10, 50, 100, 200, 500, 1000, 2000, 5000, 10000];
+const MIN_CUSTOM_AMOUNT = 5;
 
 export function showRechargeDialog() {
+    stopPoll();
+    stopExpireTimer();
     if (rechargeDialog) { 
         rechargeDialog.remove();
         rechargeDialog = null;
     }
+    selectedAmount = null;
+    customAmount = null;
+    selectedPayment = "wechat";
+    submitting = false;
 
     injectStyle("sv-recharge-style", `
         .sv-recharge-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:10001; }
-        .sv-recharge-dialog { background:linear-gradient(180deg,#1a2a3a,#0d1a24); border-radius:12px; padding:30px; width:480px; position:relative; }
+        .sv-recharge-dialog { background:linear-gradient(180deg,#1a2a3a,#0d1a24); border-radius:12px; padding:30px; width:560px; position:relative; }
         .sv-recharge-title { color:#2dd4bf; font-size:18px; font-weight:bold; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
         .sv-recharge-title svg { width:18px; height:18px; }
-        .sv-amount-grid { display:grid; grid-template-columns:repeat(3,1fr); gap:12px; margin-bottom:20px; }
-        .sv-amount-btn { background:#1e3a4a; border:2px solid #334455; border-radius:8px; padding:16px; color:white; font-size:18px; font-weight:bold; cursor:pointer; transition:all 0.2s; }
+        .sv-amount-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; margin-bottom:20px; }
+        .sv-amount-btn { min-width:0; box-sizing:border-box; background:#1e3a4a; border:2px solid #334455; border-radius:8px; padding:12px 4px; color:white; font-size:14px; font-weight:bold; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
             .sv-amount-btn .sv-currency { font-size:12px; font-weight:normal; margin-right:2px; }
         .sv-amount-btn:hover { border-color:#2dd4bf; background:#1e4a5a; }
         .sv-amount-btn.selected { border-color:#2dd4bf; background:linear-gradient(135deg,#1e4a5a,#0d3a4a); box-shadow:0 0 10px rgba(45,212,191,0.3); }
@@ -49,7 +58,9 @@ export function showRechargeDialog() {
         .sv-alipay-icon { color:#1677ff; }
         .sv-qrcode-container { text-align:center; padding:20px; }
         .sv-qrcode-container img { width:200px; height:200px; background:white; padding:10px; border-radius:8px; }
-        .sv-qrcode-expire { position:absolute; top:32px; right:58px; color:#2dd4bf; font-size:13px; font-weight:bold; }
+        .sv-qrcode-expire { position:absolute; top:24px; right:48px; color:#ef4444; font-size:14px; font-weight:600; }
+        .sv-qrcode-amount { text-align:center; color:#2dd4bf; font-size:28px; font-weight:700; margin-top:8px; }
+        .sv-qrcode-amount .sv-currency { font-size:16px; font-weight:500; margin-right:2px; }
         .sv-qrcode-tip { color:#667788; font-size:14px; margin-top:12px; }
         .sv-qrcode-order { color:#556677; font-size:12px; margin-top:8px; }
     `);
@@ -63,12 +74,18 @@ export function showRechargeDialog() {
         return btn;
     });
 
-    const customInput = $el("input.sv-custom-input", { type: "number", placeholder: "自定义金额", min: "1", oninput: (e) => {
-        amountBtns.forEach(b => b.classList.remove("selected"));
-        const val = parseInt(e.target.value);
-        selectedAmount = val > 0 ? val : null;
-        if (val <= 0 && e.target.value) e.target.value = "";
-    }});
+    const customInput = $el("input.sv-custom-input", {
+        type: "text",
+        inputMode: "numeric",
+        placeholder: "自定义金额",
+        oninput: (e) => {
+            amountBtns.forEach(b => b.classList.remove("selected"));
+            selectedAmount = null;
+            const digits = String(e.target.value || "").replace(/\D/g, "").replace(/^0+/, "");
+            e.target.value = digits;
+            customAmount = digits ? parseInt(digits, 10) : null;
+        },
+    });
 
     const wechatBtn = $el("button.sv-payment-btn.selected", { innerHTML: `<span class="sv-wechat-icon">${wechatIcon}</span> 微信支付`, onclick: () => selectPayment("wechat", wechatBtn, alipayBtn) });
     const alipayBtn = $el("button.sv-payment-btn", { innerHTML: `<span class="sv-alipay-icon">${alipayIcon}</span> 支付宝支付`, onclick: () => selectPayment("alipay", alipayBtn, wechatBtn) });
@@ -77,6 +94,7 @@ export function showRechargeDialog() {
         amountBtns.forEach(b => b.classList.remove("selected"));
         btn.classList.add("selected");
         selectedAmount = amount;
+        customAmount = null;
         customInput.value = "";
     }
 
@@ -96,7 +114,7 @@ export function showRechargeDialog() {
             $el("div.sv-recharge-title", { innerHTML: `${lightningIcon} 快速充值` }),
             $el("div.sv-amount-grid", {}, amountBtns),
             customInput,
-            $el("div.sv-custom-hint", { textContent: "自定义金额，仅支持整数充值。" }),
+            $el("div.sv-custom-hint", { textContent: "自定义金额，仅支持 5 起的整数充值。" }),
             $el("div.sv-payment-row", {}, [wechatBtn, alipayBtn]),
             submitBtn,
             $el("div.sv-recharge-footer", {}, ["支付成功即充值到账，视为同意《服务条款》及退款政策。"])
@@ -106,12 +124,23 @@ export function showRechargeDialog() {
     document.body.appendChild(rechargeDialog);
 }
 
+function getFinalAmount() {
+    if (selectedAmount) return selectedAmount;
+    if (customAmount != null && customAmount >= MIN_CUSTOM_AMOUNT) return customAmount;
+    return null;
+}
+
 async function handleSubmit() {
-    if (!selectedAmount || selectedAmount <= 0) {
+    if (!selectedAmount && customAmount != null && customAmount > 0 && customAmount < MIN_CUSTOM_AMOUNT) {
+        alert("自定义金额至少为 5");
+        return;
+    }
+    const amount = getFinalAmount();
+    if (!amount) {
         alert("请选择或输入充值金额");
         return;
     }
-    
+
     const token = getToken();
     if (!token) { showLoginDialog(); return; }
 
@@ -120,11 +149,19 @@ async function handleSubmit() {
         alert(accountReady.message || "账户状态异常，暂时无法充值");
         return;
     }
-    
+
+    if (submitting) return;
+    submitting = true;
+    const submitBtn = rechargeDialog?.querySelector(".sv-submit-btn");
+    if (submitBtn) {
+        submitBtn.disabled = true;
+        submitBtn.textContent = "提交中...";
+    }
+
     try {
         const actualPayType = selectedPayment === "wechat" ? "wxpay" : "alipay";
         const requestBody = {
-            amount: Number(selectedAmount),
+            amount: Number(amount),
             paymentType: "zpayz",
             payType: actualPayType
         };
@@ -153,11 +190,11 @@ async function handleSubmit() {
             const qrImg = paymentData.img;
 
             if (qrImg) {
-                showQrCode(qrImg, orderNo);
+                showQrCode(qrImg, orderNo, amount);
             } else if (payUrl) {
-                showQrCode(payUrl, orderNo);
+                showQrCode(payUrl, orderNo, amount);
             } else if (qrCode) {
-                showQrCode(qrCode, orderNo);
+                showQrCode(qrCode, orderNo, amount);
             } else {
                 alert("创建订单失败，无支付信息");
             }
@@ -166,6 +203,13 @@ async function handleSubmit() {
         }
     } catch (e) {
         alert("网络错误，请稍后重试");
+    } finally {
+        submitting = false;
+        const submitBtn = rechargeDialog?.querySelector(".sv-submit-btn");
+        if (submitBtn) {
+            submitBtn.disabled = false;
+            submitBtn.textContent = "立即支付";
+        }
     }
 }
 
@@ -212,12 +256,13 @@ async function ensureAccountReady(token) {
     }
 }
 
-function showQrCode(imgSrc, orderNo) {
+function showQrCode(imgSrc, orderNo, amount) {
     const dialog = rechargeDialog.querySelector(".sv-recharge-dialog");
     dialog.innerHTML = `
         <button class="sv-recharge-close" id="sv-qr-close">×</button>
         <div class="sv-recharge-title"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> 扫码支付</div>
         <div class="sv-qrcode-expire" id="sv-qrcode-expire">120s</div>
+        ${amount ? `<div class="sv-qrcode-amount"><span class="sv-currency">¥</span>${amount}</div>` : ""}
         <div class="sv-qrcode-container">
             <img src="${imgSrc}" alt="支付二维码">
             <div class="sv-qrcode-tip">请使用${selectedPayment === 'wechat' ? '微信' : '支付宝'}扫码支付</div>

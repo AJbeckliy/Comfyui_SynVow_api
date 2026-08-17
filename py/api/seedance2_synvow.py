@@ -20,8 +20,6 @@ _MODELS = [
     "seedance-2.0-mini",
     "seedance-2.0",
     "seedance-2.0-fast",
-    "seedance-2.0-face",
-    "seedance-2.0-fast-face",
 ]
 _DEFAULT_MODEL = _QUAN_NENG
 _RATIOS = ["adaptive", "16:9", "9:16", "4:3", "3:4", "1:1", "21:9"]
@@ -31,7 +29,7 @@ _MODES = ["quan_neng", "edit", "extend"]
 _VERSIONS = ["标准", "快速", "Mini"]
 _DEFAULT_MODE = "quan_neng"
 _DEFAULT_VERSION = "标准"
-_SUPPORT_1080 = {"seedance-2.0", "seedance-2.0-face"}
+_SUPPORT_1080 = {"seedance-2.0"}
 _TAG = "Seedance"
 
 
@@ -54,12 +52,8 @@ def _coerce_quan_neng(version, resolution):
 
 
 def _coerce_model_for_1080(model):
-    if model in _SUPPORT_1080:
-        return model
-    if model == "seedance-2.0-fast":
+    if model in ("seedance-2.0", "seedance-2.0-fast"):
         return "seedance-2.0"
-    if model == "seedance-2.0-fast-face":
-        return "seedance-2.0-face"
     return _DEFAULT_MODEL
 
 

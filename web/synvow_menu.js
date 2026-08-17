@@ -296,6 +296,7 @@ app.registerExtension({
 
         mainMenu.appendChild($el("div.sv-dropdown-item", { innerHTML: `<img src="/extensions/Comfyui_SynVow_api/xb_icon.svg" style="width:16px;height:16px"> 充值星币`, onclick: () => { hideMenus(); getToken() ? showRechargeDialog() : showLoginDialog(); } }));
         mainMenu.appendChild($el("div.sv-dropdown-item", { textContent: "🔄 刷新余额", onclick: () => { hideMenus(); window.synvowRefreshAccount?.(); } }));
+        mainMenu.appendChild($el("div.sv-dropdown-item", { textContent: "📋 消费记录", onclick: () => { hideMenus(); getToken() ? showConsumptionRecordsDialog() : showLoginDialog(); } }));
 
         api.addEventListener("synvow_refresh_balance", () => {
             window.synvowRefreshAccount?.();

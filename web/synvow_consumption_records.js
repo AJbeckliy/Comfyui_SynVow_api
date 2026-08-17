@@ -25,11 +25,15 @@ function parseConsumptionSource(value) {
     return value;
 }
 
-/** 按 model_name 推断资源类型（仅匹配本项目已接入的模型） */
+function recordModelLabel(item) {
+    return [item?.model_name, item?.custom_name].filter(Boolean).join(" ");
+}
+
+/** 按 model_name / custom_name 推断资源类型 */
 function consumptionResourceKind(modelName) {
     const m = (modelName ?? "").toLowerCase();
     if (/suno/.test(m)) return "audio";
-    if (/seedance|grok|omni[-_]?flash|veo|youtube|bilibili|douyin|视频号/.test(m)) return "video";
+    if (/seedance|sd2[-_.]?5|minimax|grok|omni[-_]?flash|veo|youtube|bilibili|douyin|视频号|海螺/.test(m)) return "video";
     return "image";
 }
 
@@ -76,26 +80,34 @@ function extractImageUrls(d) {
     return [];
 }
 
-/** 视频类：videos / cld2VideoUrl 等视频字段优先 */
+const VIDEO_URL_HINT = /\.(mp4|webm|mov|m3u8)(\?|#|$)/i;
+
+/** 视频类：result_url / video_url 等优先，不把参考图 url 当结果 */
 function extractVideoUrls(d) {
-    const out = [];
+    const preferred = [];
+    const fallback = [];
     const walk = (data) => {
         if (!data) return;
-        if (typeof data === "string") { if (isHttpUrl(data)) out.push(data); return; }
+        if (typeof data === "string") {
+            if (isHttpUrl(data)) (VIDEO_URL_HINT.test(data) ? preferred : fallback).push(data);
+            return;
+        }
         if (Array.isArray(data)) { data.forEach(walk); return; }
         if (typeof data !== "object") return;
-        pushHttpUrls(out, data.result_url);
-        pushHttpUrls(out, data.cld2VideoUrl);
-        pushHttpUrls(out, data.video_url);
-        pushHttpUrls(out, data.video);
-        pushHttpUrls(out, data.result_file);
-        pushHttpUrls(out, data.url);
-        for (const key of ["content", "data", "result", "results", "output", "sourceData", "task_result", "videos"]) {
+        pushHttpUrls(preferred, data.result_url);
+        pushHttpUrls(preferred, data.cld2VideoUrl);
+        pushHttpUrls(preferred, data.video_url);
+        pushHttpUrls(preferred, data.video);
+        pushHttpUrls(preferred, data.result_file);
+        const urlValues = [];
+        pushHttpUrls(urlValues, data.url);
+        for (const url of urlValues) (VIDEO_URL_HINT.test(url) ? preferred : fallback).push(url);
+        for (const key of ["data", "result", "results", "output", "sourceData", "task_result", "videos"]) {
             if (data[key] != null) walk(data[key]);
         }
     };
     walk(d);
-    return dedupe(out);
+    return dedupe(preferred.length ? preferred : fallback);
 }
 
 /** 音频类：Suno cld2AudioUrl 优先，不取 cld2VideoUrl */
@@ -131,10 +143,18 @@ function extractResourceUrls(source, modelName) {
     else if (kind === "video") urls = extractVideoUrls(parsed);
     else urls = extractAudioUrls(parsed);
 
-    if (!urls.length) {
-        urls = kind === "image" ? extractVideoUrls(parsed) : extractImageUrls(parsed);
-    }
+    if (!urls.length) urls = kind === "image" ? extractVideoUrls(parsed) : extractImageUrls(parsed);
     return urls;
+}
+
+function isSuccess(item) {
+    return item.status === 1 && parseFloat(item.amount || 0) !== 0;
+}
+
+function formatAmount(item) {
+    const amount = parseFloat(item.amount || 0);
+    if (amount === 0) return "-";
+    return isSuccess(item) ? `-¥${amount.toFixed(6)}` : `+¥${amount.toFixed(6)}`;
 }
 
 export function showConsumptionRecordsDialog() {
@@ -264,18 +284,18 @@ export function showConsumptionRecordsDialog() {
                 } else {
                     const tbody = $el("tbody");
                     for (const item of items) {
-                        const ok  = item.status === 1 && parseFloat(item.amount || 0) !== 0;
-                        const modelName = item.model_name ?? "";
-                        const urls = ok ? extractResourceUrls(item.source, modelName) : [];
-                        const kind = consumptionResourceKind(modelName);
+                        const ok = isSuccess(item);
+                        const modelLabel = recordModelLabel(item);
+                        const urls = ok ? extractResourceUrls(item.source, modelLabel) : [];
+                        const kind = consumptionResourceKind(modelLabel);
                         const resCell = urls.length
                             ? $el("a.sv-cr-link", { textContent: "打开", href: "#", onclick: (e) => { e.preventDefault(); openPreview(urls, kind); } })
                             : $el("span.sv-cr-none", { textContent: "无" });
                         tbody.appendChild($el("tr", {}, [
                             $el("td", { textContent: fmtTime(item.created_at) }),
-                            $el("td", { textContent: item.model_name || "-" }),
+                            $el("td", { textContent: item.custom_name || item.model_name || "-" }),
                             $el("td", {}, [$el("span.sv-cr-badge", { textContent: ok ? "成功" : "失败", className: `sv-cr-badge ${ok ? "sv-cr-success" : "sv-cr-fail"}` })]),
-                            $el("td", { textContent: `${ok ? "-" : "+"}¥${parseFloat(item.amount || 0).toFixed(6)}`, style: { color: ok ? "#ef4444" : "#22c55e" } }),
+                            $el("td", { textContent: formatAmount(item), style: { color: ok ? "#ef4444" : "#22c55e" } }),
                             $el("td", {}, [resCell]),
                         ]));
                     }

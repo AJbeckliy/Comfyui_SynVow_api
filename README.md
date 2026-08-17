@@ -6,6 +6,19 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 ## Changelog
 
+### 2026-08-17
+- **Video nodes**
+  - Added standalone node `SynVow Seedance 2.5` (480p/720p, duration 4–30 seconds)
+  - Removed `seedance-2.0-face` / `seedance-2.0-fast-face`
+- **Image nodes**
+  - Fixed `gpt-image-2-4k-qy` text-to-image: requests `gpt-image-2-4k-qy-t2i` when there is no reference image
+- **Account / Web**
+  - Recharge center: added more amount tiers; custom amount minimum 5 RMB
+  - Profile: added user ID, set/change password, bind email
+  - Announcements button shows a red dot when the latest item’s date is today (local); opening the list clears the dot for now
+- **Upload**
+  - Image/video/audio upload behavior updated
+
 ### 2026-08-06
 - **Video nodes**
   - Added `SynVow MiniMax 文生视频` / `SynVow MiniMax 首尾帧视频` / `SynVow MiniMax 多模态参考视频` (model `MiniMax-H3`, resolution `2K`, duration 4–15 seconds)
