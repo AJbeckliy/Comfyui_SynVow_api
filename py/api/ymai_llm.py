@@ -13,7 +13,7 @@ import requests
 
 from . import synvow_auth
 from .gemini_synvow import DEFAULT_GEMINI_MODEL, GEMINI_MODEL_OPTIONS
-from .gpt_synvow import GPT_MODEL_OPTIONS
+from .gpt_synvow import GPT_MODEL_OPTIONS, resolve_gpt_model
 from .media_common import DIRECT_API_BASE, upload_images
 
 
@@ -247,7 +247,7 @@ def chat_completion(
     timeout: int = 180,
 ) -> str:
     payload: Dict[str, Any] = {
-        "model": model,
+        "model": resolve_gpt_model(model),
         "messages": build_messages(system_prompt, user_prompt, image_urls),
         "temperature": float(temperature),
         "max_tokens": int(max_tokens),

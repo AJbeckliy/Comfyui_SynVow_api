@@ -6,6 +6,15 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 
 ## 更新日志
 
+### 2026-08-19
+- **文本模型**
+  - 去掉 `gpt-5.5-2607` / `gpt-5.6-sol-2607`（PT2607），新增 `PT5.5-稳定`（请求 `gpt-5.5-稳定`）、`PT5.6-sol-稳定`（请求 `gpt-5.6-sol-稳定`）
+- **图像节点**
+  - 即梦 5.0 分辨率改为 `2K` / `3K` / `4K`，参考图最多 4 张
+  - 新增独立节点 `SynVow GK2.0` / `(T_batch)` / `(I_batch)` / `(T_I_batch)`（`grok-image-2.0-wd`，比例、`2k`/`1k`，参考图最多 3 张）
+- **视频节点**
+  - `SynVow Seedance 2.5` 画质增加 `1080p`
+
 ### 2026-08-17
 - **视频节点**
   - 新增独立节点 `SynVow Seedance 2.5`（，480p/720p，时长 4～30 秒）
@@ -166,6 +175,10 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 | SynVow GK1.5 (T_batch) | grok-image-1.5-稳定 | 提示词列表批量 |
 | SynVow GK1.5 (I_batch) | grok-image-1.5-稳定 | 提示词 × 图像列表批量 |
 | SynVow GK1.5 (T_I_batch) | grok-image-1.5-稳定 | 提示词与图像配对批量 |
+| SynVow GK2.0 | grok-image-2.0-wd | 文生图·图生图（比例、2k/1k，最多 3 张参考图） |
+| SynVow GK2.0 (T_batch) | grok-image-2.0-wd | 提示词列表批量 |
+| SynVow GK2.0 (I_batch) | grok-image-2.0-wd | 提示词 × 图像列表批量 |
+| SynVow GK2.0 (T_I_batch) | grok-image-2.0-wd | 提示词与图像配对批量 |
 | SynVow 悠船 文生图 | Midjourney_文生图 | 文生图（支持 oref/sref/dref） |
 | SynVow 悠船 多图融合 | Midjourney_多图融合 | 2–4 张图融合 |
 | SynVow 悠船 图像编辑 | Midjourney_图像编辑 | 单图编辑（支持 oref/sref/dref） |
@@ -180,6 +193,7 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 
 | 节点名称 | 模型 | 描述 |
 |----------|------|------|
+| SynVow Seedance 2.5 | doubao-seedance-2.5 | 480p/720p/1080p，时长 4～30 秒 |
 | SynVow Seedance | seedance2.0-* | `/image/edit`：文/图/视频/音频参考；输出路径/URL/信息 |
 | SynVow Seedance2.0 视频生成 (720P) | seedance_2_720p | `/image/edit` + `content[]`，固定 720P；输出路径/URL/信息 |
 | SynVow Grok Video | grok-1.5-video | 文/图生视频（最多 6 张参考图） |

@@ -6,6 +6,15 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 ## Changelog
 
+### 2026-08-19
+- **Text models**
+  - Removed `gpt-5.5-2607` / `gpt-5.6-sol-2607` (PT2607); added `PT5.5-稳定` (requests `gpt-5.5-稳定`) and `PT5.6-sol-稳定` (requests `gpt-5.6-sol-稳定`)
+- **Image nodes**
+  - Jimeng 5.0 resolution is now `2K` / `3K` / `4K`, with up to 4 reference images
+  - Added standalone node `SynVow GK2.0` / `(T_batch)` / `(I_batch)` / `(T_I_batch)` (`grok-image-2.0-wd`; aspect ratio, `2k`/`1k`, up to 3 reference images)
+- **Video nodes**
+  - `SynVow Seedance 2.5` adds `1080p`
+
 ### 2026-08-17
 - **Video nodes**
   - Added standalone node `SynVow Seedance 2.5` (480p/720p, duration 4–30 seconds)
@@ -166,6 +175,10 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 | SynVow GK1.5 (T_batch) | grok-image-1.5-稳定 | Prompt-list batch |
 | SynVow GK1.5 (I_batch) | grok-image-1.5-稳定 | Prompt × image-list batch |
 | SynVow GK1.5 (T_I_batch) | grok-image-1.5-稳定 | Paired prompt and image batch |
+| SynVow GK2.0 | grok-image-2.0-wd | Text-to-image / image-to-image (aspect ratio, 2k/1k, up to 3 reference images) |
+| SynVow GK2.0 (T_batch) | grok-image-2.0-wd | Prompt-list batch |
+| SynVow GK2.0 (I_batch) | grok-image-2.0-wd | Prompt × image-list batch |
+| SynVow GK2.0 (T_I_batch) | grok-image-2.0-wd | Paired prompt and image batch |
 | SynVow 悠船 文生图 | Midjourney_文生图 | Text-to-image (supports oref/sref/dref) |
 | SynVow 悠船 多图融合 | Midjourney_多图融合 | Blend 2–4 images |
 | SynVow 悠船 图像编辑 | Midjourney_图像编辑 | Single-image edit (supports oref/sref/dref) |
@@ -180,6 +193,7 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 | Node | Model | Description |
 |------|-------|-------------|
+| SynVow Seedance 2.5 | doubao-seedance-2.5 | 480p/720p/1080p, duration 4–30 seconds |
 | SynVow Seedance | seedance2.0-* | `/image/edit`: text/image/video/audio reference; outputs path/URL/info |
 | SynVow Seedance2.0 视频生成 (720P) | seedance_2_720p | `/image/edit` + `content[]`, fixed 720P; outputs path/URL/info |
 | SynVow Grok Video | grok-1.5-video | Text/image-to-video (up to 6 reference images) |

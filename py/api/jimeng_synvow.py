@@ -23,14 +23,17 @@ _MODEL_PRO = "即梦5.0-pro"
 _MODELS = [_MODEL_STD, _MODEL_PRO]
 _DEFAULT_MODEL = _MODEL_STD
 _ASPECT_RATIOS = ["1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3", "21:9"]
-_RESOLUTIONS = ["1K", "2K", "3K"]
+_RESOLUTIONS = ["1K", "2K", "3K", "4K"]
 _RESOLUTIONS_BY_MODEL = {
-    _MODEL_STD: ["2K", "3K"],
+    _MODEL_STD: ["2K", "3K", "4K"],
     _MODEL_PRO: ["1K", "2K"],
 }
 _DEFAULT_RATIO = "1:1"
 _DEFAULT_RESOLUTION = "2K"
-_MAX_IMAGES = 9
+_MAX_IMAGES_BY_MODEL = {
+    _MODEL_STD: 4,
+    _MODEL_PRO: 9,
+}
 _TAG = "Jimeng"
 _POLL_TIMEOUT = 900
 
@@ -46,29 +49,28 @@ def _normalize_resolution(model, resolution):
     return "2K" if "2K" in allowed else allowed[0]
 
 
+def _max_images(model):
+    return _MAX_IMAGES_BY_MODEL.get(_normalize_model(model), 4)
+
+
 def _build_body(model, prompt, aspect_ratio, resolution, image_urls):
     model = _normalize_model(model)
     ratio = aspect_ratio if aspect_ratio in _ASPECT_RATIOS else _DEFAULT_RATIO
     res = _normalize_resolution(model, resolution)
-    urls = [u for u in (image_urls or []) if u][:_MAX_IMAGES]
-    if model == _MODEL_PRO:
-        body = {
-            "model": model,
-            "prompt": prompt or "",
-            "size": ratio,
-            "resolution": res,
-        }
-        if urls:
-            body["image_urls"] = urls
-        return body
-    params = {"web_search": True, "aspect_ratio": ratio, "size": res}
+    urls = [u for u in (image_urls or []) if u][:_max_images(model)]
+    body = {
+        "model": model,
+        "prompt": prompt or "",
+        "size": ratio,
+        "resolution": res,
+    }
     if urls:
-        params["images"] = urls
-    return {"model": model, "prompt": prompt or "", "params": params}
+        body["image_urls"] = urls
+    return body
 
 
-def _upload_tensors(api_key, tensors):
-    return [_upload_image(api_key, t) for t in (tensors or []) if t is not None][:_MAX_IMAGES]
+def _upload_tensors(api_key, tensors, model):
+    return [_upload_image(api_key, t) for t in (tensors or []) if t is not None][:_max_images(model)]
 
 
 def _run_tasks(tasks, model, aspect_ratio, resolution, api_key):
@@ -77,7 +79,7 @@ def _run_tasks(tasks, model, aspect_ratio, resolution, api_key):
     submitted = []
     for i, (prompt, imgs) in enumerate(tasks):
         try:
-            urls = _upload_tensors(api_key, imgs)
+            urls = _upload_tensors(api_key, imgs, model)
             body = _build_body(model, prompt, aspect_ratio, resolution, urls)
             task_id, consumption_id = submit_edit_async(api_key, body, _TAG)
             submitted.append((task_id, consumption_id, body.get("model") or model))
@@ -101,7 +103,7 @@ def _run_tasks(tasks, model, aspect_ratio, resolution, api_key):
         return list(executor.map(_poll_one, submitted))
 
 
-def _pick_group_images(all_lists, index):
+def _pick_group_images(all_lists, index, model=None):
     imgs = []
     for lst in all_lists:
         if not lst:
@@ -110,7 +112,7 @@ def _pick_group_images(all_lists, index):
             imgs.append(lst[0])
         elif index < len(lst):
             imgs.append(lst[index])
-    return imgs
+    return imgs[:_max_images(model)] if model else imgs
 
 
 class SynVowJimeng:
@@ -267,7 +269,7 @@ class SynVowJimeng_IBatch:
         ]
         batch_size = max(len(lst) for lst in all_lists)
         p = str(prompt).strip() if prompt else ""
-        tasks = [(p, _pick_group_images(all_lists, i)) for i in range(batch_size)]
+        tasks = [(p, _pick_group_images(all_lists, i, model)) for i in range(batch_size)]
         print(f"[{_TAG} IBatch] {batch_size} 组图, model={model}")
         image_urls = _run_tasks(tasks, model, aspect_ratio, resolution, api_key)
         image_list = download_image_tensors(image_urls, tag=_TAG)
@@ -338,7 +340,7 @@ class SynVowJimeng_TIBatch:
             for i in range(batch_size)
         ]
         print(f"[{_TAG} TIBatch] {batch_size} 组图, {count} 条 prompt, order={prompt_order}, model={model}")
-        tasks = [(assigned[i], _pick_group_images(all_lists, i)) for i in range(batch_size)]
+        tasks = [(assigned[i], _pick_group_images(all_lists, i, model)) for i in range(batch_size)]
         image_urls = _run_tasks(tasks, model, aspect_ratio, resolution, api_key)
         image_list = download_image_tensors(image_urls, tag=_TAG)
         ok = sum(1 for u in image_urls if u)

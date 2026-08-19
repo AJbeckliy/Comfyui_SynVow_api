@@ -9,14 +9,25 @@ from . import synvow_auth
 from .media_common import upload_image as _upload_image, DIRECT_API_BASE
 
 GPT_MODEL_OPTIONS = [
-    "gpt-5.5-2607",
-    "gpt-5.6-sol-2607",
+    "PT5.5-稳定",
+    "PT5.6-sol-稳定",
     "gpt-5.5-2606",
     "gpt-5.4-2606",
     "gpt-5.5-2605",
     "gpt-5.4-2605",
 ]
 DEFAULT_GPT_MODEL = GPT_MODEL_OPTIONS[0]
+_GPT_MODEL_ALIASES = {
+    "gpt-5.5-2607": "gpt-5.5-稳定",
+    "gpt-5.6-sol-2607": "gpt-5.6-sol-稳定",
+    "PT5.5-稳定": "gpt-5.5-稳定",
+    "PT5.6-sol-稳定": "gpt-5.6-sol-稳定",
+}
+
+
+def resolve_gpt_model(model_name):
+    name = model_name or DEFAULT_GPT_MODEL
+    return _GPT_MODEL_ALIASES.get(name, name)
 
 
 class SynVowGPTAPI:
@@ -90,7 +101,7 @@ class SynVowGPTAPI:
                  image_5=None, image_6=None, image_7=None, image_8=None,
                  image_9=None, image_10=None):
         api_key = synvow_auth.read_api_key()
-        model_name = 模型 or DEFAULT_GPT_MODEL
+        model_name = resolve_gpt_model(模型)
 
         single_imgs = [img for img in [image_1, image_2, image_3, image_4, image_5,
                                        image_6, image_7, image_8, image_9, image_10]

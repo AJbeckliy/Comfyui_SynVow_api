@@ -14,7 +14,7 @@ from .media_common import (
 
 _MODEL = "doubao-seedance-2.5"
 _RATIOS = ["adaptive", "16:9", "9:16", "4:3", "3:4", "1:1", "21:9"]
-_RESOLUTIONS = ["480p", "720p"]
+_RESOLUTIONS = ["480p", "720p", "1080p"]
 _DURATIONS = [str(i) for i in range(4, 31)]
 _IMAGE_SLOTS = 12
 _TAG = "Seedance25"
