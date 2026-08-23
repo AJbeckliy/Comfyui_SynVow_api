@@ -6,6 +6,7 @@ import json
 import math
 
 from . import synvow_auth
+from .model_display import combo_models, display_name, pick_model
 from .media_common import (
     download_video,
     is_changed_by_inputs,
@@ -17,8 +18,10 @@ from .media_common import (
 
 _EXT = "Omni-Flash-Ext"
 _PREVIEW = "omni-flash-preview"
-_MODELS = [_EXT, _PREVIEW]
+_API_MODELS = [_EXT, _PREVIEW]
+_MODELS = combo_models(_API_MODELS)
 _DEFAULT_MODEL = _PREVIEW
+_DEFAULT_COMBO = display_name(_DEFAULT_MODEL)
 _MODES = ["single", "triple", "video"]
 _DEFAULT_MODE = "single"
 _ASPECTS = ["16:9", "9:16"]
@@ -33,7 +36,7 @@ _TAG = "OmniFlash"
 
 
 def _normalize_model(raw):
-    return raw if raw in _MODELS else _DEFAULT_MODEL
+    return pick_model(raw, _API_MODELS, _DEFAULT_MODEL)
 
 
 def _normalize_mode(raw):
@@ -161,7 +164,7 @@ class SynVowOmniFlash:
         return {
             "required": {
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
-                "model": (_MODELS, {"default": _DEFAULT_MODEL}),
+                "model": (_MODELS, {"default": _DEFAULT_COMBO}),
                 "mode": (_MODES, {"default": _DEFAULT_MODE}),
                 "aspect_ratio": (_ASPECTS, {"default": _DEFAULT_ASPECT}),
                 "duration": (_DURATIONS, {"default": _DEFAULT_DURATION}),
@@ -199,12 +202,9 @@ class SynVowOmniFlash:
                 "status": "SUCCESS", "task_id": task_id,
                 "model": used_model, "video_url": url, "video_path": path, "seed": seed,
             }, ensure_ascii=False)
-            synvow_auth.refresh_balance()
             return (path, url, info)
-        except Exception as e:
-            print(f"[OmniFlash] Error: {e}")
+        finally:
             synvow_auth.refresh_balance()
-            return ("", "", json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
 
 
 NODE_CLASS_MAPPINGS = {

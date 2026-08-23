@@ -99,12 +99,9 @@ class SynVowGrokVideo:
                 "status": "SUCCESS", "task_id": task_id,
                 "model": _MODEL, "video_url": url, "video_path": path, "seed": seed,
             }, ensure_ascii=False)
-            synvow_auth.refresh_balance()
             return (path, url, info)
-        except Exception as e:
-            print(f"[GrokVideo] Error: {e}")
+        finally:
             synvow_auth.refresh_balance()
-            return ("", "", json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
 
 
 NODE_CLASS_MAPPINGS = {

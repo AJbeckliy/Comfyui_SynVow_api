@@ -21,6 +21,8 @@ from .media_common import (
     upload_image as _upload_image,
 )
 
+from .model_display import combo_models, display_name, resolve_model
+
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 
@@ -83,7 +85,7 @@ _RATIO_TO_SIZE_4K = {
 
 _RATIO_MAPS = {"1K": _RATIO_TO_SIZE_1K, "2K": _RATIO_TO_SIZE_2K, "4K": _RATIO_TO_SIZE_4K}
 
-_MODEL_TYPE_OPTIONS = [
+_API_MODELS = [
     "gpt-image-2-1k-2605",
     "gpt-image-2-2607",
     "gpt-image-2-稳定",
@@ -91,8 +93,9 @@ _MODEL_TYPE_OPTIONS = [
     "gpt-image-2-1k-qy",
     "gpt-image-2-4k-qy",
 ]
-
+_MODEL_TYPE_OPTIONS = combo_models(_API_MODELS)
 _DEFAULT_GPT_IMAGE_MODEL = "gpt-image-2-稳定"
+_DEFAULT_GPT_IMAGE_COMBO = display_name(_DEFAULT_GPT_IMAGE_MODEL)
 _NEW_MODELS = {"gpt-image-2-稳定"}
 _RAW_RATIO_MODELS = {"gpt-image-2-官方"}
 _NESTED_PARAM_MODELS = {"gpt-image-2-2607"}
@@ -236,7 +239,7 @@ class SynVowGptImage2:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "model_type": (_MODEL_TYPE_OPTIONS, {"default": _DEFAULT_GPT_IMAGE_MODEL}),
+                "model_type": (_MODEL_TYPE_OPTIONS, {"default": _DEFAULT_GPT_IMAGE_COMBO}),
                 "quality": (["auto", "low", "medium", "high"], {"default": "auto"}),
                 "resolution": (["1K", "2K", "4K"], {"default": "1K"}),
                 "aspect_ratio": (list(_RATIO_TO_SIZE_1K.keys()), {"default": "1:1"}),
@@ -264,7 +267,7 @@ class SynVowGptImage2:
                  aspect_ratio=None, seed=None, prompt=None,
                  image1=None, image2=None, image3=None, image4=None,
                  image5=None, image6=None, image7=None, image8=None):
-        model_type   = _unpack(model_type) or _DEFAULT_GPT_IMAGE_MODEL
+        model_type   = resolve_model(_unpack(model_type), _DEFAULT_GPT_IMAGE_MODEL)
         quality      = _unpack(quality)
         resolution   = _unpack(resolution) or "1K"
         aspect_ratio = _unpack(aspect_ratio)
@@ -305,7 +308,7 @@ class SynVowGptImage2_TBatch:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "model_type": (_MODEL_TYPE_OPTIONS, {"default": _DEFAULT_GPT_IMAGE_MODEL}),
+                "model_type": (_MODEL_TYPE_OPTIONS, {"default": _DEFAULT_GPT_IMAGE_COMBO}),
                 "quality": (["auto", "low", "medium", "high"], {"default": "auto"}),
                 "resolution": (["1K", "2K", "4K"], {"default": "1K"}),
                 "aspect_ratio": (list(_RATIO_TO_SIZE_1K.keys()), {"default": "1:1"}),
@@ -333,7 +336,7 @@ class SynVowGptImage2_TBatch:
                       resolution=None, aspect_ratio=None, seed=None, prompts_list=None,
                       image1=None, image2=None, image3=None, image4=None,
                       image5=None, image6=None, image7=None, image8=None):
-        model_type   = _unpack(model_type) or _DEFAULT_GPT_IMAGE_MODEL
+        model_type   = resolve_model(_unpack(model_type), _DEFAULT_GPT_IMAGE_MODEL)
         quality      = _unpack(quality)
         resolution   = _unpack(resolution) or "1K"
         aspect_ratio = _unpack(aspect_ratio)
@@ -377,7 +380,7 @@ class SynVowGptImage2_IBatch:
         return {
             "required": {
                 "images_list1": ("IMAGE",),
-                "model_type": (_MODEL_TYPE_OPTIONS, {"default": _DEFAULT_GPT_IMAGE_MODEL}),
+                "model_type": (_MODEL_TYPE_OPTIONS, {"default": _DEFAULT_GPT_IMAGE_COMBO}),
                 "quality": (["auto", "low", "medium", "high"], {"default": "auto"}),
                 "resolution": (["1K", "2K", "4K"], {"default": "1K"}),
                 "aspect_ratio": (list(_RATIO_TO_SIZE_1K.keys()), {"default": "1:1"}),
@@ -400,7 +403,7 @@ class SynVowGptImage2_IBatch:
     def process_batch(self, images_list1, model_type=None,
                       quality=None, resolution=None, aspect_ratio=None, prompt=None, seed=None,
                       images_list2=None, images_list3=None, images_list4=None, images_list5=None):
-        model_type   = _unpack(model_type) or _DEFAULT_GPT_IMAGE_MODEL
+        model_type   = resolve_model(_unpack(model_type), _DEFAULT_GPT_IMAGE_MODEL)
         quality      = _unpack(quality)
         resolution   = _unpack(resolution) or "1K"
         aspect_ratio = _unpack(aspect_ratio)
@@ -454,7 +457,7 @@ class SynVowGptImage2_TIBatch:
         return {
             "required": {
                 "images_list1": ("IMAGE",),
-                "model_type": (_MODEL_TYPE_OPTIONS, {"default": _DEFAULT_GPT_IMAGE_MODEL}),
+                "model_type": (_MODEL_TYPE_OPTIONS, {"default": _DEFAULT_GPT_IMAGE_COMBO}),
                 "quality": (["auto", "low", "medium", "high"], {"default": "auto"}),
                 "resolution": (["1K", "2K", "4K"], {"default": "1K"}),
                 "aspect_ratio": (list(_RATIO_TO_SIZE_1K.keys()), {"default": "1:1"}),
@@ -479,7 +482,7 @@ class SynVowGptImage2_TIBatch:
                       resolution=None, aspect_ratio=None, prompt_order=None, seed=None,
                       images_list2=None, images_list3=None, images_list4=None, images_list5=None,
                       prompts_list=None):
-        model_type   = _unpack(model_type) or _DEFAULT_GPT_IMAGE_MODEL
+        model_type   = resolve_model(_unpack(model_type), _DEFAULT_GPT_IMAGE_MODEL)
         quality      = _unpack(quality)
         resolution   = _unpack(resolution) or "1K"
         aspect_ratio = _unpack(aspect_ratio)

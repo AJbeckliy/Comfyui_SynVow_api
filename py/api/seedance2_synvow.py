@@ -5,6 +5,7 @@ SynVow Seedance 视频生成
 import json
 
 from . import synvow_auth
+from .model_display import combo_models, pick_model
 from .media_common import (
     download_video,
     is_changed_by_inputs,
@@ -15,12 +16,13 @@ from .media_common import (
 )
 
 _QUAN_NENG = "seedance2.0-全能"
-_MODELS = [
+_API_MODELS = [
     _QUAN_NENG,
     "seedance-2.0-mini",
     "seedance-2.0",
     "seedance-2.0-fast",
 ]
+_MODELS = combo_models(_API_MODELS)
 _DEFAULT_MODEL = _QUAN_NENG
 _RATIOS = ["adaptive", "16:9", "9:16", "4:3", "3:4", "1:1", "21:9"]
 _DURATIONS = [str(i) for i in range(4, 16)]
@@ -126,7 +128,7 @@ def _build_body(model, prompt, ratio, duration, resolution, with_audio,
 def _run_once(api_key, prompt, model, ratio, duration, resolution, with_audio,
               mode, version, image_tensors, video_path, audio_path,
               save_path="", filename=""):
-    model = model if model in _MODELS else _DEFAULT_MODEL
+    model = pick_model(model, _API_MODELS, _DEFAULT_MODEL)
     image_urls, video_url, audio_url = _collect_refs(api_key, image_tensors, video_path, audio_path)
     if model == _QUAN_NENG:
         _validate_quan_neng(mode, image_urls, video_url)
@@ -151,7 +153,7 @@ class SynVowSeedance:
         return {
             "required": {
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
-                "model": (_MODELS, {"default": _DEFAULT_MODEL}),
+                "model": (_MODELS, {"default": _MODELS[0]}),
                 "ratio": (_RATIOS, {"default": "adaptive"}),
                 "duration": (_DURATIONS, {"default": "5"}),
                 "resolution": (_RESOLUTIONS, {"default": "720p"}),
@@ -194,12 +196,9 @@ class SynVowSeedance:
                 "status": "SUCCESS", "task_id": task_id,
                 "model": used_model, "video_url": url, "video_path": path, "seed": seed,
             }, ensure_ascii=False)
-            synvow_auth.refresh_balance()
             return (path, url, info)
-        except Exception as e:
-            print(f"[Seedance] Error: {e}")
+        finally:
             synvow_auth.refresh_balance()
-            return ("", "", json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
 
 
 NODE_CLASS_MAPPINGS = {

@@ -11,11 +11,12 @@ import torch
 
 from . import synvow_auth
 from .media_common import EDIT_POLL_URL, EDIT_SUBMIT_URL, download_audio, is_changed_by_inputs
+from .model_display import combo_models, pick_model
 from comfy_extras.nodes_audio import load as load_audio_file
 
 _MODEL_TO_MV = {"suno5.5": "chirp-v5"}
-_MODELS = list(_MODEL_TO_MV.keys())
 _DEFAULT_MODEL = "suno5.5"
+_MODELS = combo_models(list(_MODEL_TO_MV.keys()))
 _SUCCESS = ("success", "succeeded", "succeed", "completed", "complete", "done", "finished")
 _FAILURE = ("failure", "failed", "error", "exception")
 
@@ -32,7 +33,7 @@ def _load_audio(path):
 
 
 def _build_inspire_body(model, instrumental, prompt):
-    model = model if model in _MODEL_TO_MV else _DEFAULT_MODEL
+    model = pick_model(model, _MODEL_TO_MV, _DEFAULT_MODEL)
     return {
         "gpt_description_prompt": prompt or "",
         "make_instrumental": bool(instrumental),
@@ -42,7 +43,7 @@ def _build_inspire_body(model, instrumental, prompt):
 
 
 def _build_custom_body(model, instrumental, prompt, title, tags):
-    model = model if model in _MODEL_TO_MV else _DEFAULT_MODEL
+    model = pick_model(model, _MODEL_TO_MV, _DEFAULT_MODEL)
     return {
         "model": model,
         "mv": _MODEL_TO_MV.get(model, "chirp-v5"),
@@ -222,15 +223,9 @@ def _execute(body, save_path="", filename=""):
             "audio_path": path,
             "tracks": tracks,
         }, ensure_ascii=False)
-        synvow_auth.refresh_balance()
         return (audio, path, url, lyrics, title_out, info)
-    except Exception as e:
-        print(f"[Suno] Error: {e}")
+    finally:
         synvow_auth.refresh_balance()
-        return (
-            _empty_audio(), "", "", "", "",
-            json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False),
-        )
 
 
 class SynVowSunoInspire:
@@ -243,7 +238,7 @@ class SynVowSunoInspire:
         return {
             "required": {
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
-                "model": (_MODELS, {"default": _DEFAULT_MODEL}),
+                "model": (_MODELS, {"default": _MODELS[0]}),
                 "instrumental": ("BOOLEAN", {"default": False}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
@@ -275,7 +270,7 @@ class SynVowSunoCustom:
         return {
             "required": {
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
-                "model": (_MODELS, {"default": _DEFAULT_MODEL}),
+                "model": (_MODELS, {"default": _MODELS[0]}),
                 "instrumental": ("BOOLEAN", {"default": False}),
                 "title": ("STRING", {"multiline": False, "default": ""}),
                 "tags": ("STRING", {"multiline": True, "default": ""}),

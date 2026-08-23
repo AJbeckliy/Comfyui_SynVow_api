@@ -1,0 +1,614 @@
+{
+  "id": "03cbbea2-51a2-4794-bfdc-ca0f27817957",
+  "revision": 0,
+  "last_node_id": 80,
+  "last_link_id": 87,
+  "nodes": [
+    {
+      "id": 72,
+      "type": "SynVowQwenAPI",
+      "pos": [
+        1006.2222222222217,
+        176.6666666666666
+      ],
+      "size": [
+        400,
+        364
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "image_1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_5",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_6",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_7",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_8",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_9",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_10",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            83
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "00390727702a2b3efb69bfecc4644044e87cafbb",
+        "Node name for S&R": "SynVowQwenAPI"
+      },
+      "widgets_values": [
+        "qwen3.6-flash-稳定",
+        "hi",
+        2114502354,
+        "randomize",
+        ""
+      ],
+      "widgets_values_named": {
+        "模型": "qwen3.6-flash-稳定",
+        "user_prompt": "hi",
+        "seed": 2114502354,
+        "control_after_generate": "randomize",
+        "video_path": ""
+      }
+    },
+    {
+      "id": 74,
+      "type": "ShowText|pysssss",
+      "pos": [
+        1438.746684844157,
+        171.3221668346639
+      ],
+      "size": [
+        435.86776859504107,
+        242.9421487603305
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 83
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": [
+        "Hi there! 👋 How can I help you today? Whether you have a question, need help with a task, or just want to chat, I'm here for you."
+      ],
+      "widgets_values_named": {
+        "text_undefined": "Hi there! 👋 How can I help you today? Whether you have a question, need help with a task, or just want to chat, I'm here for you."
+      }
+    },
+    {
+      "id": 77,
+      "type": "LoadImage",
+      "pos": [
+        986.7300398062497,
+        704.3692483864696
+      ],
+      "size": [
+        270,
+        314
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 4,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "IMAGE",
+          "type": "IMAGE",
+          "links": [
+            85
+          ]
+        },
+        {
+          "name": "MASK",
+          "type": "MASK",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.33.0",
+        "Node name for S&R": "LoadImage"
+      },
+      "widgets_values": [
+        "1a68746fee260eaa149806e6e339a87b_webp.webp",
+        "image"
+      ],
+      "widgets_values_named": {
+        "image": "1a68746fee260eaa149806e6e339a87b_webp.webp",
+        "upload": "image"
+      }
+    },
+    {
+      "id": 76,
+      "type": "ShowText|pysssss",
+      "pos": [
+        1784.2126842463679,
+        705.4583392955606
+      ],
+      "size": [
+        435.86776859504107,
+        242.9421487603305
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 4,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 84
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": [
+        "Hi there! That is a striking black-and-white portrait of the renowned Danish actor **Mads Mikkelsen**.\n\nHe is well-known for his roles in *Casino Royale*, *Hannibal* (the TV series), *The Hunt*, and *Another Round*. This photo captures his signature rugged look—the scruffy beard, intense eyes, and slightly messy hair give it a very gritty, cinematic feel."
+      ],
+      "widgets_values_named": {
+        "text_0": "Hi there! That is a striking black-and-white portrait of the renowned Danish actor **Mads Mikkelsen**.\n\nHe is well-known for his roles in *Casino Royale*, *Hannibal* (the TV series), *The Hunt*, and *Another Round*. This photo captures his signature rugged look—the scruffy beard, intense eyes, and slightly messy hair give it a very gritty, cinematic feel."
+      }
+    },
+    {
+      "id": 75,
+      "type": "SynVowQwenAPI",
+      "pos": [
+        1334.415494351705,
+        681.7119300366544
+      ],
+      "size": [
+        400,
+        364
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "image_1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": 85
+        },
+        {
+          "name": "image_2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_5",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_6",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_7",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_8",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_9",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_10",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            84
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "00390727702a2b3efb69bfecc4644044e87cafbb",
+        "Node name for S&R": "SynVowQwenAPI"
+      },
+      "widgets_values": [
+        "qwen3.6-flash-稳定",
+        "hi",
+        2114502354,
+        "randomize",
+        ""
+      ],
+      "widgets_values_named": {
+        "模型": "qwen3.6-flash-稳定",
+        "user_prompt": "hi",
+        "seed": 2114502354,
+        "control_after_generate": "randomize",
+        "video_path": ""
+      }
+    },
+    {
+      "id": 78,
+      "type": "SynVowApiVideoLoader",
+      "pos": [
+        987.5400398062495,
+        1179.6118847501073
+      ],
+      "size": [
+        279.9173553719006,
+        526.3140495867767
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 4,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "video",
+          "type": "VIDEO",
+          "links": null
+        },
+        {
+          "name": "video_path",
+          "type": "STRING",
+          "links": [
+            87
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "00390727702a2b3efb69bfecc4644044e87cafbb",
+        "Node name for S&R": "SynVowApiVideoLoader"
+      },
+      "widgets_values": [
+        "2.mp4",
+        0,
+        0,
+        null,
+        ""
+      ],
+      "widgets_values_named": {
+        "video": "2.mp4",
+        "起始秒": 0,
+        "裁剪秒数": 0,
+        "选择文件上传": ""
+      }
+    },
+    {
+      "id": 80,
+      "type": "ShowText|pysssss",
+      "pos": [
+        1742.5491222628968,
+        1210.8181535131466
+      ],
+      "size": [
+        527.8677685950411,
+        416.9421487603305
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 4,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 86
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": [
+        "The video displays a continuous shot of a person taking a mirror selfie in what appears to be a bathroom with dark tiled walls.\n\n**<0.0 - 2.0 seconds>**\nA person with long brown hair stands facing a mirror. They are wearing a tight, cream-colored knit two-piece set featuring a sleeveless top with a keyhole cutout and a matching mini-skirt with side laces. They also wear long, ribbed detached sleeves. They hold a smartphone with a yellow, bear-shaped case up to their face to record. Initially, they lift their left leg back and reach down with their left hand to adjust a white sock or shoe on their foot.\n\n**<2.0 - 4.0 seconds>**\nThe person lowers their leg and returns to a standing position. As they do so, they bring their left hand up from their foot area, letting it rest casually near their waist. They continue to hold the phone steady, covering their face, while looking into the mirror reflection of the screen.\n\n**<4.0 - 8.0 seconds>**\nThe person remains standing in the same spot, making very subtle adjustments to their pose. They shift their weight slightly and raise their left hand to chest level, making a loose fist or gentle gesture. The lighting is dim, highlighting the texture of the knit fabric and the person's pale skin. They seem to be checking their appearance and angle for the video."
+      ],
+      "widgets_values_named": {
+        "text_0": "The video displays a continuous shot of a person taking a mirror selfie in what appears to be a bathroom with dark tiled walls.\n\n**<0.0 - 2.0 seconds>**\nA person with long brown hair stands facing a mirror. They are wearing a tight, cream-colored knit two-piece set featuring a sleeveless top with a keyhole cutout and a matching mini-skirt with side laces. They also wear long, ribbed detached sleeves. They hold a smartphone with a yellow, bear-shaped case up to their face to record. Initially, they lift their left leg back and reach down with their left hand to adjust a white sock or shoe on their foot.\n\n**<2.0 - 4.0 seconds>**\nThe person lowers their leg and returns to a standing position. As they do so, they bring their left hand up from their foot area, letting it rest casually near their waist. They continue to hold the phone steady, covering their face, while looking into the mirror reflection of the screen.\n\n**<4.0 - 8.0 seconds>**\nThe person remains standing in the same spot, making very subtle adjustments to their pose. They shift their weight slightly and raise their left hand to chest level, making a loose fist or gentle gesture. The lighting is dim, highlighting the texture of the knit fabric and the person's pale skin. They seem to be checking their appearance and angle for the video."
+      }
+    },
+    {
+      "id": 79,
+      "type": "SynVowQwenAPI",
+      "pos": [
+        1308.7519323682343,
+        1211.0717442542405
+      ],
+      "size": [
+        400,
+        364
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "image_1",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_2",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_3",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_4",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_5",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_6",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_7",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_8",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_9",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "image_10",
+          "shape": 7,
+          "type": "IMAGE",
+          "link": null
+        },
+        {
+          "name": "video_path",
+          "shape": 7,
+          "type": "STRING",
+          "widget": {
+            "name": "video_path"
+          },
+          "link": 87
+        }
+      ],
+      "outputs": [
+        {
+          "name": "output",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            86
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "00390727702a2b3efb69bfecc4644044e87cafbb",
+        "Node name for S&R": "SynVowQwenAPI"
+      },
+      "widgets_values": [
+        "qwen3.6-flash-稳定",
+        "按照时间线，秒数视频",
+        2114502354,
+        "randomize",
+        ""
+      ],
+      "widgets_values_named": {
+        "模型": "qwen3.6-flash-稳定",
+        "user_prompt": "按照时间线，秒数视频",
+        "seed": 2114502354,
+        "control_after_generate": "randomize",
+        "video_path": ""
+      }
+    }
+  ],
+  "links": [
+    [
+      83,
+      72,
+      0,
+      74,
+      0,
+      "STRING"
+    ],
+    [
+      84,
+      75,
+      0,
+      76,
+      0,
+      "STRING"
+    ],
+    [
+      85,
+      77,
+      0,
+      75,
+      0,
+      "IMAGE"
+    ],
+    [
+      86,
+      79,
+      0,
+      80,
+      0,
+      "STRING"
+    ],
+    [
+      87,
+      78,
+      1,
+      79,
+      10,
+      "STRING"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.751314800901578,
+      "offset": [
+        -342.0820822227794,
+        -3.957284190603616
+      ]
+    },
+    "frontendVersion": "1.49.6",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4
+}

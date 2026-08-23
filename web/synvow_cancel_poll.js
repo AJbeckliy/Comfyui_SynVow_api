@@ -16,6 +16,7 @@ const SYNVOW_NODE_TYPES = new Set([
     "SynVowMiniMaxReferenceToVideo",
     "SynVowSunoInspire",
     "SynVowSunoCustom",
+    "SynVowDoubaoAudio",
     "SynVowGptImage2",
     "SynVowGptImage2_TBatch",
     "SynVowGptImage2_IBatch",

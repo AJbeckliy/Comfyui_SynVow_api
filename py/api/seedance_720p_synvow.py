@@ -8,6 +8,7 @@ payload: model/resolution/duration/ratio + content[]（text / image_url / video_
 import json
 
 from . import synvow_auth
+from .model_display import display_name
 from .media_common import (
     download_video,
     is_changed_by_inputs,
@@ -17,8 +18,8 @@ from .media_common import (
     upload_media_file,
 )
 
-_MODEL_UI = "seedance2.0"
 _API_MODEL = "seedance_2_720p"
+_MODEL_UI = display_name(_API_MODEL)
 _RATIOS = ["adaptive", "16:9", "9:16", "4:3", "3:4", "1:1", "21:9"]
 _DURATIONS = [str(i) for i in range(4, 16)]
 _RESOLUTIONS = ["720p"]
@@ -176,15 +177,9 @@ class SynVowSeedance2Video:
                 "status": "SUCCESS", "task_id": task_id,
                 "model": _API_MODEL, "video_url": url, "video_path": path, "seed": seed,
             }, ensure_ascii=False)
-            synvow_auth.refresh_balance()
             return (path, url, info)
-        except Exception as e:
-            print(f"[{_TAG}] Error: {e}")
+        finally:
             synvow_auth.refresh_balance()
-            return (
-                "", "",
-                json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False),
-            )
 
 
 NODE_CLASS_MAPPINGS = {

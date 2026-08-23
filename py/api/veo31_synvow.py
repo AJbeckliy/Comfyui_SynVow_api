@@ -5,6 +5,7 @@ SynVow Veo31 视频生成
 import json
 
 from . import synvow_auth
+from .model_display import combo_models, pick_model
 from .media_common import (
     download_video,
     extract_result_url,
@@ -14,8 +15,9 @@ from .media_common import (
     upload_image,
 )
 
-_MODELS = ["veo3.1"]
+_API_MODELS = ["veo3.1"]
 _DEFAULT_MODEL = "veo3.1"
+_MODELS = combo_models(_API_MODELS)
 _MAX_IMAGES = 2
 _ASPECTS = ["16:9", "9:16"]
 _DURATIONS = ["8"]
@@ -26,7 +28,7 @@ _TAG = "Veo31"
 
 
 def _normalize_model(model):
-    return model if model in _MODELS else _DEFAULT_MODEL
+    return pick_model(model, _API_MODELS, _DEFAULT_MODEL)
 
 
 def _build_body(prompt, model, aspect_ratio, duration, image_urls):
@@ -93,7 +95,7 @@ class SynVowVeo31:
         return {
             "required": {
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
-                "model": (_MODELS, {"default": _DEFAULT_MODEL}),
+                "model": (_MODELS, {"default": _MODELS[0]}),
                 "aspect_ratio": (_ASPECTS, {"default": _DEFAULT_ASPECT}),
                 "duration": (_DURATIONS, {"default": _DEFAULT_DURATION}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
@@ -126,12 +128,9 @@ class SynVowVeo31:
                 "model": used_model, "video_url": url, "video_path": path,
                 "quality": _QUALITY, "seed": seed,
             }, ensure_ascii=False)
-            synvow_auth.refresh_balance()
             return (path, url, info)
-        except Exception as e:
-            print(f"[Veo31] Error: {e}")
+        finally:
             synvow_auth.refresh_balance()
-            return ("", "", json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
 
 
 NODE_CLASS_MAPPINGS = {

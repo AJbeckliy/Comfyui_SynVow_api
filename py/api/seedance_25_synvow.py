@@ -101,12 +101,9 @@ class SynVowSeedance25:
                 "video_path": path,
                 "seed": seed,
             }, ensure_ascii=False)
-            result = (path, url, info)
-        except Exception as e:
-            print(f"[{_TAG}] Error: {e}")
-            result = ("", "", json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False))
-        synvow_auth.refresh_balance()
-        return result
+            return (path, url, info)
+        finally:
+            synvow_auth.refresh_balance()
 
 
 NODE_CLASS_MAPPINGS = {

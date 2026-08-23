@@ -18,8 +18,10 @@ from .media_common import (
     upload_image as _upload_image,
 )
 
+from .model_display import combo_models
+
 _MODEL = "grok-image-2.0-wd"
-_MODELS = [_MODEL]
+_MODELS = combo_models([_MODEL])
 _ASPECT_RATIOS = [
     "1:1", "3:4", "4:3", "9:16", "16:9", "2:3", "3:2",
     "9:19.5", "19.5:9", "9:20", "20:9", "1:2", "2:1", "auto",
@@ -107,7 +109,7 @@ class SynVowGkImage20:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "model_type": (_MODELS, {"default": _MODEL}),
+                "model_type": (_MODELS, {"default": _MODELS[0]}),
                 "aspect_ratio": (_ASPECT_RATIOS, {"default": _DEFAULT_RATIO}),
                 "resolution": (_RESOLUTIONS, {"default": _DEFAULT_RESOLUTION}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
@@ -152,7 +154,7 @@ class SynVowGkImage20_TBatch:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "model_type": (_MODELS, {"default": _MODEL}),
+                "model_type": (_MODELS, {"default": _MODELS[0]}),
                 "aspect_ratio": (_ASPECT_RATIOS, {"default": _DEFAULT_RATIO}),
                 "resolution": (_RESOLUTIONS, {"default": _DEFAULT_RESOLUTION}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
@@ -199,7 +201,7 @@ class SynVowGkImage20_IBatch:
         return {
             "required": {
                 "images_list1": ("IMAGE",),
-                "model_type": (_MODELS, {"default": _MODEL}),
+                "model_type": (_MODELS, {"default": _MODELS[0]}),
                 "aspect_ratio": (_ASPECT_RATIOS, {"default": _DEFAULT_RATIO}),
                 "resolution": (_RESOLUTIONS, {"default": _DEFAULT_RESOLUTION}),
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
@@ -247,7 +249,7 @@ class SynVowGkImage20_TIBatch:
         return {
             "required": {
                 "images_list1": ("IMAGE",),
-                "model_type": (_MODELS, {"default": _MODEL}),
+                "model_type": (_MODELS, {"default": _MODELS[0]}),
                 "aspect_ratio": (_ASPECT_RATIOS, {"default": _DEFAULT_RATIO}),
                 "resolution": (_RESOLUTIONS, {"default": _DEFAULT_RESOLUTION}),
                 "prompt_order": (["sequential", "reverse", "random"], {"default": "sequential"}),

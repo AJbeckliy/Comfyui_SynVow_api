@@ -18,8 +18,10 @@ from .media_common import (
     upload_image as _upload_image,
 )
 
+from .model_display import combo_models
+
 _MODEL = "grok-image-1.5-稳定"
-_MODELS = [_MODEL]
+_MODELS = combo_models([_MODEL])
 _ASPECT_RATIOS = ["1:1", "16:9", "9:16", "3:2", "2:3"]
 _DEFAULT_RATIO = "1:1"
 _MAX_IMAGES = 1
@@ -89,7 +91,7 @@ class SynVowGkImage:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "model_type": (_MODELS, {"default": _MODEL}),
+                "model_type": (_MODELS, {"default": _MODELS[0]}),
                 "aspect_ratio": (_ASPECT_RATIOS, {"default": _DEFAULT_RATIO}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
@@ -130,7 +132,7 @@ class SynVowGkImage_TBatch:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "model_type": (_MODELS, {"default": _MODEL}),
+                "model_type": (_MODELS, {"default": _MODELS[0]}),
                 "aspect_ratio": (_ASPECT_RATIOS, {"default": _DEFAULT_RATIO}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
@@ -174,7 +176,7 @@ class SynVowGkImage_IBatch:
         return {
             "required": {
                 "images_list1": ("IMAGE",),
-                "model_type": (_MODELS, {"default": _MODEL}),
+                "model_type": (_MODELS, {"default": _MODELS[0]}),
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
@@ -217,7 +219,7 @@ class SynVowGkImage_TIBatch:
         return {
             "required": {
                 "images_list1": ("IMAGE",),
-                "model_type": (_MODELS, {"default": _MODEL}),
+                "model_type": (_MODELS, {"default": _MODELS[0]}),
                 "prompt_order": (["sequential", "reverse", "random"], {"default": "sequential"}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },

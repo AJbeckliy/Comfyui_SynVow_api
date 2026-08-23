@@ -8,8 +8,9 @@ import requests as _requests
 
 from . import synvow_auth
 from .media_common import upload_image as _upload_image, DIRECT_API_BASE
+from .model_display import combo_models, resolve_model
 
-GEMINI_MODEL_OPTIONS = [
+GEMINI_API_MODELS = [
     "gemini-3.1-pro-稳定",
     "gemini-3.5-flash-稳定",
     "gemini-3.5-flash-lite-稳定",
@@ -23,6 +24,7 @@ GEMINI_MODEL_OPTIONS = [
     "gemini-3.1-flash-2605",
     "gemini-3.5-flash-2605",
 ]
+GEMINI_MODEL_OPTIONS = combo_models(GEMINI_API_MODELS)
 DEFAULT_GEMINI_MODEL = GEMINI_MODEL_OPTIONS[0]
 
 
@@ -65,48 +67,48 @@ class SynVowGeminiAPI:
 
     def _request_single(self, img_tensors, model_name, user_prompt, seed, api_key, system_prompt=""):
         """img_tensors: 单个 tensor 或 tensor 列表，多张图合并进一条消息；空列表=纯文本"""
-        try:
-            if not isinstance(img_tensors, (list, tuple)):
-                img_tensors = [img_tensors]
+        if not isinstance(img_tensors, (list, tuple)):
+            img_tensors = [img_tensors]
 
-            if system_prompt.strip() and user_prompt.strip():
-                full_prompt = f"[system prompts]\n{system_prompt}\n\n[user prompts]\n{user_prompt}"
-            elif system_prompt.strip():
-                full_prompt = f"[system prompts]\n{system_prompt}"
-            else:
-                full_prompt = f"[user prompts]\n{user_prompt}"
+        if system_prompt.strip() and user_prompt.strip():
+            full_prompt = f"[system prompts]\n{system_prompt}\n\n[user prompts]\n{user_prompt}"
+        elif system_prompt.strip():
+            full_prompt = f"[system prompts]\n{system_prompt}"
+        else:
+            full_prompt = f"[user prompts]\n{user_prompt}"
 
-            if img_tensors:
-                user_content = [{"type": "text", "text": full_prompt}]
-                for t in img_tensors:
-                    url = _upload_image(api_key, t)
-                    user_content.append({"type": "image_url", "image_url": {"url": url}})
-            else:
-                user_content = full_prompt
+        if img_tensors:
+            user_content = [{"type": "text", "text": full_prompt}]
+            for t in img_tensors:
+                url = _upload_image(api_key, t)
+                user_content.append({"type": "image_url", "image_url": {"url": url}})
+        else:
+            user_content = full_prompt
 
-            request_body = {
-                "model": model_name,
-                "stream": False,
-                "messages": [{"role": "user", "content": user_content}],
-            }
-            headers = synvow_auth.make_api_headers(api_key)
-            url = f"{DIRECT_API_BASE}/api/models/completions"
-            print(f"[Gemini] {model_name} 模型正在生成...")
-            res = _requests.post(url, headers=headers, json=request_body, timeout=600, verify=False)
-            if res.status_code != 200:
-                return f"HTTP {res.status_code}: {res.text[:200]}"
-            response_data = res.json()
-            print(f"[Gemini] {model_name} 模型生成完毕。")
-            return synvow_auth.parse_chat_response(response_data) or "Error: empty response"
-        except Exception as e:
-            return str(e)
+        request_body = {
+            "model": model_name,
+            "stream": False,
+            "messages": [{"role": "user", "content": user_content}],
+        }
+        headers = synvow_auth.make_api_headers(api_key)
+        url = f"{DIRECT_API_BASE}/api/models/completions"
+        print(f"[Gemini] {model_name} 模型正在生成...")
+        res = _requests.post(url, headers=headers, json=request_body, timeout=600, verify=False)
+        if res.status_code != 200:
+            raise RuntimeError(f"HTTP {res.status_code}: {res.text[:200]}")
+        response_data = res.json()
+        print(f"[Gemini] {model_name} 模型生成完毕。")
+        text = synvow_auth.parse_chat_response(response_data)
+        if not text:
+            raise RuntimeError("模型未返回有效内容")
+        return text
 
     def generate(self, 模型, system_prompt, user_prompt, seed,
                  image_1=None, image_2=None, image_3=None, image_4=None,
                  image_5=None, image_6=None, image_7=None, image_8=None,
                  image_9=None, image_10=None):
         api_key = synvow_auth.read_api_key()
-        model_name = 模型 or DEFAULT_GEMINI_MODEL
+        model_name = resolve_model(模型, GEMINI_API_MODELS[0])
 
         single_imgs = [img for img in [image_1, image_2, image_3, image_4, image_5,
                                        image_6, image_7, image_8, image_9, image_10]
@@ -122,11 +124,7 @@ class SynVowGeminiAPI:
                 for i, imgs in enumerate(task_inputs)
             }
             for future in concurrent.futures.as_completed(future_map):
-                idx = future_map[future]
-                try:
-                    outputs[idx] = future.result()
-                except Exception as e:
-                    outputs[idx] = str(e)
+                outputs[future_map[future]] = future.result()
 
             synvow_auth.refresh_balance()
         return (outputs,)
@@ -169,7 +167,7 @@ class SynVowGeminiAPI_TBatch:
         def _u(v, d=None):
             return v[0] if isinstance(v, list) and v else (v if v is not None else d)
 
-        model_name = _u(模型) or DEFAULT_GEMINI_MODEL
+        model_name = resolve_model(_u(模型), GEMINI_API_MODELS[0])
         seed_val = _u(seed, 0)
         api_key = synvow_auth.read_api_key()
 
@@ -192,11 +190,7 @@ class SynVowGeminiAPI_TBatch:
                 for i, p in enumerate(prompts)
             }
             for future in concurrent.futures.as_completed(future_map):
-                idx = future_map[future]
-                try:
-                    outputs[idx] = future.result()
-                except Exception as e:
-                    outputs[idx] = str(e)
+                outputs[future_map[future]] = future.result()
 
             synvow_auth.refresh_balance()
         return (outputs,)

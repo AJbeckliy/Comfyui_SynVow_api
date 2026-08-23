@@ -178,14 +178,9 @@ class SynVowVideoParser:
             fname = f"{prefix}_{idx:05d}.mp4"
             video_path = download_video(video_url, prefix, save_path, prefix=prefix, filename=fname) or ""
             status = f"已完成 model={model}"
-
-            synvow_auth.refresh_balance()
             return (video_url, video_path, status)
-
-        except Exception as e:
-            print(f"[短视频解析] Error: {e}")
+        finally:
             synvow_auth.refresh_balance()
-            return ("", "", f"[ERROR] {e}")
 
 
 NODE_CLASS_MAPPINGS = {

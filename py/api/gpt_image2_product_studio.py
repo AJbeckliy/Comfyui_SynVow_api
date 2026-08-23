@@ -10,6 +10,7 @@ import torch.nn.functional as F
 
 from . import synvow_auth
 from .gpt_image_2_synvow import (
+    _DEFAULT_GPT_IMAGE_COMBO,
     _MODEL_TYPE_OPTIONS,
     _RATIO_TO_SIZE_1K,
     _is_changed,
@@ -18,8 +19,9 @@ from .gpt_image_2_synvow import (
     _unpack,
 )
 from .gemini_synvow import GEMINI_MODEL_OPTIONS
-from .gpt_synvow import DEFAULT_GPT_MODEL, GPT_MODEL_OPTIONS, resolve_gpt_model
+from .gpt_synvow import DEFAULT_GPT_MODEL, GPT_MODEL_OPTIONS
 from .media_common import DIRECT_API_BASE, stack_image_tensors, upload_image as _upload_image
+from .model_display import resolve_model
 
 
 CATEGORY = "💫SynVow_api/api/图像"
@@ -443,7 +445,7 @@ class SynVowGptImage2ProductStudio:
                 "mode": (MODES, {"default": MODE_PRODUCT_REFINE}),
                 "model_type": (
                     _MODEL_TYPE_OPTIONS,
-                    {"default": "gpt-image-2-稳定"},
+                    {"default": _DEFAULT_GPT_IMAGE_COMBO},
                 ),
                 "quality": (["auto", "low", "medium", "high"], {"default": "auto"}),
                 "resolution": (["1K", "2K", "4K"], {"default": "1K"}),
@@ -497,14 +499,14 @@ class SynVowGptImage2ProductStudio:
             raise ValueError("请连接主输入图片 image。")
 
         mode = str(_unpack(mode) or MODE_PRODUCT_REFINE).strip()
-        model_type = _unpack(model_type) or "gpt-image-2-稳定"
+        model_type = resolve_model(_unpack(model_type), "gpt-image-2-稳定")
         quality = _unpack(quality) or "auto"
         resolution = _unpack(resolution) or "1K"
         aspect_ratio = _unpack(aspect_ratio) or "auto"
         if mode in (MODE_CLARITY_RESTORE, MODE_OUTPAINT) and aspect_ratio == "auto":
             aspect_ratio = _closest_supported_aspect_ratio(image)
         seed = int(_unpack(seed) or 0)
-        llm_model = resolve_gpt_model(_unpack(llm_model) or _DEFAULT_LLM_MODEL)
+        llm_model = resolve_model(_unpack(llm_model) or _DEFAULT_LLM_MODEL)
         reference_image = _unpack(reference_image)
         outpaint_coverage = None
         if mode == MODE_OUTPAINT:

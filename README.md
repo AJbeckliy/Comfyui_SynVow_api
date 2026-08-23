@@ -6,6 +6,13 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 ## Changelog
 
+### 2026-08-23
+- **Text models**
+  - Added standalone node `SynVow LLM-Qwen` / `(T_batch)`: `qwen3.6-flash-稳定` / `qwen3.6-plus-稳定` / `qwen3.7-plus-稳定` / `qwen3.7-max-稳定` / `qwen3.8-max-稳定`
+  - `SynVow GPT 提示词生成` adds `(T_batch)`
+- **Audio**
+  - Added `SynVow Doubao 语音` (`doubao-seed-audio-1.0`; wav/mp3; speech/loudness/pitch; up to 3 reference audio clips)
+
 ### 2026-08-19
 - **Text models**
   - Removed `gpt-5.5-2607` / `gpt-5.6-sol-2607` (PT2607); added `PT5.5-稳定` (requests `gpt-5.5-稳定`) and `PT5.6-sol-稳定` (requests `gpt-5.6-sol-稳定`)
@@ -207,6 +214,7 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 |------|-------|-------------|
 | SynVow Suno 灵感模式 | suno5.5 | Inspiration-mode music generation (outputs `AUDIO`) |
 | SynVow Suno 自定义模式 | suno5.5 | Custom-mode music generation (title/tags, outputs `AUDIO`) |
+| SynVow Doubao 语音 | doubao-seed-audio-1.0 | Speech synthesis (wav/mp3, up to 3 reference clips) |
 
 ### 💫SynVow_api/api/文本
 
@@ -215,6 +223,9 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 | SynVow Gemini 提示词生成 | gemini-* | Generate prompts with Gemini |
 | SynVow Gemini 提示词生成 (T_batch) | gemini-* | Prompt-list batch |
 | SynVow GPT 提示词生成 | gpt-* | Generate prompts with GPT |
+| SynVow GPT 提示词生成 (T_batch) | gpt-* | Prompt-list batch |
+| SynVow LLM-Qwen | qwen3.* | Generate prompts with Qwen (up to 10 reference images, optional video) |
+| SynVow LLM-Qwen (T_batch) | qwen3.* | Prompt-list batch |
 | GPT-Image-2 文生图提示词控制器 | gemini-* / gpt-* | Optimize image-generation prompts with an LLM |
 | 图生图提示词控制器 | gemini-* / gpt-* | Reference-image prompt optimization |
 | 🛒 电商详情页提示词生成器 | gemini-* | Multi-screen ecommerce detail-page prompts, with product and style references |

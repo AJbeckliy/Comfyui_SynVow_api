@@ -65,11 +65,9 @@ def _generate(build_body, save_path="", filename=""):
             "video_url": url,
             "video_path": path,
         }, ensure_ascii=False)
-    except Exception as e:
-        print(f"[{_TAG}] Error: {e}")
-        result = "", "", json.dumps({"status": "error", "message": str(e)}, ensure_ascii=False)
-    synvow_auth.refresh_balance()
-    return result
+        return result
+    finally:
+        synvow_auth.refresh_balance()
 
 
 class _MiniMaxNode:

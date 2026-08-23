@@ -6,6 +6,13 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 
 ## 更新日志
 
+### 2026-08-23
+- **文本模型**
+  - 新增独立节点 `SynVow LLM-Qwen` / `(T_batch)`：`qwen3.6-flash-稳定` / `qwen3.6-plus-稳定` / `qwen3.7-plus-稳定` / `qwen3.7-max-稳定` / `qwen3.8-max-稳定`
+  - `SynVow GPT 提示词生成` 新增 `(T_batch)`
+- **音频**
+  - 新增 `SynVow Doubao 语音`（`doubao-seed-audio-1.0`，wav/mp3，语速/响度/音高，最多 3 段参考音频）
+
 ### 2026-08-19
 - **文本模型**
   - 去掉 `gpt-5.5-2607` / `gpt-5.6-sol-2607`（PT2607），新增 `PT5.5-稳定`（请求 `gpt-5.5-稳定`）、`PT5.6-sol-稳定`（请求 `gpt-5.6-sol-稳定`）
@@ -207,6 +214,7 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 |----------|------|------|
 | SynVow Suno 灵感模式 | suno5.5 | 灵感模式音乐生成（输出 `AUDIO`） |
 | SynVow Suno 自定义模式 | suno5.5 | 自定义模式音乐生成（标题/标签，输出 `AUDIO`） |
+| SynVow Doubao 语音 | doubao-seed-audio-1.0 | 语音合成（wav/mp3，最多 3 段参考音频） |
 
 ### 💫SynVow_api/api/文本
 
@@ -215,6 +223,9 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 | SynVow Gemini 提示词生成 | gemini-* | 通过 Gemini 生成提示词 |
 | SynVow Gemini 提示词生成 (T_batch) | gemini-* | 提示词列表批量 |
 | SynVow GPT 提示词生成 | gpt-* | 通过 GPT 生成提示词 |
+| SynVow GPT 提示词生成 (T_batch) | gpt-* | 提示词列表批量 |
+| SynVow LLM-Qwen | qwen3.* | 通过 Qwen 生成提示词（最多 10 张参考图，可选视频） |
+| SynVow LLM-Qwen (T_batch) | qwen3.* | 提示词列表批量 |
 | GPT-Image-2 文生图提示词控制器 | gemini-* / gpt-* | 通过 LLM 优化图像生成提示词 |
 | 图生图提示词控制器 | gemini-* / gpt-* | 参考图提示词优化 |
 | 🛒 电商详情页提示词生成器 | gemini-* | 多屏电商详情页提示词生成，支持产品参考图与风格参考图 |

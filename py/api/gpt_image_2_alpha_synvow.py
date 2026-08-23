@@ -15,6 +15,7 @@ import requests
 
 from . import synvow_auth
 from .gpt_image_2_synvow import (
+    _DEFAULT_GPT_IMAGE_COMBO,
     _DEFAULT_GPT_IMAGE_MODEL,
     _MODEL_TYPE_OPTIONS,
     _NEW_MODELS,
@@ -24,6 +25,7 @@ from .gpt_image_2_synvow import (
     _resolve_size_params,
     _unpack,
 )
+from .model_display import resolve_model
 from .media_common import EDIT_POLL_URL, EDIT_SUBMIT_URL, extract_result_urls
 
 
@@ -292,7 +294,7 @@ class SynVowGptImage2Alpha_TBatch:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "model_type": (_MODEL_TYPE_OPTIONS, {"default": _DEFAULT_GPT_IMAGE_MODEL}),
+                "model_type": (_MODEL_TYPE_OPTIONS, {"default": _DEFAULT_GPT_IMAGE_COMBO}),
                 "quality": (["auto", "low", "medium", "high"], {"default": "auto"}),
                 "resolution": (["1K", "2K", "4K"], {"default": "1K"}),
                 "aspect_ratio": (list(_RATIO_TO_SIZE_1K.keys()), {"default": "1:1"}),
@@ -333,7 +335,7 @@ class SynVowGptImage2Alpha_TBatch:
         image8=None,
     ):
         _ALPHA_CANCEL_EVENT.clear()
-        model_type = _unpack(model_type) or _DEFAULT_GPT_IMAGE_MODEL
+        model_type = resolve_model(_unpack(model_type), _DEFAULT_GPT_IMAGE_MODEL)
         quality = _unpack(quality)
         resolution = _unpack(resolution) or "1K"
         aspect_ratio = _unpack(aspect_ratio)

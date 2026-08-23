@@ -19,6 +19,7 @@ import torch.nn.functional as F
 
 from .gemini_synvow import DEFAULT_GEMINI_MODEL, GEMINI_MODEL_OPTIONS
 from .media_common import DIRECT_API_BASE, upload_image as _upload_image
+from .model_display import resolve_model
 
 
 CATEGORY = "💫SynVow_api/api/文本"
@@ -487,7 +488,7 @@ def call_synvow_llm(model, system_prompt, user_prompt, image_urls=None, temperat
         user_content.append({"type": "image_url", "image_url": {"url": image_url}})
 
     payload = {
-        "model": model or DEFAULT_MODEL,
+        "model": resolve_model(model, DEFAULT_MODEL),
         "stream": False,
         "messages": [
             {"role": "system", "content": system_prompt},

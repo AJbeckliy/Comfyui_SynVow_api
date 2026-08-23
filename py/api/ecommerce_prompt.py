@@ -7,6 +7,7 @@ import requests
 
 from .gemini_synvow import DEFAULT_GEMINI_MODEL, GEMINI_MODEL_OPTIONS
 from .media_common import upload_image as _upload_image, DIRECT_API_BASE as _DIRECT_API_BASE
+from .model_display import resolve_model
 
 _CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 _PROMPTS_DIR = os.path.join(_CURRENT_DIR, "..", "prompts")
@@ -173,7 +174,7 @@ class EcommercePromptGenerator:
     def generate_prompts_with_vision(self, 模型, product_type, selling_points, design_style, scene_preference, output_language, seed, prompt_count, product_image_1=None, product_image_2=None, product_image_3=None, product_image_4=None, product_image_5=None, product_image_6=None, product_image_7=None, product_image_8=None, ref_image_1=None, ref_image_2=None, ref_image_3=None, ref_image_4=None):
         from . import synvow_auth
         api_key = synvow_auth.read_api_key()
-        model_name = 模型 or DEFAULT_GEMINI_MODEL
+        model_name = resolve_model(模型, DEFAULT_GEMINI_MODEL)
 
         product_urls = self._collect_image_urls(
             [product_image_1, product_image_2, product_image_3, product_image_4,
