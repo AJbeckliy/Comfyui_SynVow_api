@@ -8,6 +8,7 @@ const SYNVOW_NODE_TYPES = new Set([
     "SynVowSeedance",
     "SynVowSeedance2Video",
     "SynVowSeedance25",
+    "SynVowWanVideo",
     "SynVowGrokVideo",
     "SynVowVeo31",
     "SynVowOmniFlash",
