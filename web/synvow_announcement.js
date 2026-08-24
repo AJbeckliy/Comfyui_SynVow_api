@@ -11,16 +11,6 @@ function listPath(page, perPage = PAGE_SIZE) {
     return `/content/announcements?page=${page}&per_page=${perPage}&category_id=${CATEGORY_ID}`;
 }
 
-function itemDate(item) {
-    return String(item?.created_at || "").slice(0, 10);
-}
-
-function todayDate() {
-    const d = new Date();
-    const p = (n) => String(n).padStart(2, "0");
-    return `${d.getFullYear()}-${p(d.getMonth() + 1)}-${p(d.getDate())}`;
-}
-
 async function fetchAnnouncement(path) {
     const data = await authedGet(path, getToken());
     console.log("[SynVow 公告] 请求返回:", { path, data });
@@ -63,15 +53,12 @@ function showMessage(container, message) {
     container.replaceChildren($el("div.sv-an-empty", { textContent: message }));
 }
 
-export async function checkAnnouncementUnread(button) {
-    try {
-        const data = await fetchAnnouncement(listPath(1, 1));
-        if (data?.code !== 200) return;
-        setUnread(button, itemDate(data.data?.list?.[0]) === todayDate());
-    } catch (_) {}
+export function checkAnnouncementUnread(button) {
+    setUnread(button, true);
 }
 
 export function showAnnouncementDialog(button) {
+    setUnread(button, false);
     if (dialog) dialog.remove();
     ensureDialogStyle();
 
@@ -144,7 +131,6 @@ export function showAnnouncementDialog(button) {
                     ]));
                 });
             }
-            if (currentPage === 1) setUnread(button, false);
             pageInfo.textContent = `${currentPage} / ${totalPages}`;
             prev.disabled = currentPage <= 1;
             next.disabled = currentPage >= totalPages;

@@ -6,6 +6,10 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 ## Changelog
 
+### 2026-08-24
+- **Video nodes**
+  - Added `SynVow wan-video` (`wan3.0-video-wd`, display name `wan3.0-video-稳定`): text-to-video, with optional up to 9 reference images, 1 reference video, and 1 reference audio; resolution `480P`/`720P`/`1080P`; size `adaptive`/`16:9`/`4:3`/`1:1`/`3:4`/`9:16`; duration 2–30 seconds
+
 ### 2026-08-23
 - **Text models**
   - Added standalone node `SynVow LLM-Qwen` / `(T_batch)`: `qwen3.6-flash-稳定` / `qwen3.6-plus-稳定` / `qwen3.7-plus-稳定` / `qwen3.7-max-稳定` / `qwen3.8-max-稳定`
@@ -200,6 +204,7 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 | Node | Model | Description |
 |------|-------|-------------|
+| SynVow wan-video | wan3.0-video-wd | Text/image/video/audio-reference video; 480P/720P/1080P, duration 2–30 seconds |
 | SynVow Seedance 2.5 | doubao-seedance-2.5 | 480p/720p/1080p, duration 4–30 seconds |
 | SynVow Seedance | seedance2.0-* | `/image/edit`: text/image/video/audio reference; outputs path/URL/info |
 | SynVow Seedance2.0 视频生成 (720P) | seedance_2_720p | `/image/edit` + `content[]`, fixed 720P; outputs path/URL/info |

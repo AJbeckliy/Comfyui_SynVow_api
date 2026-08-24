@@ -60,6 +60,7 @@ MODEL_DISPLAY_NAMES = {
     "grok-1.5-video": "GK视频",
     "Omni-Flash-Ext": "O-Flash-Ext",
     "omni-flash-preview": "O-flash-preview",
+    "wan3.0-video-wd": "wan3.0-video-稳定",
     # 音频
     "suno5.5": "Suno 5.5",
     "doubao-seed-audio-1.0": "豆包语音1.0",
