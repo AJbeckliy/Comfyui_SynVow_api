@@ -8,7 +8,7 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 ### 2026-08-25
 - **Video nodes**
-  - `SynVow Seedance 2.5` adds `seedance-2.5-低价` (requests `sd2-5-dj`): same duration/resolution as 2.5 (4–30 seconds, `480p`/`720p`/`1080p`); ratio is only `16:9` / `9:16`
+  - `SynVow Seedance 2.5` adds `seedance-2.5-低价` : same duration/resolution as 2.5 (4–30 seconds, `480p`/`720p`/`1080p`); ratio is only `16:9` / `9:16`
   - `SynVow Seedance` removes `seedance2.0-全能` and its mode / version / 4K parameters
 - **Account / Web**
   - Model prices can be filtered by tag: text / image / video / audio / parse / other
