@@ -6,6 +6,14 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 
 ## 更新日志
 
+### 2026-08-25
+- **视频节点**
+  - `SynVow Seedance 2.5` 新增 `seedance-2.5-低价`（请求 `sd2-5-dj`）：时长/分辨率同 2.5（4～30 秒，`480p`/`720p`/`1080p`），比例仅 `16:9` / `9:16`
+  - `SynVow Seedance` 去掉 `seedance2.0-全能` 及其模式 / 版本 / 4K 参数
+- **账号 / Web**
+  - 模型价格按标签筛选：可切文本/图像/视频/音频/解析/其它
+  - 充值中心拉取生效活动：立即支付上方展示近期活动说明；达到门槛的快速金额显示 `+5%` / `+5`
+
 ### 2026-08-24
 - **视频节点**
   - 新增 `SynVow wan-video`（`wan3.0-video-wd` / 展示名 `wan3.0-video-稳定`）：文生视频，可选最多 9 张参考图、1 段参考视频、1 段参考音频；分辨率 `480P`/`720P`/`1080P`，画幅 `adaptive`/`16:9`/`4:3`/`1:1`/`3:4`/`9:16`，时长 2～30 秒
@@ -205,8 +213,8 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 | 节点名称 | 模型 | 描述 |
 |----------|------|------|
 | SynVow wan-video | wan3.0-video-wd | 文/图/视频/音频参考生视频；480P/720P/1080P，时长 2～30 秒 |
-| SynVow Seedance 2.5 | doubao-seedance-2.5 | 480p/720p/1080p，时长 4～30 秒 |
-| SynVow Seedance | seedance2.0-* | `/image/edit`：文/图/视频/音频参考；输出路径/URL/信息 |
+| SynVow Seedance 2.5 | doubao-seedance-2.5 / sd2-5-dj | 480p/720p/1080p，时长 4～30 秒；低价比例仅 16:9 / 9:16 |
+| SynVow Seedance | seedance-2.0-* | `/image/edit`：文/图/视频/音频参考；输出路径/URL/信息 |
 | SynVow Seedance2.0 视频生成 (720P) | seedance_2_720p | `/image/edit` + `content[]`，固定 720P；输出路径/URL/信息 |
 | SynVow Grok Video | grok-1.5-video | 文/图生视频（最多 6 张参考图） |
 | SynVow Omni-Flash | Omni-Flash-Ext / omni-flash-preview | 图/视频参考生视频 |

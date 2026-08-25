@@ -1,7 +1,7 @@
 /**
  * SynVow 充值中心对话框
  */
-import { $el, getToken, injectStyle, API_BASE } from "./dom.js";
+import { $el, getToken, injectStyle, API_BASE, authedGet } from "./dom.js";
 import { showLoginDialog } from "./synvow_login.js";
 
 let rechargeDialog = null;
@@ -15,6 +15,26 @@ let submitting = false;
 
 const AMOUNTS = [5, 10, 50, 100, 200, 500, 1000, 2000, 5000, 10000];
 const MIN_CUSTOM_AMOUNT = 5;
+const ACTIVITY_TYPES = { 1: "单次充值", 2: "累计充值", 3: "首充", 4: "连续天数充值" };
+
+function parseGiftOffer(act) {
+    if (!act) return null;
+    const kind = Number(act.gift_type);
+    if (kind !== 1 && kind !== 2) return null;
+    const v = String(Number(act.gift_value));
+    const percent = kind === 2;
+    const type = Number(act.activity_type);
+    const name = String(act.activity_name ?? "").trim();
+    const typeLabel = ACTIVITY_TYPES[type] || "";
+    const endTime = String(act.end_time ?? "").match(/^\d{4}-\d{2}-\d{2}/)?.[0] ?? "";
+    const threshold = Number(act.recharge_threshold);
+    const giftThreshold = Number.isFinite(threshold) ? threshold : 0;
+    const gift = percent ? `送 ${v}%` : `送 ${v}`;
+    const summary = name && typeLabel && endTime
+        ? `${name} / ${typeLabel} / ${giftThreshold}起 ${gift} / 结束时间：${endTime}`
+        : "";
+    return { summary, giftBadge: percent ? `+${v}%` : `+${v}`, giftThreshold };
+}
 
 export function showRechargeDialog() {
     stopPoll();
@@ -28,14 +48,17 @@ export function showRechargeDialog() {
     selectedPayment = "wechat";
     submitting = false;
 
+    const oldStyle = document.getElementById("sv-recharge-style");
+    if (oldStyle) oldStyle.remove();
     injectStyle("sv-recharge-style", `
         .sv-recharge-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:10001; }
         .sv-recharge-dialog { background:linear-gradient(180deg,#1a2a3a,#0d1a24); border-radius:12px; padding:30px; width:560px; position:relative; }
         .sv-recharge-title { color:#2dd4bf; font-size:18px; font-weight:bold; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
         .sv-recharge-title svg { width:18px; height:18px; }
-        .sv-amount-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; margin-bottom:20px; }
-        .sv-amount-btn { min-width:0; box-sizing:border-box; background:#1e3a4a; border:2px solid #334455; border-radius:8px; padding:12px 4px; color:white; font-size:14px; font-weight:bold; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
+        .sv-amount-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; margin-bottom:20px; padding-top:8px; }
+        .sv-amount-btn { position:relative; overflow:visible; min-width:0; box-sizing:border-box; background:#1e3a4a; border:2px solid #334455; border-radius:8px; padding:12px 4px; color:white; font-size:14px; font-weight:bold; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
             .sv-amount-btn .sv-currency { font-size:12px; font-weight:normal; margin-right:2px; }
+        .sv-amount-gift-badge { position:absolute; top:-7px; right:-4px; z-index:1; padding:1px 5px; border-radius:6px; background:#2dd4bf; color:#fff; font-size:10px; font-weight:600; line-height:1.3; pointer-events:none; }
         .sv-amount-btn:hover { border-color:#2dd4bf; background:#1e4a5a; }
         .sv-amount-btn.selected { border-color:#2dd4bf; background:linear-gradient(135deg,#1e4a5a,#0d3a4a); box-shadow:0 0 10px rgba(45,212,191,0.3); }
         .sv-custom-input { width:100%; background:#1e3a4a; border:1px solid #334455; border-radius:8px; padding:14px 16px; color:white; font-size:14px; margin-bottom:8px; box-sizing:border-box; }
@@ -47,6 +70,8 @@ export function showRechargeDialog() {
         .sv-payment-btn:hover { border-color:#556677; }
         .sv-payment-btn.selected { border-color:#2dd4bf; }
         .sv-payment-btn svg { width:20px; height:20px; }
+        .sv-recharge-activity { display:none; margin-bottom:16px; padding:10px 12px; border:1px solid #334455; border-radius:8px; background:#1e3a4a; color:#9aabba; font-size:12px; line-height:1.55; }
+        .sv-recharge-activity-title { margin-bottom:4px; color:#fff; font-weight:600; }
         .sv-submit-btn { width:100%; background:linear-gradient(90deg,#2dd4bf,#22d3ee); border:none; border-radius:8px; padding:14px; color:white; font-size:16px; font-weight:bold; cursor:pointer; margin-bottom:16px; }
         .sv-submit-btn:hover { filter:brightness(1.1); }
         .sv-submit-btn:disabled { opacity:0.5; cursor:not-allowed; }
@@ -105,6 +130,7 @@ export function showRechargeDialog() {
     }
 
     const submitBtn = $el("button.sv-submit-btn", { textContent: "立即支付", onclick: handleSubmit });
+    const activityBox = $el("div.sv-recharge-activity");
 
     rechargeDialog = $el("div.sv-recharge-overlay", {
         onclick: (e) => { if (e.target === rechargeDialog) hideRechargeDialog(); }
@@ -116,12 +142,34 @@ export function showRechargeDialog() {
             customInput,
             $el("div.sv-custom-hint", { textContent: "自定义金额，仅支持 5 起的整数充值。" }),
             $el("div.sv-payment-row", {}, [wechatBtn, alipayBtn]),
+            activityBox,
             submitBtn,
             $el("div.sv-recharge-footer", {}, ["支付成功即充值到账，视为同意《服务条款》及退款政策。"])
         ])
     ]);
 
     document.body.appendChild(rechargeDialog);
+    loadGiftOffer(amountBtns, activityBox);
+}
+
+async function loadGiftOffer(amountBtns, activityBox) {
+    try {
+        const res = await authedGet("/recharge-activities", getToken());
+        const list = Array.isArray(res?.data) ? res.data : [];
+        const offer = parseGiftOffer(list[0]);
+        if (!offer) return;
+        amountBtns.forEach((btn, i) => {
+            if (AMOUNTS[i] < offer.giftThreshold) return;
+            btn.appendChild($el("span.sv-amount-gift-badge", { textContent: offer.giftBadge }));
+        });
+        if (offer.summary) {
+            activityBox.replaceChildren(
+                $el("div.sv-recharge-activity-title", { textContent: "近期活动" }),
+                $el("div", { textContent: offer.summary }),
+            );
+            activityBox.style.display = "block";
+        }
+    } catch {}
 }
 
 function getFinalAmount() {

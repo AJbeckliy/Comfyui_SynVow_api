@@ -55,6 +55,36 @@ function addCancelWidget(node) {
     btn.serialize = false;
 }
 
+const SEEDANCE25_RATIOS = ["adaptive", "16:9", "9:16", "4:3", "3:4", "1:1", "21:9"];
+const SEEDANCE25_DJ_RATIOS = ["16:9", "9:16"];
+
+function bindSeedance25Ratio(node) {
+    if (node.type !== "SynVowSeedance25" || node._svSeedance25RatioBound) return;
+    const modelW = node.widgets?.find(w => w.name === "model");
+    const ratioW = node.widgets?.find(w => w.name === "ratio");
+    if (!modelW || !ratioW) return;
+    node._svSeedance25RatioBound = true;
+
+    const apply = () => {
+        const v = String(modelW.value || "");
+        const opts = (v === "sd2-5-dj" || v.includes("低价")) ? SEEDANCE25_DJ_RATIOS : SEEDANCE25_RATIOS;
+        if (ratioW.options) ratioW.options.values = opts;
+        if (!opts.includes(ratioW.value)) ratioW.value = opts[0];
+    };
+    const prev = modelW.callback;
+    modelW.callback = function () {
+        const r = prev?.apply(this, arguments);
+        apply();
+        return r;
+    };
+    apply();
+}
+
+function enhanceNode(node) {
+    addCancelWidget(node);
+    bindSeedance25Ratio(node);
+}
+
 app.registerExtension({
     name: "SynVow.CancelPoll",
 
@@ -63,21 +93,21 @@ app.registerExtension({
         const orig = nodeType.prototype.onNodeCreated;
         nodeType.prototype.onNodeCreated = function () {
             orig?.apply(this, arguments);
-            addCancelWidget(this);
+            enhanceNode(this);
         };
     },
 
     async setup() {
         setTimeout(() => {
             for (const node of app.graph._nodes || []) {
-                if (SYNVOW_NODE_TYPES.has(node.type)) addCancelWidget(node);
+                if (SYNVOW_NODE_TYPES.has(node.type)) enhanceNode(node);
             }
         }, 500);
     },
 
     afterConfigureGraph() {
         for (const node of app.graph._nodes || []) {
-            if (SYNVOW_NODE_TYPES.has(node.type)) addCancelWidget(node);
+            if (SYNVOW_NODE_TYPES.has(node.type)) enhanceNode(node);
         }
     },
 });

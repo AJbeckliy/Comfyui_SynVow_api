@@ -3,6 +3,7 @@
 import json
 
 from . import synvow_auth
+from .model_display import combo_models, pick_model
 from .media_common import (
     download_video,
     is_changed_by_inputs,
@@ -12,8 +13,12 @@ from .media_common import (
     upload_media_file,
 )
 
-_MODEL = "doubao-seedance-2.5"
+_API_MODELS = ["doubao-seedance-2.5", "sd2-5-dj"]
+_DEFAULT_MODEL = "doubao-seedance-2.5"
+_MODELS = combo_models(_API_MODELS)
+_DJ = "sd2-5-dj"
 _RATIOS = ["adaptive", "16:9", "9:16", "4:3", "3:4", "1:1", "21:9"]
+_DJ_RATIOS = ("16:9", "9:16")
 _RESOLUTIONS = ["480p", "720p", "1080p"]
 _DURATIONS = [str(i) for i in range(4, 31)]
 _IMAGE_SLOTS = 12
@@ -28,15 +33,19 @@ def _clamp_duration(raw):
     return max(4, min(30, n))
 
 
-def _build_body(prompt, ratio, duration, resolution, image_urls, video_url, audio_url, generate_audio):
+def _build_body(model, prompt, ratio, duration, resolution, image_urls, video_url, audio_url, generate_audio):
+    model = pick_model(model, _API_MODELS, _DEFAULT_MODEL)
     body = {
-        "model": _MODEL,
+        "model": model,
         "prompt": prompt or "",
-        "size": ratio if ratio in _RATIOS else "adaptive",
         "resolution": resolution if resolution in _RESOLUTIONS else "720p",
         "duration": _clamp_duration(duration),
         "generate_audio": bool(generate_audio),
     }
+    if model == _DJ:
+        body["ratio"] = ratio if ratio in _DJ_RATIOS else "16:9"
+    else:
+        body["size"] = ratio if ratio in _RATIOS else "adaptive"
     if image_urls:
         body["image_urls"] = image_urls
     if video_url:
@@ -49,7 +58,7 @@ def _build_body(prompt, ratio, duration, resolution, image_urls, video_url, audi
 class SynVowSeedance25:
     FUNCTION = "generate_video"
     CATEGORY = "💫SynVow_api/api/视频"
-    DESCRIPTION = "SynVow Seedance 2.5（doubao-seedance-2.5）"
+    DESCRIPTION = "SynVow Seedance 2.5"
     RETURN_TYPES = ("STRING", "STRING", "STRING")
     RETURN_NAMES = ("video_path", "video_url", "task_info")
     IS_CHANGED = staticmethod(is_changed_by_inputs)
@@ -66,6 +75,7 @@ class SynVowSeedance25:
         return {
             "required": {
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
+                "model": (_MODELS, {"default": _MODELS[0]}),
                 "ratio": (_RATIOS, {"default": "adaptive"}),
                 "duration": (_DURATIONS, {"default": "5"}),
                 "resolution": (_RESOLUTIONS, {"default": "720p"}),
@@ -75,7 +85,7 @@ class SynVowSeedance25:
             "optional": optional,
         }
 
-    def generate_video(self, prompt, ratio, duration, resolution, generate_audio=True, seed=0, **kwargs):
+    def generate_video(self, prompt, model, ratio, duration, resolution, generate_audio=True, seed=0, **kwargs):
         api_key = synvow_auth.read_api_key()
         try:
             tensors = [kwargs.get(f"image_{i}") for i in range(1, _IMAGE_SLOTS + 1)]
@@ -85,10 +95,11 @@ class SynVowSeedance25:
             video_url = upload_media_file(api_key, video_path, "video") if video_path else ""
             audio_url = upload_media_file(api_key, audio_path, "audio") if audio_path else ""
             body = _build_body(
-                prompt, ratio, duration, resolution, image_urls, video_url, audio_url, generate_audio,
+                model, prompt, ratio, duration, resolution, image_urls, video_url, audio_url, generate_audio,
             )
+            used_model = body["model"]
             task_id, consumption_id = submit_edit_async(api_key, body, _TAG)
-            url = poll_edit_task(api_key, task_id, _MODEL, _TAG, consumption_id=consumption_id)
+            url = poll_edit_task(api_key, task_id, used_model, _TAG, consumption_id=consumption_id)
             path = download_video(
                 url, task_id, kwargs.get("save_path") or "", prefix="seedance25",
                 filename=kwargs.get("filename") or "",
@@ -96,7 +107,7 @@ class SynVowSeedance25:
             info = json.dumps({
                 "status": "SUCCESS",
                 "task_id": task_id,
-                "model": _MODEL,
+                "model": used_model,
                 "video_url": url,
                 "video_path": path,
                 "seed": seed,

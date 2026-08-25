@@ -55,6 +55,7 @@ MODEL_DISPLAY_NAMES = {
     # 视频
     "seedance_2_720p": "seedance2.0-720P",
     "doubao-seedance-2.5": "seedance-2.5",
+    "sd2-5-dj": "seedance-2.5-低价",
     "MiniMax-H3": "海螺-H3",
     "veo3.1": "Veo 3.1",
     "grok-1.5-video": "GK视频",

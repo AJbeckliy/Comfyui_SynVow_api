@@ -79,6 +79,7 @@ _JWT_ROUTES = [
     ("GET",  "/sv_api/models",                      "/models",                      False),
     ("GET",  "/sv_api/models/public-list",          "/models/public-list",          False),
     ("GET",  "/sv_api/content/announcements",       "/content/announcements",       False),
+    ("GET",  "/sv_api/recharge-activities",         "/recharge-activities",         False),
 ]
 
 _APIKEY_ROUTES = [
