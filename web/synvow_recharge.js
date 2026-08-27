@@ -19,21 +19,38 @@ const ACTIVITY_TYPES = { 1: "单次充值", 2: "累计充值", 3: "首充", 4: "
 
 function parseGiftOffer(act) {
     if (!act) return null;
-    const kind = Number(act.gift_type);
-    if (kind !== 1 && kind !== 2) return null;
-    const v = String(Number(act.gift_value));
-    const percent = kind === 2;
+    const rules = Array.isArray(act.rules) && act.rules.length
+        ? act.rules
+        : [{ recharge_amount: act.recharge_threshold, gift_type: act.gift_type, gift_value: act.gift_value }];
+    const tiers = [];
+    for (const rule of rules) {
+        const kind = Number(rule.gift_type);
+        const amount = Number(rule.recharge_amount);
+        if ((kind !== 1 && kind !== 2) || !Number.isFinite(amount)) continue;
+        const v = String(Number(rule.gift_value));
+        const pct = kind === 2;
+        tiers.push({ amount, gift: pct ? `送 ${v}%` : `送 ${v}`, badge: pct ? `+${v}%` : `+${v}` });
+    }
+    tiers.sort((a, b) => a.amount - b.amount);
+    if (!tiers.length) return null;
+
     const type = Number(act.activity_type);
     const name = String(act.activity_name ?? "").trim();
     const typeLabel = ACTIVITY_TYPES[type] || "";
     const endTime = String(act.end_time ?? "").match(/^\d{4}-\d{2}-\d{2}/)?.[0] ?? "";
-    const threshold = Number(act.recharge_threshold);
-    const giftThreshold = Number.isFinite(threshold) ? threshold : 0;
-    const gift = percent ? `送 ${v}%` : `送 ${v}`;
     const summary = name && typeLabel && endTime
-        ? `${name} / ${typeLabel} / ${giftThreshold}起 ${gift} / 结束时间：${endTime}`
+        ? `${name} / ${typeLabel} / ${tiers.map(t => `${t.amount}起 ${t.gift}`).join(" / ")} / 结束时间：${endTime}`
         : "";
-    return { summary, giftBadge: percent ? `+${v}%` : `+${v}`, giftThreshold };
+    const badges = {};
+    for (const amt of AMOUNTS) {
+        for (let i = tiers.length - 1; i >= 0; i--) {
+            if (amt >= tiers[i].amount) {
+                badges[amt] = tiers[i].badge;
+                break;
+            }
+        }
+    }
+    return { summary, badges };
 }
 
 export function showRechargeDialog() {
@@ -159,8 +176,9 @@ async function loadGiftOffer(amountBtns, activityBox) {
         const offer = parseGiftOffer(list[0]);
         if (!offer) return;
         amountBtns.forEach((btn, i) => {
-            if (AMOUNTS[i] < offer.giftThreshold) return;
-            btn.appendChild($el("span.sv-amount-gift-badge", { textContent: offer.giftBadge }));
+            const text = offer.badges[AMOUNTS[i]];
+            if (!text) return;
+            btn.appendChild($el("span.sv-amount-gift-badge", { textContent: text }));
         });
         if (offer.summary) {
             activityBox.replaceChildren(
