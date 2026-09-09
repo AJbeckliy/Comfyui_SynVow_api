@@ -43,6 +43,11 @@ MODEL_DISPLAY_NAMES = {
     "nano-banana-pro-官方": "全能Npro-官方",
     "nanobananapro-qy": "全能Npro-企业",
     # 图像 GPT-Image
+    "gpt-image-2.5-1k-2609": "PT2.5-1k-2609",
+    "gpt-image-2.5-sunburst-2609": "PT2.5-sunburst-2609",
+    "gpt-image-2.5-flare-2609": "PT2.5-flare-2609",
+    "gpt-image-2.5-sunburst-qy": "PT2.5-sunburst-企业",
+    "gpt-image-2.5-flare-qy": "PT2.5-flare-企业",
     "gpt-image-2-1k-2605": "全能G2-1k-2605",
     "gpt-image-2-2607": "全能G2-2607",
     "gpt-image-2-稳定": "全能G2-稳定",
@@ -61,6 +66,7 @@ MODEL_DISPLAY_NAMES = {
     "grok-1.5-video": "GK视频",
     "Omni-Flash-Ext": "O-Flash-Ext",
     "omni-flash-preview": "O-flash-preview",
+    "omni-1.1-flash": "O-1.1-flash",
     "wan3.0-video-wd": "wan3.0-video-稳定",
     # 音频
     "suno5.5": "Suno 5.5",

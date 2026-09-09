@@ -22,6 +22,7 @@ const SYNVOW_NODE_TYPES = new Set([
     "SynVowGptImage2_TBatch",
     "SynVowGptImage2_IBatch",
     "SynVowGptImage2_TIBatch",
+    "SynVowGptImage2ProductStudio",
     "SynVowNanoBanana",
     "SynVowNanoBanana_TBatch",
     "SynVowNanoBanana_IBatch",
@@ -57,19 +58,23 @@ function addCancelWidget(node) {
 
 const SEEDANCE25_RATIOS = ["adaptive", "16:9", "9:16", "4:3", "3:4", "1:1", "21:9"];
 const SEEDANCE25_DJ_RATIOS = ["16:9", "9:16"];
+const OMNI_RESOLUTIONS = ["720p", "1080p", "4k"];
+const OMNI_11_RESOLUTIONS = ["360p", "720p", "1080p", "4k"];
+const GPT_IMAGE_RESOLUTIONS = ["1K", "2K", "4K"];
 
-function bindSeedance25Ratio(node) {
-    if (node.type !== "SynVowSeedance25" || node._svSeedance25RatioBound) return;
-    const modelW = node.widgets?.find(w => w.name === "model");
-    const ratioW = node.widgets?.find(w => w.name === "ratio");
-    if (!modelW || !ratioW) return;
-    node._svSeedance25RatioBound = true;
+function bindModelCombo(node, types, modelName, comboName, pickOpts, fallback) {
+    const match = typeof types === "function" ? types(node.type) : node.type === types;
+    const key = `_svBind_${modelName}_${comboName}`;
+    if (!match || node[key]) return;
+    const modelW = node.widgets?.find(w => w.name === modelName);
+    const comboW = node.widgets?.find(w => w.name === comboName);
+    if (!modelW || !comboW) return;
+    node[key] = true;
 
     const apply = () => {
-        const v = String(modelW.value || "");
-        const opts = (v === "sd2-5-dj" || v.includes("低价")) ? SEEDANCE25_DJ_RATIOS : SEEDANCE25_RATIOS;
-        if (ratioW.options) ratioW.options.values = opts;
-        if (!opts.includes(ratioW.value)) ratioW.value = opts[0];
+        const opts = pickOpts(String(modelW.value || ""));
+        if (comboW.options) comboW.options.values = opts;
+        if (!opts.includes(comboW.value)) comboW.value = fallback ? fallback(opts) : opts[0];
     };
     const prev = modelW.callback;
     modelW.callback = function () {
@@ -80,9 +85,21 @@ function bindSeedance25Ratio(node) {
     apply();
 }
 
+function bindWidgetOptions(node) {
+    bindModelCombo(node, "SynVowSeedance25", "model", "ratio", v =>
+        (v === "sd2-5-dj" || v.includes("低价")) ? SEEDANCE25_DJ_RATIOS : SEEDANCE25_RATIOS);
+    bindModelCombo(node, "SynVowOmniFlash", "model", "resolution", v => {
+        if (v === "omni-1.1-flash" || v.includes("O-1.1")) return OMNI_11_RESOLUTIONS;
+        if (v === "omni-flash-preview" || v.includes("O-flash-preview")) return ["720p"];
+        return OMNI_RESOLUTIONS;
+    }, opts => (opts.includes("720p") ? "720p" : opts[0]));
+    bindModelCombo(node, t => String(t || "").startsWith("SynVowGptImage2"), "model_type", "resolution", v =>
+        v.includes("1k-") ? ["1K"] : GPT_IMAGE_RESOLUTIONS);
+}
+
 function enhanceNode(node) {
     addCancelWidget(node);
-    bindSeedance25Ratio(node);
+    bindWidgetOptions(node);
 }
 
 app.registerExtension({

@@ -11,6 +11,7 @@ import torch.nn.functional as F
 from . import synvow_auth
 from .gpt_image_2_synvow import (
     _DEFAULT_GPT_IMAGE_COMBO,
+    _DEFAULT_GPT_IMAGE_MODEL,
     _MODEL_TYPE_OPTIONS,
     _RATIO_TO_SIZE_1K,
     _is_changed,
@@ -499,7 +500,7 @@ class SynVowGptImage2ProductStudio:
             raise ValueError("请连接主输入图片 image。")
 
         mode = str(_unpack(mode) or MODE_PRODUCT_REFINE).strip()
-        model_type = resolve_model(_unpack(model_type), "gpt-image-2-稳定")
+        model_type = resolve_model(_unpack(model_type), _DEFAULT_GPT_IMAGE_MODEL)
         quality = _unpack(quality) or "auto"
         resolution = _unpack(resolution) or "1K"
         aspect_ratio = _unpack(aspect_ratio) or "auto"

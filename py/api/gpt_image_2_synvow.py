@@ -86,15 +86,20 @@ _RATIO_TO_SIZE_4K = {
 _RATIO_MAPS = {"1K": _RATIO_TO_SIZE_1K, "2K": _RATIO_TO_SIZE_2K, "4K": _RATIO_TO_SIZE_4K}
 
 _API_MODELS = [
-    "gpt-image-2-1k-2605",
-    "gpt-image-2-2607",
+    "gpt-image-2.5-1k-2609",
+    "gpt-image-2.5-sunburst-2609",
+    "gpt-image-2.5-flare-2609",
+    "gpt-image-2.5-sunburst-qy",
+    "gpt-image-2.5-flare-qy",
     "gpt-image-2-稳定",
-    "gpt-image-2-官方",
     "gpt-image-2-1k-qy",
     "gpt-image-2-4k-qy",
+    "gpt-image-2-官方",
+    "gpt-image-2-1k-2605",
+    "gpt-image-2-2607",
 ]
 _MODEL_TYPE_OPTIONS = combo_models(_API_MODELS)
-_DEFAULT_GPT_IMAGE_MODEL = "gpt-image-2-稳定"
+_DEFAULT_GPT_IMAGE_MODEL = "gpt-image-2.5-1k-2609"
 _DEFAULT_GPT_IMAGE_COMBO = display_name(_DEFAULT_GPT_IMAGE_MODEL)
 _NEW_MODELS = {"gpt-image-2-稳定"}
 _RAW_RATIO_MODELS = {"gpt-image-2-官方"}
@@ -105,8 +110,20 @@ def _is_qy_model(model):
     return str(model or "").endswith(("-qy", "-qy-t2i"))
 
 
+def _is_gpt_image_25(model):
+    m = str(model or "")
+    return m.startswith("gpt-image-2.5") and not _is_qy_model(m)
+
+
 def _locked_resolution(model):
     return "1K" if "-1k-" in str(model or "") else None
+
+
+def _request_model(model, is_img2img):
+    m = str(model or "")
+    if (not is_img2img) and m.endswith("-qy") and "-1k-" not in m:
+        return f"{m}-t2i"
+    return m
 
 
 def _resolve_size_params(model, aspect_ratio, resolution):
@@ -115,7 +132,10 @@ def _resolve_size_params(model, aspect_ratio, resolution):
     locked = _locked_resolution(model)
     eff_resolution = locked or (resolution or "1K")
     ratio_map = _RATIO_MAPS.get(eff_resolution, _RATIO_TO_SIZE_1K)
-    return eff_resolution, ratio_map.get(aspect_ratio, "auto")
+    ratio_key = aspect_ratio
+    if _is_gpt_image_25(model) and (not aspect_ratio or aspect_ratio == "auto"):
+        ratio_key = "1:1"
+    return eff_resolution, ratio_map.get(ratio_key, "auto")
 
 
 def _build_payload(model, prompt, size, quality, resolution, is_img2img, img_tensors, api_key=None, aspect_ratio=None):
@@ -164,7 +184,10 @@ def _build_payload(model, prompt, size, quality, resolution, is_img2img, img_ten
         payload["replyType"] = "async"
         if size and size != "auto":
             payload["aspectRatio"] = size
-        if quality and quality != "auto":
+        if _is_gpt_image_25(model):
+            if not _locked_resolution(model):
+                payload["quality"] = (quality or "auto").lower()
+        elif quality and quality != "auto":
             payload["quality"] = quality
         if image_urls:
             payload["images"] = image_urls
@@ -190,7 +213,7 @@ def _poll_urls(api_key, task_id, model, consumption_id=""):
 def _run_tasks(tasks, model, size, quality, resolution, is_img2img, api_key, aspect_ratio=None):
     total = len(tasks)
     pbar = comfy.utils.ProgressBar(total)
-    request_model = "gpt-image-2-4k-qy-t2i" if model == "gpt-image-2-4k-qy" and not is_img2img else model
+    request_model = _request_model(model, is_img2img)
 
     submitted = []
     for i, (p, imgs) in enumerate(tasks):

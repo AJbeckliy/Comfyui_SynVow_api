@@ -6,6 +6,12 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 
 ## 更新日志
 
+### 2026-09-10
+- **视频节点**
+  - `SynVow Omni-Flash` 新增 `omni-1.1-flash`；
+- **图像节点**
+  - `SynVow GPT-Image-2`（含批量与产品六合一）新增 PT2.5：`PT2.5-1k-2609`/ `PT2.5-sunburst-2609` / `PT2.5-flare-2609`；企业 `PT2.5-sunburst-企业` / `PT2.5-flare-企业`
+
 ### 2026-08-25
 - **视频节点**
   - `SynVow Seedance 2.5` 新增 `seedance-2.5-低价`：时长/分辨率同 2.5（4～30 秒，`480p`/`720p`/`1080p`），比例仅 `16:9` / `9:16`

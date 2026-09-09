@@ -6,6 +6,12 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 ## Changelog
 
+### 2026-09-10
+- **Video nodes**
+  - `SynVow Omni-Flash` adds `omni-1.1-flash`
+- **Image nodes**
+  - `SynVow GPT-Image-2` (including batch and product six-in-one) adds PT2.5: `PT2.5-1k-2609` / `PT2.5-sunburst-2609` / `PT2.5-flare-2609`; enterprise `PT2.5-sunburst-企业` / `PT2.5-flare-企业`
+
 ### 2026-08-25
 - **Video nodes**
   - `SynVow Seedance 2.5` adds `seedance-2.5-低价` : same duration/resolution as 2.5 (4–30 seconds, `480p`/`720p`/`1080p`); ratio is only `16:9` / `9:16`
