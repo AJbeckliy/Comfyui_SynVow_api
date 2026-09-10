@@ -15,17 +15,17 @@ import requests
 
 from . import synvow_auth
 from .gpt_image_2_synvow import (
+    _ASPECTS,
     _DEFAULT_GPT_IMAGE_COMBO,
-    _DEFAULT_GPT_IMAGE_MODEL,
     _MODEL_TYPE_OPTIONS,
     _NEW_MODELS,
-    _RATIO_TO_SIZE_1K,
+    _QUALITIES_EXT,
+    _STYLES,
     _build_payload,
     _is_changed,
-    _resolve_size_params,
+    _prep_model,
     _unpack,
 )
-from .model_display import resolve_model
 from .media_common import EDIT_POLL_URL, EDIT_SUBMIT_URL, extract_result_urls
 
 
@@ -219,7 +219,7 @@ def _run_tasks_with_background(
     api_key,
     headers,
     seed=None,
-    aspect_ratio=None,
+    gpt_style=None,
 ):
     total = len(tasks)
     pbar = comfy.utils.ProgressBar(total)
@@ -230,7 +230,7 @@ def _run_tasks_with_background(
         _raise_if_alpha_cancelled()
         payload = _build_payload(
             model, prompt, size, quality, resolution, is_img2img, images,
-            api_key=api_key, aspect_ratio=aspect_ratio,
+            api_key=api_key, gpt_style=gpt_style, transparent=True,
         )
         try:
             seed_value = int(seed) if seed is not None else 0
@@ -295,9 +295,10 @@ class SynVowGptImage2Alpha_TBatch:
         return {
             "required": {
                 "model_type": (_MODEL_TYPE_OPTIONS, {"default": _DEFAULT_GPT_IMAGE_COMBO}),
-                "quality": (["auto", "low", "medium", "high"], {"default": "auto"}),
+                "gpt_style": (_STYLES, {"default": "sunburst"}),
+                "quality": (_QUALITIES_EXT, {"default": "auto"}),
                 "resolution": (["1K", "2K", "4K"], {"default": "1K"}),
-                "aspect_ratio": (list(_RATIO_TO_SIZE_1K.keys()), {"default": "1:1"}),
+                "aspect_ratio": (_ASPECTS, {"default": "1:1"}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
             "optional": {
@@ -320,6 +321,7 @@ class SynVowGptImage2Alpha_TBatch:
     def process_batch(
         self,
         model_type=None,
+        gpt_style=None,
         quality=None,
         resolution=None,
         aspect_ratio=None,
@@ -335,10 +337,10 @@ class SynVowGptImage2Alpha_TBatch:
         image8=None,
     ):
         _ALPHA_CANCEL_EVENT.clear()
-        model_type = resolve_model(_unpack(model_type), _DEFAULT_GPT_IMAGE_MODEL)
-        quality = _unpack(quality)
-        resolution = _unpack(resolution) or "1K"
-        aspect_ratio = _unpack(aspect_ratio)
+        model, style, quality, eff_resolution, size = _prep_model(
+            _unpack(model_type), _unpack(quality), _unpack(resolution) or "1K",
+            _unpack(aspect_ratio), _unpack(gpt_style),
+        )
         seed = _unpack(seed)
         image1 = _unpack(image1)
         image2 = _unpack(image2)
@@ -351,9 +353,6 @@ class SynVowGptImage2Alpha_TBatch:
 
         api_key = synvow_auth.read_api_key()
         headers = synvow_auth.make_api_headers(api_key)
-        model = model_type or _DEFAULT_GPT_IMAGE_MODEL
-        eff_resolution, size = _resolve_size_params(model, aspect_ratio, resolution)
-
         images = [item for item in [image1, image2, image3, image4, image5, image6, image7, image8] if item is not None]
         is_img2img = len(images) > 0
         prompts = prompts_list if isinstance(prompts_list, list) else ([prompts_list] if prompts_list else [""])
@@ -371,7 +370,7 @@ class SynVowGptImage2Alpha_TBatch:
             api_key,
             headers,
             seed=seed,
-            aspect_ratio=aspect_ratio,
+            gpt_style=style,
         )
         successful = sum(1 for url in image_urls if url)
         if successful == 0:

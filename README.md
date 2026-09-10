@@ -6,6 +6,11 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 ## Changelog
 
+### 2026-09-11
+- **Image nodes**
+  - `SynVow GPT-Image-2` (including batch, product six-in-one, and Alpha) adds PT2.5 `1K-企业`, `稳定`, and `官方`
+  - Adds transparent background support (`1k` / `稳定` not supported yet)
+
 ### 2026-09-10
 - **Video nodes**
   - `SynVow Omni-Flash` adds `omni-1.1-flash`

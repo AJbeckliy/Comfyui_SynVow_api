@@ -10,12 +10,13 @@ import torch.nn.functional as F
 
 from . import synvow_auth
 from .gpt_image_2_synvow import (
+    _ASPECTS,
     _DEFAULT_GPT_IMAGE_COMBO,
-    _DEFAULT_GPT_IMAGE_MODEL,
     _MODEL_TYPE_OPTIONS,
-    _RATIO_TO_SIZE_1K,
+    _QUALITIES_EXT,
+    _STYLES,
     _is_changed,
-    _resolve_size_params,
+    _prep_model,
     _run_tasks,
     _unpack,
 )
@@ -422,7 +423,7 @@ def _closest_supported_aspect_ratio(image):
         return "1:1"
 
     source_ratio = width / height
-    candidates = [ratio for ratio in _RATIO_TO_SIZE_1K if ratio != "auto"]
+    candidates = [ratio for ratio in _ASPECTS if ratio != "auto"]
     return min(
         candidates,
         key=lambda ratio: abs(
@@ -448,9 +449,11 @@ class SynVowGptImage2ProductStudio:
                     _MODEL_TYPE_OPTIONS,
                     {"default": _DEFAULT_GPT_IMAGE_COMBO},
                 ),
-                "quality": (["auto", "low", "medium", "high"], {"default": "auto"}),
+                "gpt_style": (_STYLES, {"default": "sunburst"}),
+                "quality": (_QUALITIES_EXT, {"default": "auto"}),
                 "resolution": (["1K", "2K", "4K"], {"default": "1K"}),
-                "aspect_ratio": (list(_RATIO_TO_SIZE_1K.keys()), {"default": "auto"}),
+                "aspect_ratio": (_ASPECTS, {"default": "auto"}),
+                "transparent": ("BOOLEAN", {"default": False}),
                 "seed": (
                     "INT",
                     {
@@ -486,9 +489,11 @@ class SynVowGptImage2ProductStudio:
         image,
         mode=None,
         model_type=None,
+        gpt_style=None,
         quality=None,
         resolution=None,
         aspect_ratio=None,
+        transparent=None,
         seed=None,
         llm_model=None,
         reference_image=None,
@@ -500,12 +505,14 @@ class SynVowGptImage2ProductStudio:
             raise ValueError("请连接主输入图片 image。")
 
         mode = str(_unpack(mode) or MODE_PRODUCT_REFINE).strip()
-        model_type = resolve_model(_unpack(model_type), _DEFAULT_GPT_IMAGE_MODEL)
-        quality = _unpack(quality) or "auto"
-        resolution = _unpack(resolution) or "1K"
         aspect_ratio = _unpack(aspect_ratio) or "auto"
         if mode in (MODE_CLARITY_RESTORE, MODE_OUTPAINT) and aspect_ratio == "auto":
             aspect_ratio = _closest_supported_aspect_ratio(image)
+        model_type, style, quality, effective_resolution, size = _prep_model(
+            _unpack(model_type), _unpack(quality) or "auto", _unpack(resolution) or "1K",
+            aspect_ratio, _unpack(gpt_style),
+        )
+        transparent = bool(_unpack(transparent))
         seed = int(_unpack(seed) or 0)
         llm_model = resolve_model(_unpack(llm_model) or _DEFAULT_LLM_MODEL)
         reference_image = _unpack(reference_image)
@@ -545,12 +552,6 @@ class SynVowGptImage2ProductStudio:
             except Exception as exc:
                 llm_status = f"fallback({llm_model})"
                 print(f"[ProductStudio] LLM 增强失败，回退本地模板：{exc}")
-        effective_resolution, size = _resolve_size_params(
-            model_type,
-            aspect_ratio,
-            resolution,
-        )
-
         if mode == MODE_OBJECT_REMOVE and mask_guide is not None:
             images = [_make_removal_overlay(image, mask_guide), mask_guide]
         else:
@@ -568,7 +569,8 @@ class SynVowGptImage2ProductStudio:
             effective_resolution,
             True,
             api_key,
-            aspect_ratio=aspect_ratio,
+            gpt_style=style,
+            transparent=transparent,
         )
         successful = sum(1 for url in image_urls if url)
         mask_status = "yes" if mask_guide is not None else "no"
