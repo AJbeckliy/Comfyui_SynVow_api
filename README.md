@@ -6,6 +6,10 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 ## Changelog
 
+### 2026-09-12
+- **Audio nodes**
+  - `SynVow Suno` adds the suno6 model; supports generate / cover / extend
+
 ### 2026-09-11
 - **Image nodes**
   - `SynVow GPT-Image-2` (including batch, product six-in-one, and Alpha) adds PT2.5 `1K-企业`, `稳定`, and `官方`
