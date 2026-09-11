@@ -110,20 +110,17 @@ function extractVideoUrls(d) {
     return dedupe(preferred.length ? preferred : fallback);
 }
 
-/** 音频类：Suno cld2AudioUrl 优先，不取 cld2VideoUrl */
+/** 音频类：audio_url / cld2AudioUrl，下钻 music */
 function extractAudioUrls(d) {
     const out = [];
     const walk = (data) => {
         if (!data) return;
-        if (typeof data === "string") { if (isHttpUrl(data) && /audiopipe\.suno\.ai|\.suno\.ai/i.test(data)) out.push(data); return; }
+        if (typeof data === "string") { if (isHttpUrl(data)) out.push(data); return; }
         if (Array.isArray(data)) { data.forEach(walk); return; }
         if (typeof data !== "object") return;
+        pushHttpUrls(out, data.audio_url);
         pushHttpUrls(out, data.cld2AudioUrl);
-        if (Array.isArray(data.items)) {
-            for (const it of data.items) if (it && typeof it === "object") pushHttpUrls(out, it.cld2AudioUrl);
-        }
-        if (data.audios != null) walk(data.audios);
-        for (const key of ["data", "result", "results", "output", "sourceData", "task_result", "audios", "items"]) {
+        for (const key of ["data", "result", "results", "output", "sourceData", "task_result", "audios", "items", "music"]) {
             if (data[key] != null) walk(data[key]);
         }
     };

@@ -70,6 +70,9 @@ MODEL_DISPLAY_NAMES = {
     "wan3.0-video-wd": "wan3.0-video-稳定",
     # 音频
     "suno5.5": "Suno 5.5",
+    "suno6": "Suno 6",
+    "suno6-fc": "Suno 6 翻唱",
+    "suno6-yc": "Suno 6 延长",
     "doubao-seed-audio-1.0": "豆包语音1.0",
 }
 

@@ -17,6 +17,7 @@ const SYNVOW_NODE_TYPES = new Set([
     "SynVowMiniMaxReferenceToVideo",
     "SynVowSunoInspire",
     "SynVowSunoCustom",
+    "SynVowSuno6",
     "SynVowDoubaoAudio",
     "SynVowGptImage2",
     "SynVowGptImage2_TBatch",
@@ -82,31 +83,36 @@ function setCombo(w, opts, prefer) {
     if (!opts.includes(w.value)) w.value = opts.includes(prefer) ? prefer : opts[0];
 }
 
-function setHidden(w, hidden) {
-    if (!w) return;
-    w.hidden = hidden;
-    w.computeSize = hidden ? () => [0, -4] : undefined;
+function setHidden(obj, hidden) {
+    if (obj) obj.hidden = hidden;
+}
+
+function bindByWidgets(node, names, apply) {
+    const key = `_svBind_${names.join("_")}`;
+    if (node[key]) return;
+    const ws = names.map(n => widget(node, n));
+    if (!ws[0]) return;
+    node[key] = true;
+    const run = () => {
+        apply();
+        node.setDirtyCanvas?.(true, true);
+    };
+    for (const w of ws) {
+        if (!w) continue;
+        const prev = w.callback;
+        w.callback = function () {
+            const r = prev?.apply(this, arguments);
+            run();
+            return r;
+        };
+    }
+    run();
 }
 
 function bindByModel(node, modelName, apply) {
-    const key = `_svBind_${modelName}`;
-    if (node[key]) return;
-    const modelW = widget(node, modelName);
-    if (!modelW) return;
-    node[key] = true;
-    const run = () => {
-        apply(String(modelW.value || ""));
-        const measured = node.computeSize?.();
-        if (measured && node.size) node.setSize([node.size[0], measured[1]]);
-        node.setDirtyCanvas?.(true, true);
-    };
-    const prev = modelW.callback;
-    modelW.callback = function () {
-        const r = prev?.apply(this, arguments);
-        run();
-        return r;
-    };
-    run();
+    bindByWidgets(node, [modelName], () => {
+        apply(String(widget(node, modelName)?.value || ""));
+    });
 }
 
 function bindWidgetOptions(node) {
@@ -161,6 +167,22 @@ function bindWidgetOptions(node) {
             setHidden(widget(node, "gpt_style"), !showStyle);
             setHidden(qW, !showQuality);
             setHidden(widget(node, "transparent"), !(showStyle && !lock1k && !wd));
+        });
+        return;
+    }
+    if (t === "SynVowSuno6") {
+        bindByWidgets(node, ["task_kind", "mode", "instrumental"], () => {
+            const kind = String(widget(node, "task_kind")?.value || "");
+            const custom = String(widget(node, "mode")?.value || "") === "自定义";
+            const extend = kind === "延长";
+            const inst = !!widget(node, "instrumental")?.value;
+            setHidden(widget(node, "continue_at"), !extend);
+            setHidden(widget(node, "instrumental"), extend);
+            setHidden(widget(node, "vocal_gender"), !(extend || !inst));
+            for (const name of ["duration", "title", "tags", "negative_tags"]) {
+                setHidden(widget(node, name), !custom);
+            }
+            setHidden(node.inputs?.find(s => s.name === "audio_path"), !(kind === "翻唱" || extend));
         });
     }
 }

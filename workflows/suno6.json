@@ -1,0 +1,1586 @@
+{
+  "id": "b9e0090c-3759-4680-a275-b74ea0cd6744",
+  "revision": 0,
+  "last_node_id": 64,
+  "last_link_id": 46,
+  "nodes": [
+    {
+      "id": 27,
+      "type": "ShowText|pysssss",
+      "pos": [
+        12997.41134372415,
+        1372.189183918613
+      ],
+      "size": [
+        463.39092256408003,
+        126
+      ],
+      "flags": {},
+      "order": 12,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 18
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": [
+        "D:\\ComfyUI-aki-v1.7\\ComfyUI\\output\\suno6_task_01M(3).mp3",
+        "D:\\ComfyUI-aki-v1.7\\ComfyUI\\output\\suno6_task_01M(4).mp3"
+      ],
+      "widgets_values_named": {
+        "text_0": "D:\\ComfyUI-aki-v1.7\\ComfyUI\\output\\suno6_task_01M(3).mp3",
+        "text_1": "D:\\ComfyUI-aki-v1.7\\ComfyUI\\output\\suno6_task_01M(4).mp3"
+      }
+    },
+    {
+      "id": 37,
+      "type": "ShowText|pysssss",
+      "pos": [
+        12996.392803448533,
+        1559.9521150676178
+      ],
+      "size": [
+        463.1311876743548,
+        173.17243615683992
+      ],
+      "flags": {},
+      "order": 13,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 27
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      }
+    },
+    {
+      "id": 38,
+      "type": "SaveAudio",
+      "pos": [
+        13003.822842404237,
+        1168.7443912209503
+      ],
+      "size": [
+        453.9725010116763,
+        112
+      ],
+      "flags": {},
+      "order": 11,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 28
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.35.0",
+        "Node name for S&R": "SaveAudio"
+      },
+      "widgets_values": [
+        "audio/ComfyUI"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "audio/ComfyUI"
+      }
+    },
+    {
+      "id": 34,
+      "type": "ShowText|pysssss",
+      "pos": [
+        13527.41047354656,
+        1168.998575383147
+      ],
+      "size": [
+        140,
+        126
+      ],
+      "flags": {},
+      "order": 15,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 24
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": [
+        "像爱手机一样爱你",
+        "像爱手机一样爱你"
+      ],
+      "widgets_values_named": {
+        "text_0": "像爱手机一样爱你",
+        "text_1": "像爱手机一样爱你"
+      }
+    },
+    {
+      "id": 33,
+      "type": "ShowText|pysssss",
+      "pos": [
+        13703.664676374967,
+        1154.4974595290778
+      ],
+      "size": [
+        420.2728923715622,
+        552.1526148224618
+      ],
+      "flags": {},
+      "order": 14,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 23
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": [
+        "[Verse 1]\n你把手机放在桌边\n屏幕亮了又暗了几遍\n我问你今天最想见谁\n你笑着说答案就在眼前\n\n你记得每个小小细节\n连我爱喝的温度都了解\n人群里面你一眼认出我\n像收藏已久的特别页面\n\n[Pre-Chorus]\n不是一句随口的喜欢\n是每次选择都有我的份\n你把耐心分给我的不安\n把普通日子过得认真\n\n[Chorus]\n我爱你的心像你爱苹果手机二十一 Pro\n每天都想握紧不放手\n不是因为外表多闪烁\n是你让我心跳有了理由\n\n我爱你的心像你爱苹果手机二十一 Pro\n换了多少季节还不够\n你是我舍不得删的温柔\n也是我最想分享的人生以后\n\n[Verse 2]\n你会为我留一盏灯\n会在我沉默时问一声\n不用我把委屈说完整\n你就把拥抱递到我身边\n\n你说未来还很遥远\n那就一步一步走近一点\n从早餐到晚安的每一天\n我都想和你反复体验\n\n[Pre-Chorus]\n不是一时兴起的浪漫\n是风雨里也不松开的手\n你把平凡写成了答案\n让我相信爱真的长久\n\n[Chorus]\n我爱你的心像你爱苹果手机二十一 Pro\n每天都想握紧不放手\n不是因为外表多闪烁\n是你让我心跳有了理由\n\n我爱你的心像你爱苹果手机二十一 Pro\n换了多少季节还不够\n你是我舍不得删的温柔\n也是我最想分享的人生以后\n\n[Bridge]\n如果世界更新了版本\n我还是选最初的那份认真\n你不用完美才值得被爱\n在我这里你永远是满分\n\n[Final Chorus]\n我爱你的心像你爱苹果手机二十一 Pro\n每次想你都清晰依旧\n从今天一直到很久以后\n我想把我的偏爱给你拥有\n\n我爱你的心像你爱苹果手机二十一 Pro\n这份心意不会过期或丢\n你是我最想守护的宇宙\n也是我每次心动的理由\n\n[Outro]\n你问我到底有多爱你\n就像你爱那部手机一样\n不，是比那更多一点\n因为你是我的唯一答案",
+        "[Verse 1]\n你把手机放在桌边\n屏幕亮了又暗了几遍\n我问你今天最想见谁\n你笑着说答案就在眼前\n\n你记得每个小小细节\n连我爱喝的温度都了解\n人群里面你一眼认出我\n像收藏已久的特别页面\n\n[Pre-Chorus]\n不是一句随口的喜欢\n是每次选择都有我的份\n你把耐心分给我的不安\n把普通日子过得认真\n\n[Chorus]\n我爱你的心像你爱苹果手机二十一 Pro\n每天都想握紧不放手\n不是因为外表多闪烁\n是你让我心跳有了理由\n\n我爱你的心像你爱苹果手机二十一 Pro\n换了多少季节还不够\n你是我舍不得删的温柔\n也是我最想分享的人生以后\n\n[Verse 2]\n你会为我留一盏灯\n会在我沉默时问一声\n不用我把委屈说完整\n你就把拥抱递到我身边\n\n你说未来还很遥远\n那就一步一步走近一点\n从早餐到晚安的每一天\n我都想和你反复体验\n\n[Pre-Chorus]\n不是一时兴起的浪漫\n是风雨里也不松开的手\n你把平凡写成了答案\n让我相信爱真的长久\n\n[Chorus]\n我爱你的心像你爱苹果手机二十一 Pro\n每天都想握紧不放手\n不是因为外表多闪烁\n是你让我心跳有了理由\n\n我爱你的心像你爱苹果手机二十一 Pro\n换了多少季节还不够\n你是我舍不得删的温柔\n也是我最想分享的人生以后\n\n[Bridge]\n如果世界更新了版本\n我还是选最初的那份认真\n你不用完美才值得被爱\n在我这里你永远是满分\n\n[Final Chorus]\n我爱你的心像你爱苹果手机二十一 Pro\n每次想你都清晰依旧\n从今天一直到很久以后\n我想把我的偏爱给你拥有\n\n我爱你的心像你爱苹果手机二十一 Pro\n这份心意不会过期或丢\n你是我最想守护的宇宙\n也是我每次心动的理由\n\n[Outro]\n你问我到底有多爱你\n就像你爱那部手机一样\n不，是比那更多一点\n因为你是我的唯一答案"
+      ],
+      "widgets_values_named": {
+        "text_0": "[Verse 1]\n你把手机放在桌边\n屏幕亮了又暗了几遍\n我问你今天最想见谁\n你笑着说答案就在眼前\n\n你记得每个小小细节\n连我爱喝的温度都了解\n人群里面你一眼认出我\n像收藏已久的特别页面\n\n[Pre-Chorus]\n不是一句随口的喜欢\n是每次选择都有我的份\n你把耐心分给我的不安\n把普通日子过得认真\n\n[Chorus]\n我爱你的心像你爱苹果手机二十一 Pro\n每天都想握紧不放手\n不是因为外表多闪烁\n是你让我心跳有了理由\n\n我爱你的心像你爱苹果手机二十一 Pro\n换了多少季节还不够\n你是我舍不得删的温柔\n也是我最想分享的人生以后\n\n[Verse 2]\n你会为我留一盏灯\n会在我沉默时问一声\n不用我把委屈说完整\n你就把拥抱递到我身边\n\n你说未来还很遥远\n那就一步一步走近一点\n从早餐到晚安的每一天\n我都想和你反复体验\n\n[Pre-Chorus]\n不是一时兴起的浪漫\n是风雨里也不松开的手\n你把平凡写成了答案\n让我相信爱真的长久\n\n[Chorus]\n我爱你的心像你爱苹果手机二十一 Pro\n每天都想握紧不放手\n不是因为外表多闪烁\n是你让我心跳有了理由\n\n我爱你的心像你爱苹果手机二十一 Pro\n换了多少季节还不够\n你是我舍不得删的温柔\n也是我最想分享的人生以后\n\n[Bridge]\n如果世界更新了版本\n我还是选最初的那份认真\n你不用完美才值得被爱\n在我这里你永远是满分\n\n[Final Chorus]\n我爱你的心像你爱苹果手机二十一 Pro\n每次想你都清晰依旧\n从今天一直到很久以后\n我想把我的偏爱给你拥有\n\n我爱你的心像你爱苹果手机二十一 Pro\n这份心意不会过期或丢\n你是我最想守护的宇宙\n也是我每次心动的理由\n\n[Outro]\n你问我到底有多爱你\n就像你爱那部手机一样\n不，是比那更多一点\n因为你是我的唯一答案",
+        "text_1": "[Verse 1]\n你把手机放在桌边\n屏幕亮了又暗了几遍\n我问你今天最想见谁\n你笑着说答案就在眼前\n\n你记得每个小小细节\n连我爱喝的温度都了解\n人群里面你一眼认出我\n像收藏已久的特别页面\n\n[Pre-Chorus]\n不是一句随口的喜欢\n是每次选择都有我的份\n你把耐心分给我的不安\n把普通日子过得认真\n\n[Chorus]\n我爱你的心像你爱苹果手机二十一 Pro\n每天都想握紧不放手\n不是因为外表多闪烁\n是你让我心跳有了理由\n\n我爱你的心像你爱苹果手机二十一 Pro\n换了多少季节还不够\n你是我舍不得删的温柔\n也是我最想分享的人生以后\n\n[Verse 2]\n你会为我留一盏灯\n会在我沉默时问一声\n不用我把委屈说完整\n你就把拥抱递到我身边\n\n你说未来还很遥远\n那就一步一步走近一点\n从早餐到晚安的每一天\n我都想和你反复体验\n\n[Pre-Chorus]\n不是一时兴起的浪漫\n是风雨里也不松开的手\n你把平凡写成了答案\n让我相信爱真的长久\n\n[Chorus]\n我爱你的心像你爱苹果手机二十一 Pro\n每天都想握紧不放手\n不是因为外表多闪烁\n是你让我心跳有了理由\n\n我爱你的心像你爱苹果手机二十一 Pro\n换了多少季节还不够\n你是我舍不得删的温柔\n也是我最想分享的人生以后\n\n[Bridge]\n如果世界更新了版本\n我还是选最初的那份认真\n你不用完美才值得被爱\n在我这里你永远是满分\n\n[Final Chorus]\n我爱你的心像你爱苹果手机二十一 Pro\n每次想你都清晰依旧\n从今天一直到很久以后\n我想把我的偏爱给你拥有\n\n我爱你的心像你爱苹果手机二十一 Pro\n这份心意不会过期或丢\n你是我最想守护的宇宙\n也是我每次心动的理由\n\n[Outro]\n你问我到底有多爱你\n就像你爱那部手机一样\n不，是比那更多一点\n因为你是我的唯一答案"
+      }
+    },
+    {
+      "id": 40,
+      "type": "ShowText|pysssss",
+      "pos": [
+        13000.693181896127,
+        2069.601531986581
+      ],
+      "size": [
+        463.39092256408003,
+        126
+      ],
+      "flags": {},
+      "order": 6,
+      "mode": 4,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 29
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      }
+    },
+    {
+      "id": 41,
+      "type": "SaveAudio",
+      "pos": [
+        13007.104680576214,
+        1866.1567392889183
+      ],
+      "size": [
+        453.9725010116763,
+        112
+      ],
+      "flags": {},
+      "order": 5,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 30
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.35.0",
+        "Node name for S&R": "SaveAudio"
+      },
+      "widgets_values": [
+        "audio/ComfyUI"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "audio/ComfyUI"
+      }
+    },
+    {
+      "id": 42,
+      "type": "ShowText|pysssss",
+      "pos": [
+        13530.692311718538,
+        1866.410923451115
+      ],
+      "size": [
+        140,
+        126
+      ],
+      "flags": {},
+      "order": 9,
+      "mode": 4,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 31
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      }
+    },
+    {
+      "id": 43,
+      "type": "ShowText|pysssss",
+      "pos": [
+        12999.67464162051,
+        2257.3644631355855
+      ],
+      "size": [
+        463.1311876743548,
+        173.17243615683992
+      ],
+      "flags": {},
+      "order": 7,
+      "mode": 4,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 32
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      }
+    },
+    {
+      "id": 44,
+      "type": "ShowText|pysssss",
+      "pos": [
+        13706.946514546944,
+        1851.9098075970458
+      ],
+      "size": [
+        420.2728923715622,
+        552.1526148224618
+      ],
+      "flags": {},
+      "order": 8,
+      "mode": 4,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 33
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      }
+    },
+    {
+      "id": 46,
+      "type": "ShowText|pysssss",
+      "pos": [
+        13352.999478729102,
+        2937.025282028187
+      ],
+      "size": [
+        463.39092256408003,
+        126
+      ],
+      "flags": {},
+      "order": 17,
+      "mode": 4,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 34
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      }
+    },
+    {
+      "id": 47,
+      "type": "SaveAudio",
+      "pos": [
+        13359.410977409188,
+        2733.5804893305244
+      ],
+      "size": [
+        453.9725010116763,
+        112
+      ],
+      "flags": {},
+      "order": 16,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 35
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.35.0",
+        "Node name for S&R": "SaveAudio"
+      },
+      "widgets_values": [
+        "audio/ComfyUI"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "audio/ComfyUI"
+      }
+    },
+    {
+      "id": 48,
+      "type": "ShowText|pysssss",
+      "pos": [
+        13351.980938453484,
+        3124.7882131771917
+      ],
+      "size": [
+        463.1311876743548,
+        173.17243615683992
+      ],
+      "flags": {},
+      "order": 18,
+      "mode": 4,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 36
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      }
+    },
+    {
+      "id": 49,
+      "type": "ShowText|pysssss",
+      "pos": [
+        13882.998608551512,
+        2733.834673492721
+      ],
+      "size": [
+        140,
+        126
+      ],
+      "flags": {},
+      "order": 20,
+      "mode": 4,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 37
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      }
+    },
+    {
+      "id": 50,
+      "type": "ShowText|pysssss",
+      "pos": [
+        14059.252811379918,
+        2719.3335576386517
+      ],
+      "size": [
+        420.2728923715622,
+        552.1526148224618
+      ],
+      "flags": {},
+      "order": 19,
+      "mode": 4,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 38
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      }
+    },
+    {
+      "id": 51,
+      "type": "SynVowApiAudioLoader",
+      "pos": [
+        12580.525252297648,
+        2761.795916331614
+      ],
+      "size": [
+        270,
+        204
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 4,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": null
+        },
+        {
+          "name": "audio_path",
+          "type": "STRING",
+          "links": [
+            39
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "212ae8dcfd3aab1e9d958aa3bd3eb782a8fbded2",
+        "Node name for S&R": "SynVowApiAudioLoader"
+      },
+      "widgets_values": [
+        "1.mp3",
+        0,
+        0,
+        null,
+        null
+      ],
+      "widgets_values_named": {
+        "audio": "1.mp3",
+        "起始秒": 0,
+        "裁剪秒数": 0,
+        "选择文件上传": null
+      }
+    },
+    {
+      "id": 54,
+      "type": "ShowText|pysssss",
+      "pos": [
+        13356.601520011713,
+        3757.56990577685
+      ],
+      "size": [
+        463.39092256408003,
+        126
+      ],
+      "flags": {},
+      "order": 22,
+      "mode": 4,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 40
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      }
+    },
+    {
+      "id": 55,
+      "type": "SaveAudio",
+      "pos": [
+        13363.0130186918,
+        3554.1251130791875
+      ],
+      "size": [
+        453.9725010116763,
+        112
+      ],
+      "flags": {},
+      "order": 21,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "link": 41
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfy-core",
+        "ver": "0.35.0",
+        "Node name for S&R": "SaveAudio"
+      },
+      "widgets_values": [
+        "audio/ComfyUI"
+      ],
+      "widgets_values_named": {
+        "filename_prefix": "audio/ComfyUI"
+      }
+    },
+    {
+      "id": 56,
+      "type": "ShowText|pysssss",
+      "pos": [
+        13355.582979736095,
+        3945.3328369258547
+      ],
+      "size": [
+        463.1311876743548,
+        173.17243615683992
+      ],
+      "flags": {},
+      "order": 23,
+      "mode": 4,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 42
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      }
+    },
+    {
+      "id": 57,
+      "type": "ShowText|pysssss",
+      "pos": [
+        13886.600649834123,
+        3554.379297241384
+      ],
+      "size": [
+        140,
+        126
+      ],
+      "flags": {},
+      "order": 25,
+      "mode": 4,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 43
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      }
+    },
+    {
+      "id": 58,
+      "type": "ShowText|pysssss",
+      "pos": [
+        14062.854852662529,
+        3539.8781813873147
+      ],
+      "size": [
+        420.2728923715622,
+        552.1526148224618
+      ],
+      "flags": {},
+      "order": 24,
+      "mode": 4,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 44
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      }
+    },
+    {
+      "id": 45,
+      "type": "SynVowSuno6",
+      "pos": [
+        12903.171238772933,
+        2743.4655778877172
+      ],
+      "size": [
+        400,
+        500
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "audio_path",
+          "shape": 7,
+          "type": "STRING",
+          "link": 39
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            35
+          ]
+        },
+        {
+          "name": "audio_path",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            34
+          ]
+        },
+        {
+          "name": "audio_url",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            36
+          ]
+        },
+        {
+          "name": "lyrics",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            38
+          ]
+        },
+        {
+          "name": "title",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            37
+          ]
+        },
+        {
+          "name": "task_info",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "212ae8dcfd3aab1e9d958aa3bd3eb782a8fbded2",
+        "Node name for S&R": "SynVowSuno6"
+      },
+      "widgets_values": [
+        "翻唱",
+        "灵感",
+        "v6",
+        false,
+        "自动",
+        0,
+        0,
+        0,
+        1,
+        0,
+        "",
+        "",
+        "",
+        "一首爱你的心如你爱苹果手机21pro",
+        855001008,
+        "",
+        "",
+        ""
+      ],
+      "widgets_values_named": {
+        "task_kind": "翻唱",
+        "mode": "灵感",
+        "version": "v6",
+        "instrumental": false,
+        "vocal_gender": "自动",
+        "style_weight": 0,
+        "weirdness": 0,
+        "audio_weight": 0,
+        "continue_at": 1,
+        "duration": 0,
+        "title": "",
+        "tags": "",
+        "negative_tags": "",
+        "prompt": "一首爱你的心如你爱苹果手机21pro",
+        "seed": 855001008,
+        "control_after_generate": "",
+        "filename": "",
+        "save_path": ""
+      }
+    },
+    {
+      "id": 39,
+      "type": "SynVowSuno6",
+      "pos": [
+        12550.864941939959,
+        1876.0418278461116
+      ],
+      "size": [
+        400,
+        656
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "audio_path",
+          "shape": 7,
+          "type": "STRING",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            30
+          ]
+        },
+        {
+          "name": "audio_path",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            29
+          ]
+        },
+        {
+          "name": "audio_url",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            32
+          ]
+        },
+        {
+          "name": "lyrics",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            33
+          ]
+        },
+        {
+          "name": "title",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            31
+          ]
+        },
+        {
+          "name": "task_info",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "212ae8dcfd3aab1e9d958aa3bd3eb782a8fbded2",
+        "Node name for S&R": "SynVowSuno6"
+      },
+      "widgets_values": [
+        "生成音乐",
+        "自定义",
+        "v6",
+        false,
+        "自动",
+        0,
+        0,
+        0,
+        1,
+        0,
+        "",
+        "",
+        "",
+        "一首爱你的心如你爱苹果手机21pro",
+        855001008,
+        "",
+        "",
+        ""
+      ],
+      "widgets_values_named": {
+        "task_kind": "生成音乐",
+        "mode": "自定义",
+        "version": "v6",
+        "instrumental": false,
+        "vocal_gender": "自动",
+        "style_weight": 0,
+        "weirdness": 0,
+        "audio_weight": 0,
+        "continue_at": 1,
+        "duration": 0,
+        "title": "",
+        "tags": "",
+        "negative_tags": "",
+        "prompt": "一首爱你的心如你爱苹果手机21pro",
+        "seed": 855001008,
+        "control_after_generate": "",
+        "filename": "",
+        "save_path": ""
+      }
+    },
+    {
+      "id": 52,
+      "type": "SynVowApiAudioLoader",
+      "pos": [
+        12583.341086310977,
+        3573.6922601181914
+      ],
+      "size": [
+        270,
+        204
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 4,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": null
+        },
+        {
+          "name": "audio_path",
+          "type": "STRING",
+          "links": [
+            46
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "212ae8dcfd3aab1e9d958aa3bd3eb782a8fbded2",
+        "Node name for S&R": "SynVowApiAudioLoader"
+      },
+      "widgets_values": [
+        "1.mp3",
+        0,
+        0,
+        null,
+        null
+      ],
+      "widgets_values_named": {
+        "audio": "1.mp3",
+        "起始秒": 0,
+        "裁剪秒数": 0,
+        "选择文件上传": null
+      }
+    },
+    {
+      "id": 53,
+      "type": "SynVowSuno6",
+      "pos": [
+        12894.83480272173,
+        3551.8018608015664
+      ],
+      "size": [
+        330.97100175715786,
+        656
+      ],
+      "flags": {},
+      "order": 10,
+      "mode": 4,
+      "inputs": [
+        {
+          "name": "audio_path",
+          "shape": 7,
+          "type": "STRING",
+          "link": 46
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            41
+          ]
+        },
+        {
+          "name": "audio_path",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            40
+          ]
+        },
+        {
+          "name": "audio_url",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            42
+          ]
+        },
+        {
+          "name": "lyrics",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            44
+          ]
+        },
+        {
+          "name": "title",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            43
+          ]
+        },
+        {
+          "name": "task_info",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "212ae8dcfd3aab1e9d958aa3bd3eb782a8fbded2",
+        "Node name for S&R": "SynVowSuno6"
+      },
+      "widgets_values": [
+        "延长",
+        "灵感",
+        "v6",
+        false,
+        "自动",
+        0,
+        0,
+        0,
+        1,
+        0,
+        "",
+        "",
+        "",
+        "一首爱你的心如你爱苹果手机21pro",
+        855001015,
+        "randomize",
+        "",
+        ""
+      ],
+      "widgets_values_named": {
+        "task_kind": "延长",
+        "mode": "灵感",
+        "version": "v6",
+        "instrumental": false,
+        "vocal_gender": "自动",
+        "style_weight": 0,
+        "weirdness": 0,
+        "audio_weight": 0,
+        "continue_at": 1,
+        "duration": 0,
+        "title": "",
+        "tags": "",
+        "negative_tags": "",
+        "prompt": "一首爱你的心如你爱苹果手机21pro",
+        "seed": 855001015,
+        "control_after_generate": "randomize",
+        "filename": "",
+        "save_path": ""
+      }
+    },
+    {
+      "id": 24,
+      "type": "SynVowSuno6",
+      "pos": [
+        12547.583103767982,
+        1178.6294797781436
+      ],
+      "size": [
+        400,
+        500
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "audio_path",
+          "shape": 7,
+          "type": "STRING",
+          "link": null
+        }
+      ],
+      "outputs": [
+        {
+          "name": "audio",
+          "type": "AUDIO",
+          "links": [
+            28
+          ]
+        },
+        {
+          "name": "audio_path",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            18
+          ]
+        },
+        {
+          "name": "audio_url",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            27
+          ]
+        },
+        {
+          "name": "lyrics",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            23
+          ]
+        },
+        {
+          "name": "title",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            24
+          ]
+        },
+        {
+          "name": "task_info",
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "212ae8dcfd3aab1e9d958aa3bd3eb782a8fbded2",
+        "Node name for S&R": "SynVowSuno6"
+      },
+      "widgets_values": [
+        "生成音乐",
+        "灵感",
+        "v6",
+        false,
+        "自动",
+        0,
+        0,
+        0,
+        1,
+        0,
+        "",
+        "",
+        "",
+        "一首爱你的心如你爱苹果手机21pro",
+        855001008,
+        "",
+        "",
+        ""
+      ],
+      "widgets_values_named": {
+        "task_kind": "生成音乐",
+        "mode": "灵感",
+        "version": "v6",
+        "instrumental": false,
+        "vocal_gender": "自动",
+        "style_weight": 0,
+        "weirdness": 0,
+        "audio_weight": 0,
+        "continue_at": 1,
+        "duration": 0,
+        "title": "",
+        "tags": "",
+        "negative_tags": "",
+        "prompt": "一首爱你的心如你爱苹果手机21pro",
+        "seed": 855001008,
+        "control_after_generate": "",
+        "filename": "",
+        "save_path": ""
+      }
+    }
+  ],
+  "links": [
+    [
+      18,
+      24,
+      1,
+      27,
+      0,
+      "STRING"
+    ],
+    [
+      23,
+      24,
+      3,
+      33,
+      0,
+      "STRING"
+    ],
+    [
+      24,
+      24,
+      4,
+      34,
+      0,
+      "STRING"
+    ],
+    [
+      27,
+      24,
+      2,
+      37,
+      0,
+      "STRING"
+    ],
+    [
+      28,
+      24,
+      0,
+      38,
+      0,
+      "AUDIO"
+    ],
+    [
+      29,
+      39,
+      1,
+      40,
+      0,
+      "STRING"
+    ],
+    [
+      30,
+      39,
+      0,
+      41,
+      0,
+      "AUDIO"
+    ],
+    [
+      31,
+      39,
+      4,
+      42,
+      0,
+      "STRING"
+    ],
+    [
+      32,
+      39,
+      2,
+      43,
+      0,
+      "STRING"
+    ],
+    [
+      33,
+      39,
+      3,
+      44,
+      0,
+      "STRING"
+    ],
+    [
+      34,
+      45,
+      1,
+      46,
+      0,
+      "STRING"
+    ],
+    [
+      35,
+      45,
+      0,
+      47,
+      0,
+      "AUDIO"
+    ],
+    [
+      36,
+      45,
+      2,
+      48,
+      0,
+      "STRING"
+    ],
+    [
+      37,
+      45,
+      4,
+      49,
+      0,
+      "STRING"
+    ],
+    [
+      38,
+      45,
+      3,
+      50,
+      0,
+      "STRING"
+    ],
+    [
+      39,
+      51,
+      1,
+      45,
+      0,
+      "STRING"
+    ],
+    [
+      40,
+      53,
+      1,
+      54,
+      0,
+      "STRING"
+    ],
+    [
+      41,
+      53,
+      0,
+      55,
+      0,
+      "AUDIO"
+    ],
+    [
+      42,
+      53,
+      2,
+      56,
+      0,
+      "STRING"
+    ],
+    [
+      43,
+      53,
+      4,
+      57,
+      0,
+      "STRING"
+    ],
+    [
+      44,
+      53,
+      3,
+      58,
+      0,
+      "STRING"
+    ],
+    [
+      46,
+      52,
+      1,
+      53,
+      0,
+      "STRING"
+    ]
+  ],
+  "groups": [
+    {
+      "id": 1,
+      "title": "灵感",
+      "bounding": [
+        12537.583103767982,
+        1084.4974595290778,
+        1596.3544649785472,
+        658.6270916953799
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    },
+    {
+      "id": 2,
+      "title": "自定义",
+      "bounding": [
+        12540.864941939959,
+        1781.9098075970458,
+        1629.275526379026,
+        777.6493906048061
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    },
+    {
+      "id": 3,
+      "title": "翻唱",
+      "bounding": [
+        12554.717403682616,
+        2627.048531459865,
+        1959.3724766522937,
+        781.827833013328
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    },
+    {
+      "id": 4,
+      "title": "延长",
+      "bounding": [
+        12558.319444965227,
+        3447.593155208528,
+        1959.3724766522937,
+        781.827833013328
+      ],
+      "color": "#3f789e",
+      "flags": {}
+    }
+  ],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 0.5394221536014426,
+      "offset": [
+        -11614.013153082797,
+        -692.7701492994076
+      ]
+    },
+    "frontendVersion": "1.51.10",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4,
+  "seed_widgets": {
+    "24": 14,
+    "39": 14,
+    "45": 14,
+    "53": 14
+  }
+}
