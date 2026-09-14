@@ -72,6 +72,13 @@ const GPT_ASPECTS = [
 const GPT_WD_ASPECTS = [
     "auto", "1:1", "16:9", "9:16", "4:3", "3:4", "3:2", "2:3", "5:4", "4:5", "21:9",
 ];
+const N2_ULTRA = ["1:4", "4:1", "1:8", "8:1"];
+const N2_ASPECTS = [
+    "auto", "1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16", "5:4", "4:5", "21:9", ...N2_ULTRA,
+];
+const NPRO_ASPECTS = [
+    "auto", "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9",
+];
 
 function widget(node, name) {
     return node.widgets?.find(w => w.name === name);
@@ -167,6 +174,15 @@ function bindWidgetOptions(node) {
             setHidden(widget(node, "gpt_style"), !showStyle);
             setHidden(qW, !showQuality);
             setHidden(widget(node, "transparent"), !(showStyle && !lock1k && !wd));
+        });
+        return;
+    }
+    if (t.startsWith("SynVowNanoBanana")) {
+        bindByModel(node, "model_type", v => {
+            const pro = /pro/i.test(v);
+            const noUltra = v.includes("lite-2607");
+            const opts = pro ? NPRO_ASPECTS : noUltra ? N2_ASPECTS.filter(r => !N2_ULTRA.includes(r)) : N2_ASPECTS;
+            setCombo(widget(node, "aspect_ratio"), opts, "1:1");
         });
         return;
     }

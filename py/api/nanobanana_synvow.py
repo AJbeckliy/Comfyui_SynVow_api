@@ -48,27 +48,50 @@ def _tensor_to_pil(image_tensor):
     return Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
 
 
-_ASPECT_RATIOS = [
-    "auto", "1:1", "16:9", "9:16", "4:3", "3:4", "4:5", "5:4",
-    "2:3", "3:2", "21:9", "1:4", "4:1", "1:8", "8:1",
+_N2_ULTRA = ("1:4", "4:1", "1:8", "8:1")
+_N2_ASPECTS = [
+    "auto", "1:1", "3:2", "2:3", "4:3", "3:4", "16:9", "9:16", "5:4", "4:5", "21:9",
+    *_N2_ULTRA,
 ]
+_NPRO_ASPECTS = [
+    "auto", "1:1", "2:3", "3:2", "3:4", "4:3", "4:5", "5:4", "9:16", "16:9", "21:9",
+]
+_ASPECT_RATIOS = _N2_ASPECTS
 
 
-def _find_closest_aspect_ratio(width, height):
-    _ratios = {
-        "1:1": (1,1), "16:9": (16,9), "9:16": (9,16), "4:3": (4,3), "3:4": (3,4),
-        "4:5": (4,5), "5:4": (5,4), "2:3": (2,3), "3:2": (3,2), "21:9": (21,9),
-        "1:4": (1,4), "4:1": (4,1), "1:8": (1,8), "8:1": (8,1),
-    }
+def _aspects_of(model):
+    m = str(model or "")
+    if "pro" in m.lower():
+        return _NPRO_ASPECTS
+    if "lite-2607" in m:
+        return [r for r in _N2_ASPECTS if r not in _N2_ULTRA]
+    return _N2_ASPECTS
+
+
+def _find_closest_aspect_ratio(width, height, model):
     input_ratio = width / height
     best_match = "1:1"
     min_diff = float("inf")
-    for name, (w, h) in _ratios.items():
-        diff = abs(input_ratio - w / h)
+    for name in _aspects_of(model):
+        if name == "auto" or ":" not in name:
+            continue
+        w, h = name.split(":", 1)
+        diff = abs(input_ratio - int(w) / int(h))
         if diff < min_diff:
             min_diff = diff
             best_match = name
     return best_match
+
+
+def _resolve_aspect(model, aspect_ratio, image_tensor=None):
+    aspect_ratio = aspect_ratio or "1:1"
+    if aspect_ratio == "auto":
+        if image_tensor is not None:
+            pil0 = _tensor_to_pil(image_tensor)
+            return _find_closest_aspect_ratio(pil0.width, pil0.height, model)
+        return "1:1"
+    allowed = _aspects_of(model)
+    return aspect_ratio if aspect_ratio in allowed else "1:1"
 
 
 _MODERN_MODELS = {
@@ -220,11 +243,7 @@ class SynVowNanoBanana:
         api_key = synvow_auth.read_api_key()
 
         imgs = [t for t in [image1, image2, image3, image4, image5, image6, image7, image8, image9] if t is not None]
-        if aspect_ratio == "auto" and imgs:
-            pil0 = _tensor_to_pil(imgs[0])
-            aspect_ratio = _find_closest_aspect_ratio(pil0.width, pil0.height)
-        elif aspect_ratio == "auto":
-            aspect_ratio = "1:1"
+        aspect_ratio = _resolve_aspect(model_type, aspect_ratio, imgs[0] if imgs else None)
         is_img2img = len(imgs) > 0
 
         p = str(prompt).strip() if prompt else ""
@@ -286,11 +305,7 @@ class SynVowNanoBanana_TBatch:
         api_key = synvow_auth.read_api_key()
 
         imgs = [t for t in [image1, image2, image3, image4, image5, image6, image7, image8, image9] if t is not None]
-        if aspect_ratio == "auto" and imgs:
-            pil0 = _tensor_to_pil(imgs[0])
-            aspect_ratio = _find_closest_aspect_ratio(pil0.width, pil0.height)
-        elif aspect_ratio == "auto":
-            aspect_ratio = "1:1"
+        aspect_ratio = _resolve_aspect(model_type, aspect_ratio, imgs[0] if imgs else None)
         is_img2img = len(imgs) > 0
 
         prompts = prompts_list if isinstance(prompts_list, list) else ([prompts_list] if prompts_list else [""])
@@ -358,14 +373,10 @@ class SynVowNanoBanana_IBatch:
                      images_list5 if images_list5 is not None else []]
         batch_size = max(len(lst) for lst in all_lists)
 
-        if aspect_ratio == "auto":
-            first_nonempty = next((lst for lst in all_lists if lst), None)
-            if first_nonempty:
-                pil0 = _tensor_to_pil(first_nonempty[0])
-                aspect_ratio = _find_closest_aspect_ratio(pil0.width, pil0.height)
-            else:
-                aspect_ratio = "1:1"
-
+        aspect_ratio = _resolve_aspect(
+            model_type, aspect_ratio,
+            next((lst[0] for lst in all_lists if lst), None),
+        )
         print(f"[NanoBanana IBatch] {batch_size} 组图, model={model_type}")
 
         tasks = []
@@ -440,14 +451,10 @@ class SynVowNanoBanana_TIBatch:
                      images_list5 if images_list5 is not None else []]
         batch_size = max(len(lst) for lst in all_lists)
 
-        if aspect_ratio == "auto":
-            first_nonempty = next((lst for lst in all_lists if lst), None)
-            if first_nonempty:
-                pil0 = _tensor_to_pil(first_nonempty[0])
-                aspect_ratio = _find_closest_aspect_ratio(pil0.width, pil0.height)
-            else:
-                aspect_ratio = "1:1"
-
+        aspect_ratio = _resolve_aspect(
+            model_type, aspect_ratio,
+            next((lst[0] for lst in all_lists if lst), None),
+        )
         prompts = [p for p in (prompts_list if isinstance(prompts_list, list) else ([prompts_list] if prompts_list else [])) if p is not None]
         if not prompts:
             prompts = [""]

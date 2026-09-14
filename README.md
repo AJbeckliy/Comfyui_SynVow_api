@@ -6,6 +6,10 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 ## Changelog
 
+### 2026-09-14
+- **Image nodes**
+  - `SynVow NanoBanana` (including batch) updates aspect ratio options
+
 ### 2026-09-12
 - **Audio nodes**
   - `SynVow Suno` adds the suno6 model; supports generate / cover / extend
