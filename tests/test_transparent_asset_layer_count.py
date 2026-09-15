@@ -107,6 +107,44 @@ class TransparentAssetLayerCountTests(unittest.TestCase):
         self.assertTrue(all(200 <= len(prompt) <= 500 for prompt in result[0]))
         chat_completion.assert_called_once()
 
+    @mock.patch.object(generator, "image_to_data_urls", return_value=["https://example.test/source.png"])
+    @mock.patch.object(generator, "chat_completion")
+    def test_split_mode_ignores_style_reference_image(self, chat_completion, image_to_data_urls):
+        chat_completion.return_value = json.dumps({
+            "source_image_description": "visible source",
+            "slots": [
+                {
+                    "slot_id": "background",
+                    "visible_content": "background",
+                    "bbox_normalized": [0, 0, 1, 1],
+                    "regions": [],
+                },
+                {
+                    "slot_id": "subject_product",
+                    "visible_content": "subject",
+                    "bbox_normalized": [0.2, 0.2, 0.8, 0.8],
+                    "regions": [],
+                },
+            ],
+        })
+        reference = torch.zeros((1, 100, 80, 3), dtype=torch.float32)
+        result = generator.SynVowTransparentAssetPromptGenerator().generate(
+            scene_preset="参考图分层拆图",
+            planner_mode="自动规划(LLM)",
+            asset_count="2",
+            layer_count="2",
+            custom_prompt="",
+            llm_model="mock-model",
+            seed=1,
+            product_or_reference_image=reference,
+            style_reference_image=reference,
+        )
+
+        plan = json.loads(result[1])
+        image_to_data_urls.assert_called_once_with(reference)
+        self.assertFalse(plan["style_reference_image_used"])
+        self.assertEqual(plan["style_prompt_source"], "none_for_reference_layer_split")
+
     @mock.patch.object(generator, "chat_completion")
     def test_split_rule_mode_uses_layer_count_without_llm(self, chat_completion):
         result = generator.SynVowTransparentAssetPromptGenerator().generate(

@@ -1360,6 +1360,8 @@ class SynVowTransparentAssetPromptGenerator:
         llm_model = _unpack(llm_model) or _default_planner_model(fetch_models())
         product_or_reference_image = _unpack(product_or_reference_image)
         style_reference_image = _unpack(style_reference_image)
+        if scene == LAYOUT_SPLIT_SCENE:
+            style_reference_image = None
         style_pass_through = style_reference_image is not None
         style_strength, complexity = _auto_style_controls(scene)
 
