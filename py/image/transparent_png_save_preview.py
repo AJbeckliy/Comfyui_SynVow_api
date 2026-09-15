@@ -204,7 +204,9 @@ def _layer_records_from_plan(value, count: int) -> List[dict]:
         data = json.loads(raw)
     except json.JSONDecodeError:
         return [{} for _ in range(count)]
-    source = data.get("layers") if isinstance(data, dict) and isinstance(data.get("layers"), list) else data.get("items", [])
+    if not isinstance(data, dict):
+        return [{} for _ in range(count)]
+    source = data.get("layers") if isinstance(data.get("layers"), list) else data.get("items", [])
     source = source if isinstance(source, list) else []
     return [source[index] if index < len(source) and isinstance(source[index], dict) else {} for index in range(count)]
 

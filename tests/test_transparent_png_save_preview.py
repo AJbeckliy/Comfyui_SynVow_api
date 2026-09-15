@@ -199,6 +199,12 @@ class TransparentPngSavePreviewTests(unittest.TestCase):
         self.assertEqual(normalized[0].getchannel("A").getextrema(), (255, 255))
         self.assertEqual(transparent_save._alpha_content_bbox(normalized[1]), (19, 80, 77, 140))
 
+    def test_non_object_layer_plan_falls_back_to_empty_records(self):
+        self.assertEqual(
+            transparent_save._layer_records_from_plan('[{"name": "背景层"}]', 2),
+            [{}, {}],
+        )
+
     def test_photo_like_light_gradient_is_not_repaired_as_checkerboard(self):
         width = height = 128
         gradient = np.tile(np.linspace(185, 255, width, dtype=np.uint8), (height, 1))
