@@ -245,8 +245,8 @@ def chat_completion(
     presence_penalty: float = 0.0,
     frequency_penalty: float = 0.0,
     reasoning_effort: Optional[str] = None,
-    seed: Optional[int] = None,
     timeout: int = 180,
+    seed: Optional[int] = None,
 ) -> str:
     # Several prompt nodes use seed as a ComfyUI execution/cache salt. Keep it
     # out of the provider payload because not every routed model accepts it.
