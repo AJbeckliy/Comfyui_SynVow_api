@@ -96,14 +96,21 @@ function setHidden(obj, hidden) {
 
 function bindByWidgets(node, names, apply) {
     const key = `_svBind_${names.join("_")}`;
-    if (node[key]) return;
+    if (typeof node[key] === "function") {
+        node[key]();
+        return;
+    }
     const ws = names.map(n => widget(node, n));
     if (!ws[0]) return;
-    node[key] = true;
     const run = () => {
         apply();
+        const computed = node.computeSize?.();
+        if (computed && node.size) {
+            node.setSize?.([Math.max(node.size[0], computed[0]), computed[1]]);
+        }
         node.setDirtyCanvas?.(true, true);
     };
+    node[key] = run;
     for (const w of ws) {
         if (!w) continue;
         const prev = w.callback;
@@ -215,8 +222,16 @@ app.registerExtension({
         if (!SYNVOW_NODE_TYPES.has(nodeData.name)) return;
         const orig = nodeType.prototype.onNodeCreated;
         nodeType.prototype.onNodeCreated = function () {
-            orig?.apply(this, arguments);
-            enhanceNode(this);
+            const result = orig?.apply(this, arguments);
+            setTimeout(() => enhanceNode(this), 0);
+            return result;
+        };
+
+        const origConfigure = nodeType.prototype.onConfigure;
+        nodeType.prototype.onConfigure = function () {
+            const result = origConfigure?.apply(this, arguments);
+            setTimeout(() => enhanceNode(this), 0);
+            return result;
         };
     },
 
@@ -229,8 +244,10 @@ app.registerExtension({
     },
 
     afterConfigureGraph() {
-        for (const node of app.graph._nodes || []) {
-            if (SYNVOW_NODE_TYPES.has(node.type)) enhanceNode(node);
-        }
+        setTimeout(() => {
+            for (const node of app.graph._nodes || []) {
+                if (SYNVOW_NODE_TYPES.has(node.type)) enhanceNode(node);
+            }
+        }, 0);
     },
 });

@@ -6,6 +6,14 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 
 ## 更新日志
 
+### 2026-09-15
+- **GPT-Image-2.5 图片分层**
+  - `SynVow GPT-Image-2 Alpha (T_batch)` 新增透明/不透明背景选择、分层质量自动路由和批量失败占位
+  - `SynVow 透明素材提示词生成器` 的参考图分层模式支持2～6层，由LLM规划完整画布坐标并生成精简提示词
+  - `SynVow 透明PNG保存预览` 保留模型返回的RGBA像素，按规划坐标归位；失败槽位使用黑图占位且不中断工作流
+  - 新增 `SynVow PSD图层合成`：将最终PNG写入可编辑PSD，可选加入隐藏原图参考层
+  - 不生成新蒙版，也不把原图像素重新贴回生成图层
+
 ### 2026-09-14
 - **图像节点**
   - `SynVow NanoBanana`（含批量）比例选择更新。
@@ -114,7 +122,7 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 - **新增透明 PNG 素材工作流节点**
   - `SynVow 透明素材提示词生成器`：按场景生成可复用透明素材提示词
   - `SynVow GPT-Image-2 Alpha (T_batch)`：URL 直出透明 PNG 生成（提示词列表批量）
-  - `SynVow 透明PNG保存预览`：按原始 URL 保存 RGBA PNG，保留真实透明通道
+  - `SynVow 透明PNG保存预览`：按原始 URL 保存 RGBA PNG，保留真实透明通道；空 URL 或下载失败时用黑图占位并继续工作流
 
 ### 2026-06-30
 - **代码清理**：删除无用/重复/失效代码，统一逻辑，行为保持不变
@@ -223,7 +231,8 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 | SynVow GPT-Image-2 (T_batch) | gpt-image-2 | 批量文生图 |
 | SynVow GPT-Image-2 (I_batch) | gpt-image-2 | 批量图生图 |
 | SynVow GPT-Image-2 (T_I_batch) | gpt-image-2 | 文生图 + 图生图混合批量 |
-| SynVow GPT-Image-2 Alpha (T_batch) | gpt-image-2 | URL 直出透明 PNG（提示词列表批量） |
+| SynVow GPT-Image-2 Alpha (T_batch) | gpt-image-2 / 2.5 | URL 直出 PNG，可选择透明或不透明背景 |
+| SynVow PSD图层合成 | 本地处理 | 将RGBA PNG合成为带独立像素图层的PSD文件 |
 | SynVow GPT-Image-2 产品六合一 | gpt-image-2 | 产品精修 / 融入场景 / 高清 / 移除 / 光效 / 扩图 |
 
 ### 💫SynVow_api/api/视频
