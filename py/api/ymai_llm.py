@@ -246,7 +246,11 @@ def chat_completion(
     frequency_penalty: float = 0.0,
     reasoning_effort: Optional[str] = None,
     timeout: int = 180,
+    seed: Optional[int] = None,
 ) -> str:
+    # Several prompt nodes use seed as a ComfyUI execution/cache salt. Keep it
+    # out of the provider payload because not every routed model accepts it.
+    del seed
     payload: Dict[str, Any] = {
         "model": resolve_model(model),
         "messages": build_messages(system_prompt, user_prompt, image_urls),

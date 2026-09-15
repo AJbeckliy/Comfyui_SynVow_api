@@ -6,6 +6,14 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 ## Changelog
 
+### 2026-09-15
+- **GPT-Image-2.5 layer splitting**
+  - `SynVow GPT-Image-2 Alpha (T_batch)` now supports transparent and opaque background selection, automatic layer routing, and batch-failure placeholders
+  - `SynVow 透明素材提示词生成器` now supports 2-6 reference-image layers with LLM-planned full-canvas geometry and compact prompts
+  - `SynVow 透明PNG保存预览` keeps the returned RGBA pixels, aligns layers to the planned coordinates, and saves failed slots as black placeholders without stopping the workflow
+  - Added `SynVow PSD图层合成`: packages the final PNGs into an editable layered PSD with an optional hidden source-reference layer
+  - No new mask is generated and no source pixels are pasted back into generated layers
+
 ### 2026-09-14
 - **Image nodes**
   - `SynVow NanoBanana` (including batch) updates aspect ratio options
@@ -114,7 +122,7 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 - **Added transparent PNG asset workflow nodes**
   - `SynVow 透明素材提示词生成器`: generate reusable transparent-asset prompts by scene
   - `SynVow GPT-Image-2 Alpha (T_batch)`: URL-direct transparent PNG generation (prompt-list batch)
-  - `SynVow 透明PNG保存预览`: save RGBA PNG from the original URL and keep the real alpha channel
+  - `SynVow 透明PNG保存预览`: save RGBA PNG from the original URL and keep the real alpha channel; use a black placeholder and continue when the URL is empty or download fails
 
 ### 2026-06-30
 - **Code cleanup**: removed unused / duplicate / dead code and unified logic without changing behavior
@@ -223,7 +231,8 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 | SynVow GPT-Image-2 (T_batch) | gpt-image-2 | Batch text-to-image |
 | SynVow GPT-Image-2 (I_batch) | gpt-image-2 | Batch image-to-image |
 | SynVow GPT-Image-2 (T_I_batch) | gpt-image-2 | Mixed text-to-image + image-to-image batch |
-| SynVow GPT-Image-2 Alpha (T_batch) | gpt-image-2 | URL-direct transparent PNG (prompt-list batch) |
+| SynVow GPT-Image-2 Alpha (T_batch) | gpt-image-2 / 2.5 | URL-direct PNG with transparent or opaque background selection |
+| SynVow PSD图层合成 | Local | Compose RGBA PNG files into an editable layered PSD |
 | SynVow GPT-Image-2 产品六合一 | gpt-image-2 | Product refine / scene composite / clarity / remove / light effects / outpaint |
 
 ### 💫SynVow_api/api/视频
