@@ -1,4 +1,6 @@
-﻿# Comfyui_SynVow_api
+﻿中文 | [English](README.md)
+
+# Comfyui_SynVow_api
 
 ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视频/音频生成、提示词工具和透明 PNG 素材生成。
 

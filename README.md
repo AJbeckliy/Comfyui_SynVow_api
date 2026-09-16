@@ -1,4 +1,6 @@
-﻿# Comfyui_SynVow_api
+﻿[中文](README_cn.md) | English
+
+# Comfyui_SynVow_api
 
 ComfyUI custom nodes for SynVow integration, including account login, image/video/audio generation, prompt tools, and transparent PNG asset generation.
 
