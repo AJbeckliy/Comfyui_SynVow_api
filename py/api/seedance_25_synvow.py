@@ -13,15 +13,13 @@ from .media_common import (
     upload_media_file,
 )
 
-_API_MODELS = ["doubao-seedance-2.5", "sd2-5-dj"]
+_API_MODELS = ["doubao-seedance-2.5"]
 _DEFAULT_MODEL = "doubao-seedance-2.5"
 _MODELS = combo_models(_API_MODELS)
-_DJ = "sd2-5-dj"
 _RATIOS = ["adaptive", "16:9", "9:16", "4:3", "3:4", "1:1", "21:9"]
-_DJ_RATIOS = ("16:9", "9:16")
 _RESOLUTIONS = ["480p", "720p", "1080p"]
 _DURATIONS = [str(i) for i in range(4, 31)]
-_IMAGE_SLOTS = 12
+_IMAGE_SLOTS = 21
 _TAG = "Seedance25"
 
 
@@ -41,11 +39,8 @@ def _build_body(model, prompt, ratio, duration, resolution, image_urls, video_ur
         "resolution": resolution if resolution in _RESOLUTIONS else "720p",
         "duration": _clamp_duration(duration),
         "generate_audio": bool(generate_audio),
+        "size": ratio if ratio in _RATIOS else "adaptive",
     }
-    if model == _DJ:
-        body["ratio"] = ratio if ratio in _DJ_RATIOS else "16:9"
-    else:
-        body["size"] = ratio if ratio in _RATIOS else "adaptive"
     if image_urls:
         body["image_urls"] = image_urls
     if video_url:

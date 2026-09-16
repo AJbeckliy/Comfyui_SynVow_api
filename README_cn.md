@@ -6,6 +6,15 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 
 ## 更新日志
 
+### 2026-09-17
+- **文本模型**
+  - `SynVow Gemini` 新增 `GM3.7-flash-稳定` / `GM3.8-flash-稳定`，去掉全部 Gemini 2605；去掉 `PT5.5-2605` / `PT5.4-2605`
+- **视频节点**
+  - 删除 `SynVow Seedance2.0 视频生成 (720P)`
+  - `SynVow Seedance` 新增 `sd2.0-特惠版`
+  - `SynVow Seedance 2.5` 去掉 `seedance-2.5-低价`；
+  - `SynVow MiniMax`（文生 / 首尾帧 / 多模态参考）新增 `MiniMax-H3-低价`；
+
 ### 2026-09-15
 - **GPT-Image-2.5 图片分层**
   - `SynVow GPT-Image-2 Alpha (T_batch)` 新增透明/不透明背景选择、分层质量自动路由和批量失败占位

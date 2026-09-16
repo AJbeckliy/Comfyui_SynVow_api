@@ -33,7 +33,7 @@ function recordModelLabel(item) {
 function consumptionResourceKind(modelName) {
     const m = (modelName ?? "").toLowerCase();
     if (/suno|doubao-seed-audio/.test(m)) return "audio";
-    if (/seedance|sd2[-_.]?5|minimax|grok|omni[-_]?flash|veo|youtube|bilibili|douyin|视频号|海螺/.test(m)) return "video";
+    if (/seedance|sd2|minimax|grok|omni[-_]?flash|veo|youtube|bilibili|douyin|视频号|海螺/.test(m)) return "video";
     return "image";
 }
 

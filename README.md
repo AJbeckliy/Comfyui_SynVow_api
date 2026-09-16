@@ -6,6 +6,15 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 ## Changelog
 
+### 2026-09-17
+- **Text models**
+  - `SynVow Gemini` adds `GM3.7-flash-稳定` / `GM3.8-flash-稳定`, and removes all Gemini 2605 models; removes `PT5.5-2605` / `PT5.4-2605`
+- **Video nodes**
+  - Removes `SynVow Seedance2.0 视频生成 (720P)`
+  - `SynVow Seedance` adds `sd2.0-特惠版`
+  - `SynVow Seedance 2.5` removes `seedance-2.5-低价`
+  - `SynVow MiniMax` (text-to-video / first-last frame / multimodal reference) adds `MiniMax-H3-低价`
+
 ### 2026-09-15
 - **GPT-Image-2.5 layer splitting**
   - `SynVow GPT-Image-2 Alpha (T_batch)` now supports transparent and opaque background selection, automatic layer routing, and batch-failure placeholders

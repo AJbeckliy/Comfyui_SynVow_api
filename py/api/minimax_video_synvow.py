@@ -3,6 +3,7 @@
 import json
 
 from . import synvow_auth
+from .model_display import combo_models, pick_model
 from .media_common import (
     download_video,
     is_changed_by_inputs,
@@ -12,7 +13,9 @@ from .media_common import (
     upload_media_file,
 )
 
-_MODEL = "MiniMax-H3"
+_API_MODELS = ["MiniMax-H3", "MiniMax-H3-dj"]
+_MODELS = combo_models(_API_MODELS)
+_DEFAULT_MODEL = "MiniMax-H3"
 _RESOLUTIONS = ["2K", "768P"]
 _DURATIONS = [str(i) for i in range(4, 16)]
 _ASPECT_RATIOS = ["21:9", "16:9", "4:3", "1:1", "3:4", "9:16"]
@@ -40,14 +43,31 @@ def _pick_resolution(raw):
     return raw if raw in _RESOLUTIONS else "2K"
 
 
-def _base_body(prompt, duration, resolution, **extra):
+def _content(prompt, image_roles=None, video_url="", audio_url=""):
+    content = [{"type": "text", "text": prompt}]
+    for item in image_roles or []:
+        content.append({
+            "type": "image_url",
+            "image_url": {"url": item["url"]},
+            "role": item["role"],
+        })
+    if video_url:
+        content.append({"type": "video_url", "video_url": {"url": video_url}, "role": "reference_video"})
+    if audio_url:
+        content.append({"type": "audio_url", "audio_url": {"url": audio_url}, "role": "reference_audio"})
+    return content
+
+
+def _base_body(model, prompt, duration, resolution, ratio=None, image_roles=None, video_url="", audio_url=""):
     body = {
-        "model": _MODEL,
+        "model": model,
         "prompt": prompt,
+        "content": _content(prompt, image_roles, video_url, audio_url),
         "duration": _clamp_duration(duration),
         "resolution": _pick_resolution(resolution),
     }
-    body.update(extra)
+    if ratio is not None:
+        body["ratio"] = ratio
     return body
 
 
@@ -55,17 +75,17 @@ def _generate(build_body, save_path="", filename=""):
     try:
         api_key = synvow_auth.read_api_key()
         body = build_body(api_key)
+        model = body["model"]
         task_id, consumption_id = submit_edit_async(api_key, body, _TAG)
-        url = poll_edit_task(api_key, task_id, _MODEL, _TAG, consumption_id=consumption_id)
+        url = poll_edit_task(api_key, task_id, model, _TAG, consumption_id=consumption_id)
         path = download_video(url, task_id, save_path, prefix="minimax", filename=filename) or ""
-        result = path, url, json.dumps({
+        return path, url, json.dumps({
             "status": "SUCCESS",
             "task_id": task_id,
-            "model": _MODEL,
+            "model": model,
             "video_url": url,
             "video_path": path,
         }, ensure_ascii=False)
-        return result
     finally:
         synvow_auth.refresh_balance()
 
@@ -86,6 +106,7 @@ class SynVowMiniMaxTextToVideo(_MiniMaxNode):
         return {
             "required": {
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
+                "model": (_MODELS, {"default": _MODELS[0]}),
                 "aspect_ratio": (_ASPECT_RATIOS, {"default": "16:9"}),
                 "duration": (_DURATIONS, {"default": "5"}),
                 "resolution": (_RESOLUTIONS, {"default": "2K"}),
@@ -93,11 +114,12 @@ class SynVowMiniMaxTextToVideo(_MiniMaxNode):
             "optional": dict(_OPTIONAL_SAVE),
         }
 
-    def generate_video(self, prompt, aspect_ratio, duration, resolution="2K", filename="", save_path=""):
+    def generate_video(self, prompt, model, aspect_ratio, duration, resolution="2K", filename="", save_path=""):
+        model = pick_model(model, _API_MODELS, _DEFAULT_MODEL)
         return _generate(
             lambda _api_key: _base_body(
-                prompt, duration, resolution,
-                aspect_ratio=_pick_ratio(aspect_ratio, _ASPECT_RATIOS, "16:9"),
+                model, prompt, duration, resolution,
+                ratio=_pick_ratio(aspect_ratio, _ASPECT_RATIOS, "16:9"),
             ),
             save_path, filename,
         )
@@ -111,6 +133,7 @@ class SynVowMiniMaxFirstLastFrame(_MiniMaxNode):
         return {
             "required": {
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
+                "model": (_MODELS, {"default": _MODELS[0]}),
                 "duration": (_DURATIONS, {"default": "5"}),
                 "resolution": (_RESOLUTIONS, {"default": "2K"}),
             },
@@ -121,8 +144,10 @@ class SynVowMiniMaxFirstLastFrame(_MiniMaxNode):
             },
         }
 
-    def generate_video(self, prompt, duration, resolution="2K", first_frame=None, last_frame=None,
+    def generate_video(self, prompt, model, duration, resolution="2K", first_frame=None, last_frame=None,
                        filename="", save_path=""):
+        model = pick_model(model, _API_MODELS, _DEFAULT_MODEL)
+
         def build(api_key):
             roles = []
             if first_frame is not None:
@@ -131,7 +156,7 @@ class SynVowMiniMaxFirstLastFrame(_MiniMaxNode):
                 roles.append({"url": upload_image(api_key, last_frame), "role": "last_frame"})
             if not roles:
                 raise ValueError("请至少传入首帧或末帧图像")
-            return _base_body(prompt, duration, resolution, image_with_roles=roles)
+            return _base_body(model, prompt, duration, resolution, image_roles=roles)
 
         return _generate(build, save_path, filename)
 
@@ -144,6 +169,7 @@ class SynVowMiniMaxReferenceToVideo(_MiniMaxNode):
         return {
             "required": {
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
+                "model": (_MODELS, {"default": _MODELS[0]}),
                 "aspect_ratio": (_R2V_ASPECT_RATIOS, {"default": "adaptive"}),
                 "duration": (_DURATIONS, {"default": "5"}),
                 "resolution": (_RESOLUTIONS, {"default": "2K"}),
@@ -157,22 +183,24 @@ class SynVowMiniMaxReferenceToVideo(_MiniMaxNode):
             },
         }
 
-    def generate_video(self, prompt, aspect_ratio, duration, resolution="2K", image_1=None, image_2=None,
+    def generate_video(self, prompt, model, aspect_ratio, duration, resolution="2K", image_1=None, image_2=None,
                        video_path="", audio_path="", filename="", save_path=""):
+        model = pick_model(model, _API_MODELS, _DEFAULT_MODEL)
+
         def build(api_key):
             image_urls = [upload_image(api_key, image) for image in (image_1, image_2) if image is not None]
             video_url = upload_media_file(api_key, video_path, "video") if video_path else ""
             audio_url = upload_media_file(api_key, audio_path, "audio") if audio_path else ""
             if not image_urls and not video_url and not audio_url:
                 raise ValueError("请至少传入图像、视频或音频之一")
-            extra = {"aspect_ratio": _pick_ratio(aspect_ratio, _R2V_ASPECT_RATIOS, "adaptive")}
-            if image_urls:
-                extra["image_urls"] = image_urls
-            if video_url:
-                extra["video_urls"] = [video_url]
-            if audio_url:
-                extra["audio_urls"] = [audio_url]
-            return _base_body(prompt, duration, resolution, **extra)
+            roles = [{"url": url, "role": "reference_image"} for url in image_urls]
+            return _base_body(
+                model, prompt, duration, resolution,
+                ratio=_pick_ratio(aspect_ratio, _R2V_ASPECT_RATIOS, "adaptive"),
+                image_roles=roles,
+                video_url=video_url,
+                audio_url=audio_url,
+            )
 
         return _generate(build, save_path, filename)
 

@@ -19,13 +19,15 @@ _API_MODELS = [
     "seedance-2.0-mini",
     "seedance-2.0",
     "seedance-2.0-fast",
+    "sd2.0-dj",
 ]
 _MODELS = combo_models(_API_MODELS)
 _DEFAULT_MODEL = "seedance-2.0-mini"
 _RATIOS = ["adaptive", "16:9", "9:16", "4:3", "3:4", "1:1", "21:9"]
 _DURATIONS = [str(i) for i in range(4, 16)]
 _RESOLUTIONS = ["480p", "720p", "1080p"]
-_SUPPORT_1080 = {"seedance-2.0"}
+_DJ_MODEL = "sd2.0-dj"
+_DJ_RATIOS = ["16:9", "9:16"]
 _TAG = "Seedance"
 
 
@@ -37,15 +39,9 @@ def _clamp_duration(raw):
     return max(4, min(15, n))
 
 
-def _coerce_model_for_1080(model):
-    if model in _SUPPORT_1080:
-        return model
-    return "seedance-2.0"
-
-
 def _normalize_resolution(model, resolution):
     res = resolution if resolution in _RESOLUTIONS else "720p"
-    if res == "1080p" and model not in _SUPPORT_1080:
+    if res == "1080p" and model != "seedance-2.0":
         return "720p"
     return res
 
@@ -57,25 +53,38 @@ def _collect_refs(api_key, image_tensors, video_path, audio_path):
     return image_urls, video_url, audio_url
 
 
-def _build_body(model, prompt, ratio, duration, resolution, with_audio,
-                image_urls, video_url, audio_url):
-    duration_n = _clamp_duration(duration)
-    if resolution == "1080p":
-        model = _coerce_model_for_1080(model)
-    body = {
-        "model": model,
-        "prompt": prompt,
-        "aspect_ratio": ratio or "adaptive",
-        "duration": duration_n,
-        "resolution": _normalize_resolution(model, resolution),
-        "with_audio": bool(with_audio),
-    }
+def _put_refs(body, image_urls, video_url, audio_url, plural_av):
     if image_urls:
         body["image_urls"] = image_urls[:9]
     if video_url:
-        body["video_url"] = video_url
+        body["video_urls" if plural_av else "video_url"] = [video_url] if plural_av else video_url
     if audio_url:
-        body["audio_url"] = audio_url
+        body["audio_urls" if plural_av else "audio_url"] = [audio_url] if plural_av else audio_url
+
+
+def _build_body(model, prompt, ratio, duration, resolution, with_audio,
+                image_urls, video_url, audio_url):
+    duration_n = _clamp_duration(duration)
+    resolution = _normalize_resolution(model, resolution)
+    dj = model == _DJ_MODEL
+    if dj:
+        body = {
+            "model": model,
+            "prompt": prompt,
+            "duration": duration_n,
+            "ratio": ratio if ratio in _DJ_RATIOS else _DJ_RATIOS[0],
+            "resolution": resolution,
+        }
+    else:
+        body = {
+            "model": model,
+            "prompt": prompt,
+            "aspect_ratio": ratio or "adaptive",
+            "duration": duration_n,
+            "resolution": resolution,
+            "with_audio": bool(with_audio),
+        }
+    _put_refs(body, image_urls, video_url, audio_url, dj)
     return body
 
 
@@ -87,11 +96,10 @@ def _run_once(api_key, prompt, model, ratio, duration, resolution, with_audio,
         model, prompt, ratio, duration, resolution, with_audio,
         image_urls, video_url, audio_url,
     )
-    submit_model = body.get("model") or model
     task_id, consumption_id = submit_edit_async(api_key, body, _TAG)
-    url = poll_edit_task(api_key, task_id, submit_model, _TAG, consumption_id=consumption_id)
+    url = poll_edit_task(api_key, task_id, model, _TAG, consumption_id=consumption_id)
     path = download_video(url, task_id, save_path, prefix="seedance", filename=filename) or ""
-    return path, url, task_id, submit_model
+    return path, url, task_id, model
 
 
 class SynVowSeedance:

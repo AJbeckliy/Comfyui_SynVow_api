@@ -8,24 +8,22 @@ import requests as _requests
 
 from . import synvow_auth
 from .media_common import upload_image as _upload_image, DIRECT_API_BASE
-from .model_display import combo_models, resolve_model
+from .model_display import combo_models, display_name, resolve_model
 
 GEMINI_API_MODELS = [
-    "gemini-3.1-pro-稳定",
+    "gemini-3.8-flash-wd",
+    "gemini-3.7-flash-wd",
+    "gemini-3.6-flash-稳定",
     "gemini-3.5-flash-稳定",
     "gemini-3.5-flash-lite-稳定",
-    "gemini-3.6-flash-稳定",
-    "gemini-3-pro-2606",
+    "gemini-3.1-pro-稳定",
+    "gemini-3.5-flash-2606",
     "gemini-3.1-pro-2606",
     "gemini-3.1-flash-2606",
-    "gemini-3.5-flash-2606",
-    "gemini-3-pro-2605",
-    "gemini-3.1-pro-2605",
-    "gemini-3.1-flash-2605",
-    "gemini-3.5-flash-2605",
+    "gemini-3-pro-2606",
 ]
 GEMINI_MODEL_OPTIONS = combo_models(GEMINI_API_MODELS)
-DEFAULT_GEMINI_MODEL = GEMINI_MODEL_OPTIONS[0]
+DEFAULT_GEMINI_MODEL = display_name("gemini-3.5-flash-稳定")
 
 
 class SynVowGeminiAPI:

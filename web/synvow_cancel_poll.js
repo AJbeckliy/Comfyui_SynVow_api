@@ -6,7 +6,6 @@ import { app } from "../../../scripts/app.js";
 
 const SYNVOW_NODE_TYPES = new Set([
     "SynVowSeedance",
-    "SynVowSeedance2Video",
     "SynVowSeedance25",
     "SynVowWanVideo",
     "SynVowGrokVideo",
@@ -58,8 +57,8 @@ function addCancelWidget(node) {
     btn.serialize = false;
 }
 
-const SEEDANCE25_RATIOS = ["adaptive", "16:9", "9:16", "4:3", "3:4", "1:1", "21:9"];
-const SEEDANCE25_DJ_RATIOS = ["16:9", "9:16"];
+const SEEDANCE_RATIOS = ["adaptive", "16:9", "9:16", "4:3", "3:4", "1:1", "21:9"];
+const SEEDANCE_DJ_RATIOS = ["16:9", "9:16"];
 const OMNI_11_RESOLUTIONS = ["360p", "720p", "1080p", "4k"];
 const OMNI_RESOLUTIONS = OMNI_11_RESOLUTIONS.slice(1);
 const GPT_IMAGE_RESOLUTIONS = ["1K", "2K", "4K"];
@@ -131,17 +130,13 @@ function bindByModel(node, modelName, apply) {
 
 function bindWidgetOptions(node) {
     const t = String(node.type || "");
-    if (t === "SynVowSeedance25") {
-        bindByModel(node, "model", v => {
-            setCombo(widget(node, "ratio"),
-                (v === "sd2-5-dj" || v.includes("低价")) ? SEEDANCE25_DJ_RATIOS : SEEDANCE25_RATIOS);
-        });
-        return;
-    }
     if (t === "SynVowSeedance") {
         bindByModel(node, "model", v => {
+            const dj = v === "sd2.0-dj" || v === "sd2.0-特惠版";
             setCombo(widget(node, "resolution"),
                 v === "seedance-2.0" ? ["480p", "720p", "1080p"] : ["480p", "720p"]);
+            setCombo(widget(node, "ratio"), dj ? SEEDANCE_DJ_RATIOS : SEEDANCE_RATIOS, dj ? "16:9" : "adaptive");
+            setHidden(widget(node, "with_audio"), dj);
         });
         return;
     }

@@ -26,15 +26,15 @@ from .model_display import combo_models, display_name, resolve_model
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 _API_MODELS = [
+    "nano-banana-2-稳定",
+    "nanobanana2-qy",
+    "nano-banana-2-官方",
     "nano-banana-2-2605",
     "nano-banana-2-lite-2607",
-    "nano-banana-2-稳定",
-    "nano-banana-2-官方",
-    "nanobanana2-qy",
-    "nano-banana-pro-2605",
     "nano-banana-pro-稳定",
-    "nano-banana-pro-官方",
     "nanobananapro-qy",
+    "nano-banana-pro-官方",
+    "nano-banana-pro-2605",
 ]
 _MODEL_OPTIONS = combo_models(_API_MODELS)
 _DEFAULT_NANO_BANANA_MODEL = "nano-banana-2-稳定"
