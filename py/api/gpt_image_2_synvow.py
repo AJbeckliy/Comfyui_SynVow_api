@@ -147,7 +147,7 @@ def _shows_quality(family):
 
 
 def _shows_transparent(family):
-    return _shows_style(family) and "-1k-" not in family and not _is_wd(family)
+    return _shows_style(family) and not _is_wd(family)
 
 
 def _qualities_of(family):

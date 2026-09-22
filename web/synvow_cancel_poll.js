@@ -175,7 +175,7 @@ function bindWidgetOptions(node) {
             setCombo(aW, wd ? GPT_WD_ASPECTS : GPT_ASPECTS, aW?.value === "auto" ? "auto" : "1:1");
             setHidden(widget(node, "gpt_style"), !showStyle);
             setHidden(qW, !showQuality);
-            setHidden(widget(node, "transparent"), !(showStyle && !lock1k && !wd));
+            setHidden(widget(node, "transparent"), !(showStyle && !wd));
         });
         return;
     }

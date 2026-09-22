@@ -4,6 +4,16 @@
 import { $el, getToken, injectStyle, API_BASE } from "./dom.js";
 import { showLoginDialog, clearAuthFile } from "./synvow_login.js";
 
+const SUPPORT_WECHAT_ID = "manhualvren";
+const UPGRADE_QR_SRC = "/extensions/Comfyui_SynVow_api/wx.png";
+const ROLE_LABELS = {
+    user: "普通用户",
+    business: "企业用户",
+    moderator: "管理员",
+    admin: "超级管理员",
+    super_admin: "超级管理员(系统)",
+};
+
 let profileDialog = null;
 
 export function showProfileDialog() {
@@ -46,6 +56,23 @@ export function showProfileDialog() {
         .sv-wechat-qr-title { color:#2dd4bf; font-size:16px; font-weight:bold; margin-bottom:16px; }
         .sv-wechat-qr-tip { color:#8899aa; font-size:13px; margin-bottom:16px; }
         .sv-wechat-qr-close { background:#1e3a4a; border:1px solid #334455; border-radius:4px; padding:6px 16px; color:white; font-size:13px; cursor:pointer; }
+        .sv-role-tag { display:inline-flex; align-items:center; padding:3px 12px; border-radius:999px; font-size:13px; font-weight:500; }
+        .sv-role-user { background:#f1f5f9; color:#64748b; }
+        .sv-role-business { background:#fff6e8; color:#e8a317; }
+        .sv-role-moderator { background:#eef4ff; color:#3b82f6; }
+        .sv-role-admin { background:#fff1e0; color:#f59e0b; }
+        .sv-role-super_admin { background:#f3e8ff; color:#9333ea; }
+        .sv-upgrade-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.72); display:flex; justify-content:center; align-items:center; z-index:10004; }
+        .sv-upgrade-card { position:relative; width:360px; padding:28px 28px 24px; border-radius:20px; background:#fff; text-align:center; }
+        .sv-upgrade-head { display:flex; align-items:flex-start; gap:12px; text-align:left; margin-bottom:20px; padding-right:16px; }
+        .sv-upgrade-icon { width:40px; height:40px; flex-shrink:0; }
+        .sv-upgrade-title { font-size:18px; font-weight:700; color:#0f172a; line-height:1.3; }
+        .sv-upgrade-sub { margin-top:6px; font-size:13px; line-height:1.55; color:#64748b; }
+        .sv-upgrade-qr-wrap { width:188px; height:188px; margin:0 auto; padding:10px; border-radius:16px; background:linear-gradient(180deg,#f0fdf4,#fff); border:1px solid #d1fae5; box-sizing:border-box; }
+        .sv-upgrade-qr { width:100%; height:100%; object-fit:contain; display:block; border-radius:8px; background:#fff; }
+        .sv-upgrade-scan { margin-top:14px; font-size:14px; font-weight:600; color:#07c160; }
+        .sv-upgrade-id { display:inline-flex; align-items:center; gap:6px; margin-top:8px; padding:6px 12px; border-radius:999px; background:#f0fdf4; color:#166534; font-size:13px; font-weight:600; }
+        .sv-upgrade-id svg { width:16px; height:16px; }
     `);
 
     const contentDiv = $el("div", {}, [
@@ -92,6 +119,8 @@ export function showProfileDialog() {
                 const summary = summaryRes.data;
                 const userId = user.id || user.user_id || "";
                 const displayName = user.nickname || user.phone_number || user.email || "用户";
+                const roleKey = ROLE_LABELS[user.role] ? user.role : "user";
+                const roleLabel = ROLE_LABELS[roleKey];
                 const wechatBound = !!(user.wechat_openid || user.openid);
                 const fmt = (v) => parseFloat(v ?? 0).toFixed(2);
                 const copySvg = `<svg class="sv-profile-copy" id="sv-copy-id-btn" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
@@ -101,6 +130,9 @@ export function showProfileDialog() {
                         <span class="sv-profile-label">账户昵称：</span>
                         <span class="sv-profile-value">${escapeHtml(displayName)}</span>
                         <span class="sv-profile-link" id="sv-edit-nickname-btn">修改昵称</span>
+                        <span class="sv-profile-label sv-profile-ml">角色：</span>
+                        <span class="sv-role-tag sv-role-${roleKey}">${escapeHtml(roleLabel)}</span>
+                        ${roleKey === "user" ? `<span class="sv-profile-link" id="sv-upgrade-btn">升级了解</span>` : ""}
                         <span class="sv-profile-link sv-profile-btn-danger sv-profile-ml-auto" id="sv-logout-btn">退出登录</span>
                     </div>
                     <div class="sv-profile-row">
@@ -111,14 +143,10 @@ export function showProfileDialog() {
                         <span class="sv-profile-link" id="sv-set-pwd-btn">设置密码</span>
                         <span class="sv-profile-link" id="sv-change-pwd-btn">修改密码</span>
                     </div>
-                    <div class="sv-profile-stats" style="grid-template-columns:repeat(3,1fr);">
+                    <div class="sv-profile-stats" style="grid-template-columns:repeat(2,1fr);">
                         <div class="sv-profile-stat">
                             <div class="sv-profile-stat-label">当前余额</div>
                             <div class="sv-profile-stat-value">${fmt(summary.current_balance ?? summary.balance)}<span class="sv-currency-unit">星币</span></div>
-                        </div>
-                        <div class="sv-profile-stat">
-                            <div class="sv-profile-stat-label">总消耗量</div>
-                            <div class="sv-profile-stat-value">${fmt(summary.total_consumption)}<span class="sv-currency-unit">星币</span></div>
                         </div>
                         <div class="sv-profile-stat">
                             <div class="sv-profile-stat-label">总充值量</div>
@@ -169,6 +197,8 @@ export function showProfileDialog() {
                 if (bindEmailBtn) bindEmailBtn.onclick = () => showBindAccountDialog('email');
                 const bindWechatBtn = document.getElementById('sv-bind-wechat-btn');
                 if (bindWechatBtn) bindWechatBtn.onclick = () => startWechatBind(token, user);
+                const upgradeBtn = document.getElementById('sv-upgrade-btn');
+                if (upgradeBtn) upgradeBtn.onclick = showUpgradeDialog;
                 const logoutBtn = document.getElementById('sv-logout-btn');
                 if (logoutBtn) logoutBtn.onclick = () => {
                     if (confirm('确定要退出登录吗？')) {
@@ -192,6 +222,36 @@ export function showProfileDialog() {
 
 export function hideProfileDialog() {
     if (profileDialog) profileDialog.style.display = "none";
+}
+
+function wechatIconSvg() {
+    return `<svg viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="24" cy="24" r="24" fill="#07C160"/><path d="M19.5 14C14.25 14 10 17.58 10 22C10 24.17 11.08 26.13 12.83 27.55L12 31L15.83 29.17C17 29.5 18.25 29.67 19.5 29.67C19.67 29.67 19.83 29.67 20 29.63C19.67 28.79 19.5 27.92 19.5 27C19.5 22.58 23.58 19 28.5 19C28.83 19 29.17 19.04 29.5 19.08C28.5 16.08 24.33 14 19.5 14Z" fill="white"/><ellipse cx="15.5" cy="20.5" rx="1.5" ry="1.5" fill="#07C160"/><ellipse cx="23.5" cy="20.5" rx="1.5" ry="1.5" fill="#07C160"/><path d="M28.5 21C24.36 21 21 23.69 21 27C21 30.31 24.36 33 28.5 33C29.5 33 30.42 32.83 31.25 32.54L34.5 34L33.83 31.25C35.17 30.08 36 28.58 36 27C36 23.69 32.64 21 28.5 21Z" fill="white"/><ellipse cx="26" cy="26.5" rx="1.25" ry="1.25" fill="#07C160"/><ellipse cx="31" cy="26.5" rx="1.25" ry="1.25" fill="#07C160"/></svg>`;
+}
+
+function showUpgradeDialog() {
+    const overlay = document.createElement("div");
+    overlay.className = "sv-upgrade-overlay";
+    overlay.innerHTML = `
+        <div class="sv-upgrade-card">
+            <button class="sv-profile-close" type="button" style="color:#94a3b8">×</button>
+            <div class="sv-upgrade-head">
+                <div class="sv-upgrade-icon">${wechatIconSvg()}</div>
+                <div>
+                    <div class="sv-upgrade-title">升级了解</div>
+                    <div class="sv-upgrade-sub">添加客服微信，了解升级套餐及优惠政策。</div>
+                </div>
+            </div>
+            <div class="sv-upgrade-qr-wrap">
+                <img class="sv-upgrade-qr" src="${UPGRADE_QR_SRC}" alt="微信扫一扫">
+            </div>
+            <div class="sv-upgrade-scan">微信扫一扫</div>
+            <div class="sv-upgrade-id">${wechatIconSvg()}<span>${escapeHtml(SUPPORT_WECHAT_ID)}</span></div>
+        </div>
+    `;
+    const close = () => overlay.remove();
+    overlay.querySelector(".sv-profile-close").onclick = close;
+    overlay.onclick = (e) => { if (e.target === overlay) close(); };
+    document.body.appendChild(overlay);
 }
 
 async function startWechatBind(token, user) {

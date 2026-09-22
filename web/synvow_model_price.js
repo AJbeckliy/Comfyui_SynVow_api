@@ -51,7 +51,6 @@ export function showModelPriceDialog() {
         .sv-mp-card { background:rgba(16,41,56,.55); border:1px solid rgba(80,105,125,.35); border-radius:8px; padding:10px 12px; display:flex; flex-direction:column; gap:8px; min-height:0; }
         .sv-mp-card-head { display:flex; justify-content:space-between; align-items:flex-start; gap:6px; }
         .sv-mp-name { color:#fff; font-weight:700; font-size:13px; line-height:1.25; }
-        .sv-mp-tags-cell { color:#8899aa; font-size:11px; margin-top:2px; line-height:1.2; }
         .sv-mp-price-list { display:flex; flex-direction:column; gap:3px; flex:1; justify-content:flex-end; }
         .sv-mp-price-row { display:flex; align-items:center; justify-content:space-between; gap:4px; background:rgba(45,212,191,.05); border-radius:4px; padding:2px 7px; line-height:1.35; }
         .sv-mp-price-name { color:#9aabba; font-size:11px; }
@@ -131,7 +130,6 @@ export function showModelPriceDialog() {
                     const gridEl = $el("div.sv-mp-grid");
                     for (const model of items) {
                         const displayName = model.custom_name || model.name || "-";
-                        const tags = (model.tags || []).map(t => t.name).filter(Boolean);
                         const priceDetails = model.price_details || [];
 
                         const priceList = $el("div.sv-mp-price-list");
@@ -148,10 +146,7 @@ export function showModelPriceDialog() {
 
                         gridEl.appendChild($el("div.sv-mp-card", {}, [
                             $el("div.sv-mp-card-head", {}, [
-                                $el("div", {}, [
-                                    $el("div.sv-mp-name", { textContent: displayName }),
-                                    $el("div.sv-mp-tags-cell", { textContent: tags.length ? tags.join("、") : "未分类" }),
-                                ]),
+                                $el("div.sv-mp-name", { textContent: displayName }),
                                 $el("span", {
                                     textContent: model.status === 1 ? "启用" : "停用",
                                     className: model.status === 1 ? "sv-mp-status-on" : "sv-mp-status-off",

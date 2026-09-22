@@ -8,6 +8,12 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 ## Changelog
 
+### 2026-09-22
+- **Account / Web**
+  - Profile shows account role (普通用户 / 企业用户)
+- **Image nodes**
+  - `SynVow GPT-Image-2` (including batch, product six-in-one, and Alpha): `PT2.5-1k-企业` now supports transparent background
+
 ### 2026-09-17
 - **Text models**
   - `SynVow Gemini` adds `GM3.7-flash-稳定` / `GM3.8-flash-稳定`, and removes all Gemini 2605 models; removes `PT5.5-2605` / `PT5.4-2605`
