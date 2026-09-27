@@ -12,7 +12,6 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 1. `SynVow Gemini` adds `GM3.7-flash-2606` / `GM3.6-flash-2606`, removes `GM3.5-flash-2606`  
 2. `SynVow 即梦` (including batch) removes `即梦5.0`, adds `即梦5.0-flash`; resolution adds `1.5K`, output can be `png` / `jpeg`  
-3. Quick recharge shows the current balance; recent activity moves above payment methods; clicking WeChat Pay or Alipay places the order directly
 
 ### 2026-09-22
 
