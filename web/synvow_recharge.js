@@ -70,12 +70,14 @@ export function showRechargeDialog() {
     injectStyle("sv-recharge-style", `
         .sv-recharge-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:10001; }
         .sv-recharge-dialog { background:linear-gradient(180deg,#1a2a3a,#0d1a24); border-radius:12px; padding:30px; width:560px; position:relative; }
-        .sv-recharge-title { color:#2dd4bf; font-size:18px; font-weight:bold; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+        .sv-recharge-title { color:#2dd4bf; font-size:18px; font-weight:bold; margin-bottom:16px; display:flex; align-items:center; gap:8px; }
         .sv-recharge-title svg { width:18px; height:18px; }
+        .sv-recharge-balance { display:flex; align-items:baseline; gap:6px; color:#8899aa; font-size:13px; margin-bottom:16px; }
+        .sv-recharge-balance-amount { color:#2dd4bf; font-size:20px; font-weight:700; }
         .sv-amount-grid { display:grid; grid-template-columns:repeat(5,minmax(0,1fr)); gap:8px; margin-bottom:20px; padding-top:8px; }
         .sv-amount-btn { position:relative; overflow:visible; min-width:0; box-sizing:border-box; background:#1e3a4a; border:2px solid #334455; border-radius:8px; padding:12px 4px; color:white; font-size:14px; font-weight:bold; cursor:pointer; transition:all 0.2s; white-space:nowrap; }
             .sv-amount-btn .sv-currency { font-size:12px; font-weight:normal; margin-right:2px; }
-        .sv-amount-gift-badge { position:absolute; top:-7px; right:-4px; z-index:1; padding:1px 5px; border-radius:6px; background:#2dd4bf; color:#fff; font-size:10px; font-weight:600; line-height:1.3; pointer-events:none; }
+        .sv-amount-gift-badge { position:absolute; top:-7px; right:-4px; z-index:1; padding:1px 5px; border-radius:6px; background:#2dd4bf; color:#0b1c24; font-size:10px; font-weight:700; line-height:1.3; pointer-events:none; }
         .sv-amount-btn:hover { border-color:#2dd4bf; background:#1e4a5a; }
         .sv-amount-btn.selected { border-color:#2dd4bf; background:linear-gradient(135deg,#1e4a5a,#0d3a4a); box-shadow:0 0 10px rgba(45,212,191,0.3); }
         .sv-custom-input { width:100%; background:#1e3a4a; border:1px solid #334455; border-radius:8px; padding:14px 16px; color:white; font-size:14px; margin-bottom:8px; box-sizing:border-box; }
@@ -84,8 +86,8 @@ export function showRechargeDialog() {
         .sv-custom-hint { color:#667788; font-size:12px; margin-bottom:20px; }
         .sv-payment-row { display:flex; gap:12px; margin-bottom:20px; }
         .sv-payment-btn { flex:1; background:#1e3a4a; border:2px solid #334455; border-radius:8px; padding:12px; color:white; font-size:14px; cursor:pointer; display:flex; align-items:center; justify-content:center; gap:8px; transition:all 0.2s; }
-        .sv-payment-btn:hover { border-color:#556677; }
-        .sv-payment-btn.selected { border-color:#2dd4bf; }
+        .sv-payment-btn:hover { border-color:#2dd4bf; }
+        .sv-payment-btn:disabled { opacity:0.5; cursor:not-allowed; }
         .sv-payment-btn svg { width:20px; height:20px; }
         .sv-recharge-activity { display:none; margin-bottom:16px; padding:10px 12px; border:1px solid #334455; border-radius:8px; background:#1e3a4a; color:#9aabba; font-size:12px; line-height:1.55; }
         .sv-recharge-activity-title { margin-bottom:4px; color:#fff; font-weight:600; }
@@ -129,8 +131,8 @@ export function showRechargeDialog() {
         },
     });
 
-    const wechatBtn = $el("button.sv-payment-btn.selected", { innerHTML: `<span class="sv-wechat-icon">${wechatIcon}</span> 微信支付`, onclick: () => selectPayment("wechat", wechatBtn, alipayBtn) });
-    const alipayBtn = $el("button.sv-payment-btn", { innerHTML: `<span class="sv-alipay-icon">${alipayIcon}</span> 支付宝支付`, onclick: () => selectPayment("alipay", alipayBtn, wechatBtn) });
+    const wechatBtn = $el("button.sv-payment-btn", { innerHTML: `<span class="sv-wechat-icon">${wechatIcon}</span> 微信支付`, onclick: () => handleSubmit("wechat") });
+    const alipayBtn = $el("button.sv-payment-btn", { innerHTML: `<span class="sv-alipay-icon">${alipayIcon}</span> 支付宝支付`, onclick: () => handleSubmit("alipay") });
 
     function selectAmount(amount, btn) {
         amountBtns.forEach(b => b.classList.remove("selected"));
@@ -140,14 +142,8 @@ export function showRechargeDialog() {
         customInput.value = "";
     }
 
-    function selectPayment(type, activeBtn, otherBtn) {
-        selectedPayment = type;
-        activeBtn.classList.add("selected");
-        otherBtn.classList.remove("selected");
-    }
-
-    const submitBtn = $el("button.sv-submit-btn", { textContent: "立即支付", onclick: handleSubmit });
     const activityBox = $el("div.sv-recharge-activity");
+    const balanceAmount = $el("span.sv-recharge-balance-amount", { textContent: "--" });
 
     rechargeDialog = $el("div.sv-recharge-overlay", {
         onclick: (e) => { if (e.target === rechargeDialog) hideRechargeDialog(); }
@@ -155,18 +151,23 @@ export function showRechargeDialog() {
         $el("div.sv-recharge-dialog", {}, [
             $el("button.sv-recharge-close", { textContent: "×", onclick: hideRechargeDialog }),
             $el("div.sv-recharge-title", { innerHTML: `${lightningIcon} 快速充值` }),
+            $el("div.sv-recharge-balance", {}, [
+                $el("span", { textContent: "当前余额" }),
+                balanceAmount,
+                $el("span", { textContent: "星币" }),
+            ]),
             $el("div.sv-amount-grid", {}, amountBtns),
             customInput,
             $el("div.sv-custom-hint", { textContent: "自定义金额，仅支持 5 起的整数充值。" }),
-            $el("div.sv-payment-row", {}, [wechatBtn, alipayBtn]),
             activityBox,
-            submitBtn,
+            $el("div.sv-payment-row", {}, [wechatBtn, alipayBtn]),
             $el("div.sv-recharge-footer", {}, ["支付成功即充值到账，视为同意《服务条款》及退款政策。"])
         ])
     ]);
 
     document.body.appendChild(rechargeDialog);
     loadGiftOffer(amountBtns, activityBox);
+    loadBalance(balanceAmount);
 }
 
 async function loadGiftOffer(amountBtns, activityBox) {
@@ -196,7 +197,20 @@ function getFinalAmount() {
     return null;
 }
 
-async function handleSubmit() {
+async function loadBalance(balanceAmount) {
+    const token = getToken();
+    if (!token) return;
+    try {
+        const res = await fetch("/sv_api/account/balance", { headers: { Authorization: `Bearer ${token}` } });
+        const data = await res.json();
+        if (data.code === 200) {
+            const balance = data.data?.balance ?? data.data?.account?.balance ?? 0;
+            balanceAmount.textContent = parseFloat(balance).toFixed(2);
+        }
+    } catch {}
+}
+
+async function handleSubmit(channel) {
     if (!selectedAmount && customAmount != null && customAmount > 0 && customAmount < MIN_CUSTOM_AMOUNT) {
         alert("自定义金额至少为 5");
         return;
@@ -217,12 +231,16 @@ async function handleSubmit() {
     }
 
     if (submitting) return;
+    if (channel === "wechat" || channel === "alipay") selectedPayment = channel;
     submitting = true;
-    const submitBtn = rechargeDialog?.querySelector(".sv-submit-btn");
-    if (submitBtn) {
-        submitBtn.disabled = true;
-        submitBtn.textContent = "提交中...";
-    }
+    const payBtns = rechargeDialog?.querySelectorAll(".sv-payment-btn") || [];
+    const labels = ["微信支付", "支付宝支付"];
+    payBtns.forEach((btn, i) => {
+        btn.disabled = true;
+        if ((i === 0 && selectedPayment === "wechat") || (i === 1 && selectedPayment === "alipay")) {
+            btn.lastChild.textContent = " 提交中...";
+        }
+    });
 
     try {
         const actualPayType = selectedPayment === "wechat" ? "wxpay" : "alipay";
@@ -271,11 +289,10 @@ async function handleSubmit() {
         alert("网络错误，请稍后重试");
     } finally {
         submitting = false;
-        const submitBtn = rechargeDialog?.querySelector(".sv-submit-btn");
-        if (submitBtn) {
-            submitBtn.disabled = false;
-            submitBtn.textContent = "立即支付";
-        }
+        payBtns.forEach((btn, i) => {
+            btn.disabled = false;
+            if (btn.lastChild) btn.lastChild.textContent = ` ${labels[i] || ""}`;
+        });
     }
 }
 

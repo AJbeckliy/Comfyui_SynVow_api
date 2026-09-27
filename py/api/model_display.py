@@ -13,7 +13,8 @@ MODEL_DISPLAY_NAMES = {
     "gemini-3-pro-2606": "GM3-pro-2606",
     "gemini-3.1-pro-2606": "GM3.1-pro-2606",
     "gemini-3.1-flash-2606": "GM3.1-flash-2606",
-    "gemini-3.5-flash-2606": "GM3.5-flash-2606",
+    "gemini-3.7-flash-2606": "GM3.7-flash-2606",
+    "gemini-3.6-flash-2606": "GM3.6-flash-2606",
     # 文本 Qwen
     "qwen3.6-flash-wd": "qwen3.6-flash-稳定",
     "qwen3.6-plus-wd": "qwen3.6-plus-稳定",
@@ -70,6 +71,7 @@ MODEL_DISPLAY_NAMES = {
     "suno6-fc": "Suno 6 翻唱",
     "suno6-yc": "Suno 6 延长",
     "doubao-seed-audio-1.0": "豆包语音1.0",
+    "seedream-5-0-flash": "即梦5.0-flash",
 }
 
 _DISPLAY_TO_API = {label: model for model, label in MODEL_DISPLAY_NAMES.items()}

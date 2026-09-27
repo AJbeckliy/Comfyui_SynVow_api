@@ -8,214 +8,208 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 ## Changelog
 
+### 2026-09-27
+
+1. `SynVow Gemini` adds `GM3.7-flash-2606` / `GM3.6-flash-2606`, removes `GM3.5-flash-2606`  
+2. `SynVow 即梦` (including batch) removes `即梦5.0`, adds `即梦5.0-flash`; resolution adds `1.5K`, output can be `png` / `jpeg`  
+3. Quick recharge shows the current balance; recent activity moves above payment methods; clicking WeChat Pay or Alipay places the order directly
+
 ### 2026-09-22
-- **Account / Web**
-  - Profile shows account role (普通用户 / 企业用户)
-- **Image nodes**
-  - `SynVow GPT-Image-2` (including batch, product six-in-one, and Alpha): `PT2.5-1k-企业` now supports transparent background
+
+1. Profile shows account role (普通用户 / 企业用户)  
+2. `SynVow GPT-Image-2` (including batch, product six-in-one, and Alpha): `PT2.5-1k-企业` supports transparent background
 
 ### 2026-09-17
-- **Text models**
-  - `SynVow Gemini` adds `GM3.7-flash-稳定` / `GM3.8-flash-稳定`, and removes all Gemini 2605 models; removes `PT5.5-2605` / `PT5.4-2605`
-- **Video nodes**
-  - Removes `SynVow Seedance2.0 视频生成 (720P)`
-  - `SynVow Seedance` adds `sd2.0-特惠版`
-  - `SynVow Seedance 2.5` removes `seedance-2.5-低价`
-  - `SynVow MiniMax` (text-to-video / first-last frame / multimodal reference) adds `MiniMax-H3-低价`
+
+1. `SynVow Gemini` adds `GM3.7-flash-稳定` / `GM3.8-flash-稳定`, removes all Gemini 2605 models; removes `PT5.5-2605` / `PT5.4-2605`  
+2. Removes `SynVow Seedance2.0 视频生成 (720P)`  
+3. `SynVow Seedance` adds `sd2.0-特惠版`  
+4. `SynVow Seedance 2.5` removes `seedance-2.5-低价`  
+5. `SynVow MiniMax` (text-to-video / first-last frame / multimodal reference) adds `MiniMax-H3-低价`
 
 ### 2026-09-15
-- **GPT-Image-2.5 layer splitting**
-  - `SynVow GPT-Image-2 Alpha (T_batch)` now supports transparent and opaque background selection, automatic layer routing, and batch-failure placeholders
-  - `SynVow 透明素材提示词生成器` now supports 2-6 reference-image layers with LLM-planned full-canvas geometry and compact prompts
-  - `SynVow 透明PNG保存预览` keeps the returned RGBA pixels, aligns layers to the planned coordinates, and saves failed slots as black placeholders without stopping the workflow
-  - Added `SynVow PSD图层合成`: packages the final PNGs into an editable layered PSD with an optional hidden source-reference layer
-  - No new mask is generated and no source pixels are pasted back into generated layers
+
+1. `SynVow GPT-Image-2 Alpha (T_batch)` adds transparent/opaque background selection, automatic layer quality routing, and batch-failure placeholders  
+2. `SynVow 透明素材提示词生成器` reference-image layer mode supports 2-6 layers, with LLM-planned full-canvas coordinates and compact prompts  
+3. `SynVow 透明PNG保存预览` keeps the returned RGBA pixels and aligns them to the planned coordinates; failed slots use black placeholders without stopping the workflow  
+4. Adds `SynVow PSD图层合成`: writes the final PNGs into an editable PSD, with an optional hidden source-reference layer  
+5. No new mask is generated, and source pixels are not pasted back into generated layers
 
 ### 2026-09-14
-- **Image nodes**
-  - `SynVow NanoBanana` (including batch) updates aspect ratio options
+
+1. `SynVow NanoBanana` (including batch) updates aspect ratio options
 
 ### 2026-09-12
-- **Audio nodes**
-  - `SynVow Suno` adds the suno6 model; supports generate / cover / extend
+
+1. `SynVow Suno` adds the suno6 model; supports generate / cover / extend
 
 ### 2026-09-11
-- **Image nodes**
-  - `SynVow GPT-Image-2` (including batch, product six-in-one, and Alpha) adds PT2.5 `1K-企业`, `稳定`, and `官方`
-  - Adds transparent background support (`1k` / `稳定` not supported yet)
+
+1. `SynVow GPT-Image-2` (including batch, product six-in-one, and Alpha) adds PT2.5 `1K-企业`, `稳定`, and `官方`  
+2. Adds transparent background support (`1k` / `稳定` not supported yet)
 
 ### 2026-09-10
-- **Video nodes**
-  - `SynVow Omni-Flash` adds `omni-1.1-flash`
-- **Image nodes**
-  - `SynVow GPT-Image-2` (including batch and product six-in-one) adds PT2.5: `PT2.5-1k-2609` / `PT2.5-sunburst-2609` / `PT2.5-flare-2609`; enterprise `PT2.5-sunburst-企业` / `PT2.5-flare-企业`
+
+1. `SynVow Omni-Flash` adds `omni-1.1-flash`  
+2. `SynVow GPT-Image-2` (including batch and product six-in-one) adds PT2.5: `PT2.5-1k-2609` / `PT2.5-sunburst-2609` / `PT2.5-flare-2609`; enterprise `PT2.5-sunburst-企业` / `PT2.5-flare-企业`
 
 ### 2026-08-25
-- **Video nodes**
-  - `SynVow Seedance 2.5` adds `seedance-2.5-低价` : same duration/resolution as 2.5 (4–30 seconds, `480p`/`720p`/`1080p`); ratio is only `16:9` / `9:16`
-  - `SynVow Seedance` removes `seedance2.0-全能` and its mode / version / 4K parameters
-- **Account / Web**
-  - Model prices can be filtered by tag: text / image / video / audio / parse / other
+
+1. `SynVow Seedance 2.5` adds `seedance-2.5-低价`: same duration/resolution as 2.5 (4-30 seconds, `480p`/`720p`/`1080p`); ratio only `16:9` / `9:16`  
+2. `SynVow Seedance` removes `seedance2.0-全能` and its mode / version / 4K parameters  
+3. Model prices can be filtered by tag: text / image / video / audio / parse / other
 
 ### 2026-08-24
-- **Video nodes**
-  - Added `SynVow wan-video` (`wan3.0-video-wd` / display name `wan3.0-video-稳定`): text-to-video, with optional up to 9 reference images, 1 reference video, and 1 reference audio; resolution `480P`/`720P`/`1080P`; aspect `adaptive`/`16:9`/`4:3`/`1:1`/`3:4`/`9:16`; duration 2–30 seconds
+
+1. Adds `SynVow wan-video` (`wan3.0-video-wd`, display name `wan3.0-video-稳定`): text-to-video with up to 9 reference images, 1 reference video, and 1 reference audio; resolution `480P`/`720P`/`1080P`, aspect `adaptive`/`16:9`/`4:3`/`1:1`/`3:4`/`9:16`, duration 2-30 seconds
 
 ### 2026-08-23
-- **Text models**
-  - Added standalone node `SynVow LLM-Qwen` / `(T_batch)`: `qwen3.6-flash-稳定` / `qwen3.6-plus-稳定` / `qwen3.7-plus-稳定` / `qwen3.7-max-稳定` / `qwen3.8-max-稳定`
-  - `SynVow GPT 提示词生成` adds `(T_batch)`
-- **Audio**
-  - Added `SynVow Doubao 语音` (`doubao-seed-audio-1.0`; wav/mp3; speech rate / loudness / pitch; up to 3 reference audio clips)
+
+1. Adds standalone nodes `SynVow LLM-Qwen` / `(T_batch)`: `qwen3.6-flash-稳定` / `qwen3.6-plus-稳定` / `qwen3.7-plus-稳定` / `qwen3.7-max-稳定` / `qwen3.8-max-稳定`  
+2. `SynVow GPT 提示词生成` adds `(T_batch)`  
+3. Adds `SynVow Doubao 语音` (`doubao-seed-audio-1.0`, wav/mp3, speed/loudness/pitch, up to 3 reference audios)
 
 ### 2026-08-19
-- **Text models**
-  - Removed `gpt-5.5-2607` / `gpt-5.6-sol-2607` (PT2607); added `PT5.5-稳定` (requests `gpt-5.5-稳定`) and `PT5.6-sol-稳定` (requests `gpt-5.6-sol-稳定`)
-- **Image nodes**
-  - Jimeng 5.0 resolution is now `2K` / `3K` / `4K`, with up to 4 reference images
-  - Added standalone node `SynVow GK2.0` / `(T_batch)` / `(I_batch)` / `(T_I_batch)` (`grok-image-2.0-wd`; aspect ratio, `2k`/`1k`, up to 3 reference images)
-- **Video nodes**
-  - `SynVow Seedance 2.5` adds `1080p`
+
+1. Removes `gpt-5.5-2607` / `gpt-5.6-sol-2607` (PT2607), adds `PT5.5-稳定` (requests `gpt-5.5-稳定`) and `PT5.6-sol-稳定` (requests `gpt-5.6-sol-稳定`)  
+2. 即梦 5.0 resolution changes to `2K` / `3K` / `4K`, up to 4 reference images  
+3. Adds standalone nodes `SynVow GK2.0` / `(T_batch)` / `(I_batch)` / `(T_I_batch)` (`grok-image-2.0-wd`, aspect ratio, `2k`/`1k`, up to 3 reference images)  
+4. `SynVow Seedance 2.5` adds `1080p`
 
 ### 2026-08-17
-- **Video nodes**
-  - Added standalone node `SynVow Seedance 2.5` (480p/720p, duration 4–30 seconds)
-  - Removed `seedance-2.0-face` / `seedance-2.0-fast-face`
-- **Image nodes**
-  - Fixed `gpt-image-2-4k-qy` text-to-image: requests `gpt-image-2-4k-qy-t2i` when there is no reference image
-- **Account / Web**
-  - Recharge center: added more amount tiers; custom amount minimum 5 RMB
-  - Profile: added user ID, set / change password, bind email
-  - When the latest announcement date is today (local), a red dot appears on the Announcements button; opening the list clears the dot for now
-- **Upload**
-  - Image/video/audio upload behavior updated
+
+1. Adds standalone node `SynVow Seedance 2.5` (480p/720p, 4-30 seconds)  
+2. Removes `seedance-2.0-face` / `seedance-2.0-fast-face`  
+3. Fixes `gpt-image-2-4k-qy` text-to-image: requests `gpt-image-2-4k-qy-t2i` when there is no reference image  
+4. Recharge center: more tiers, custom amount minimum 5 RMB  
+5. Profile: adds user ID, set / change password, and email binding  
+6. When the latest announcement is dated today (local time), the "公告" button shows a red dot; opening the list hides it temporarily  
+7. Image / video / audio upload changes
 
 ### 2026-08-06
-- **Video nodes**
-  - Added `SynVow MiniMax 文生视频` / `SynVow MiniMax 首尾帧视频` / `SynVow MiniMax 多模态参考视频` (model `MiniMax-H3`, resolution `2K`, duration 4–15 seconds)
-- **Image nodes**
-  - Fixed text-to-image for the `gpt-image-2-4k-qy` model
-- **Account / Web**
-  - Added an Announcements button to the floating menu
+
+1. Adds `SynVow MiniMax 文生视频` / `SynVow MiniMax 首尾帧视频` / `SynVow MiniMax 多模态参考视频` (model `MiniMax-H3`, resolution `2K`, 4-15 seconds)  
+2. Fixes `gpt-image-2-4k-qy` text-to-image  
+3. Floating menu adds the "公告" button
 
 ### 2026-08-03
-- **Image nodes**
-  - Jimeng adds `即梦5.0-pro`
-  - Added `SynVow GK1.5` / `(T_batch)` / `(I_batch)` / `(T_I_batch)`, requesting `grok-image-1.5-稳定`
-  - Added `SynVow 悠船 文生图`, `SynVow 悠船 多图融合`, `SynVow 悠船 图像编辑`
-  - GPT-Image-2 adds `gpt-image-2-1k-qy` / `gpt-image-2-4k-qy`; the 1K model always requests 1K, while the 4K model supports 1K / 2K / 4K; fast and affordable
-  - NanoBanana adds `nanobanana2-qy` / `nanobananapro-qy`; fast and affordable
-- **Video nodes**
-  - Fixed `SynVow Seedance2.0 视频生成 (720P)`
-- **Account / Web**
-  - Login / register support both phone and email
-- **Text models**
-  - Gemini adds `gemini-3.5-flash-lite-稳定` / `gemini-3.6-flash-稳定`
-  - GPT adds `gpt-5.5-2607` / `gpt-5.6-sol-2607`
+
+1. 即梦 adds `即梦5.0-pro`  
+2. Adds `SynVow GK1.5` / `(T_batch)` / `(I_batch)` / `(T_I_batch)`, requesting `grok-image-1.5-稳定`  
+3. Adds `SynVow 悠船 文生图`, `SynVow 悠船 多图融合`, `SynVow 悠船 图像编辑`  
+4. GPT-Image-2 adds `gpt-image-2-1k-qy` / `gpt-image-2-4k-qy`; the 1K model always requests 1K, the 4K model supports 1K / 2K / 4K; fast and affordable  
+5. NanoBanana adds `nanobanana2-qy` / `nanobananapro-qy`; fast and affordable  
+6. Fixes `SynVow Seedance2.0 视频生成 (720P)`  
+7. Login / registration supports both phone number and email  
+8. Gemini adds `gemini-3.5-flash-lite-稳定` / `gemini-3.6-flash-稳定`  
+9. GPT adds `gpt-5.5-2607` / `gpt-5.6-sol-2607`
 
 ### 2026-07-22
-- **Video / audio node updates**
-  - Added `SynVow Seedance` (`/image/edit`: 全能 / mini / face / resolution / edit / extend)
-  - **Kept** the legacy node `SynVow Seedance2.0 视频生成 (720P)` (`/video/generate`, actual model `seedance_2_720p`)
-  - Added `SynVow Grok Video` (`grok-1.5-video`)
-  - Added `SynVow Omni-Flash` (`Omni-Flash-Ext` / `omni-flash-preview`)
-  - Added `SynVow Veo31` (`veo3.1`)
-  - Added `SynVow Suno 灵感模式` / `SynVow Suno 自定义模式` (`suno5.5`)
-  - Video nodes output ComfyUI `VIDEO`; Suno outputs `AUDIO` plus path / URL / lyrics
-  - Short-video parse models aligned: Douyin / Xiaohongshu / Channels / bilibili / YouTube
-- **Image nodes**
-  - Added `SynVow 即梦` / `(T_batch)` / `(I_batch)` / `(T_I_batch)` (model `即梦5.0`, resolution `2K`/`3K`)
-  - GPT-Image-2 adds `gpt-image-2-2607`; NanoBanana adds `nano-banana-2-lite-2607`
-- **GPT-Image-2 product and prompt workflows**
-  - Added `SynVow GPT-Image-2 产品六合一`: product refinement, product-into-scene, blur-to-HD, object removal, mask-guided product tech light effects, and outpainting
-  - Added the **One-Take prompt workflow (Beta)**: character setup, scene setup, route storyboard, and Seedance LLM prompt compiler
-  - One-Take is currently a test version; prompt structure, node parameters, and output quality may keep changing based on real testing
-- **Code cleanup**
-  - Submit / poll / download / upload shared logic moved into `media_common.py`
-  - Removed duplicate download retries and duplicate `IS_CHANGED` implementations
-  - New video/audio nodes registered with cancel-poll buttons
+
+1. Adds `SynVow Seedance` (`/image/edit`: all-round / mini / face / resolution / edit / extend)  
+2. **Keeps** the legacy node `SynVow Seedance2.0 视频生成 (720P)` (`/video/generate`, actual model `seedance_2_720p`)  
+3. Adds `SynVow Grok Video` (`grok-1.5-video`)  
+4. Adds `SynVow Omni-Flash` (`Omni-Flash-Ext` / `omni-flash-preview`)  
+5. Adds `SynVow Veo31` (`veo3.1`)  
+6. Adds `SynVow Suno 灵感模式` / `SynVow Suno 自定义模式` (`suno5.5`)  
+7. Video nodes output ComfyUI `VIDEO`; Suno outputs `AUDIO` plus path / URL / lyrics  
+8. Short-video parsing aligned: Douyin / Xiaohongshu / WeChat Channels / bilibili / YouTube  
+9. Adds `SynVow 即梦` / `(T_batch)` / `(I_batch)` / `(T_I_batch)` (model `即梦5.0`, resolution `2K`/`3K`)  
+10. GPT-Image-2 adds `gpt-image-2-2607`; NanoBanana adds `nano-banana-2-lite-2607`  
+11. Adds `SynVow GPT-Image-2 产品六合一`: product retouch, product-in-scene, blurry image upscale, object removal, mask-guided product tech light effects, and outpainting  
+12. Adds the **one-take prompt workflow (Beta)**: character setup, scene setup, route storyboard, and Seedance LLM prompt compiler  
+13. The one-take workflow is in beta; prompt structure, node parameters, and output may change after further testing  
+14. Shared submit / poll / download / upload logic moved into `media_common.py`  
+15. Removes duplicate download retries and duplicate `IS_CHANGED` implementations  
+16. New video / audio nodes register the cancel-polling button
 
 ### 2026-07-01
-- **Added transparent PNG asset workflow nodes**
-  - `SynVow 透明素材提示词生成器`: generate reusable transparent-asset prompts by scene
-  - `SynVow GPT-Image-2 Alpha (T_batch)`: URL-direct transparent PNG generation (prompt-list batch)
-  - `SynVow 透明PNG保存预览`: save RGBA PNG from the original URL and keep the real alpha channel; use a black placeholder and continue when the URL is empty or download fails
+
+1. `SynVow 透明素材提示词生成器`: generates reusable transparent asset prompts by scene  
+2. `SynVow GPT-Image-2 Alpha (T_batch)`: direct transparent PNG output via URL (prompt-list batch)  
+3. `SynVow 透明PNG保存预览`: saves RGBA PNG from the original URL with the real alpha channel; empty URLs or failed downloads use black placeholders and the workflow continues
 
 ### 2026-06-30
-- **Code cleanup**: removed unused / duplicate / dead code and unified logic without changing behavior
-  - Removed obsolete model-pool filter scripts, orphaned backend endpoints, and related dead code
-  - Unified duplicated audio/video loading, pagination styles, and time/request helpers
-- **Models and UI aligned with the frontend**
-  - GPT-Image-2 adds `gpt-image-2-官方`; image inputs expanded to 9
-  - Gemini model list and defaults aligned
-  - Model price dialog switched to a card-grid layout; display names use the real model name only
-- **Fixed opening consumption-record "resources"**: parse links by model type (image/video/audio); fixed missing video and audio links
+
+1. **Code cleanup**: removes unused / duplicate / broken code and unifies logic without changing behavior  
+2. Removes the broken model-pool filter script, orphaned backend endpoints, and related dead code  
+3. Unifies duplicated logic for audio/video loading, pagination styles, and time/request utilities  
+4. GPT-Image-2 adds `gpt-image-2-官方`, image inputs expanded to 9  
+5. Gemini model list and default model aligned  
+6. Model price dialog uses a card grid; display names use the real model name only  
+7. **Fixes opening "资源" in usage records**: parses links by model type (image / video / audio), fixing missing links for video and audio records
 
 ### 2026-06-23
-- **Integrated YMAI prompt nodes**: added `YM-爆款封面`, `YM-故事板`, `YM-人物情绪`, `YM-角色卡`; reuse SynVow login and APIs with no extra setup
+
+1. **Integrates YMAI prompt nodes**: adds `YM-爆款封面`, `YM-故事板`, `YM-人物情绪`, `YM-角色卡`, reusing SynVow login and API with no extra configuration
 
 ### 2026-06-01
-- **Added models `nano-banana-2-低价`, `nano-banana-pro-低价`** (NanoBanana series: single, T_batch, I_batch, TI_batch)
-  - Low-price variants use a `ratio` / `resolution` / `files` request body and parse results from `result.url`
+
+1. **Adds models `nano-banana-2-低价`, `nano-banana-pro-低价`** (NanoBanana nodes: single, T_batch, I_batch, TI_batch)  
+2. The low-price models use the `ratio` / `resolution` / `files` request structure; results are parsed from `result.url`
 
 ### 2026-05-29
-- **Added models `gpt-5.5-2606`, `gpt-5.4-2606`** (SynVow GPT prompt generation, GPT-Image-2 text-to-image prompt controller, image-to-image prompt controller)
-  - Default model updated to `gpt-5.5-2606`
-- **Added models `gemini-3.1-flash-2606`, `gemini-3.5-flash-2606`, `gemini-3.1-pro-2606`, `gemini-3-pro-2606`** (SynVow Gemini prompt generation, 🛒 ecommerce detail-page prompt generator, GPT-Image-2 text-to-image prompt controller, image-to-image prompt controller)
-  - Gemini node and ecommerce detail-page prompt generator defaults updated to `gemini-3.1-flash-2606`
+
+1. **Adds models `gpt-5.5-2606`, `gpt-5.4-2606`** (SynVow GPT 提示词生成, GPT-Image-2 text-to-image prompt controller, image-to-image prompt controller)  
+2. Default model changes to `gpt-5.5-2606`  
+3. **Adds models `gemini-3.1-flash-2606`, `gemini-3.5-flash-2606`, `gemini-3.1-pro-2606`, `gemini-3-pro-2606`** (SynVow Gemini 提示词生成, 🛒 e-commerce detail page prompt generator, GPT-Image-2 text-to-image prompt controller, image-to-image prompt controller)  
+4. Gemini node and e-commerce detail page prompt generator default to `gemini-3.1-flash-2606`
 
 ### 2026-05-20
-- **Added `短视频解析` node** (`💫SynVow_api/api/视频`)
-  - Accepts a Douyin share link or text containing a link, extracts the URL, calls the API for a watermark-free direct link, and downloads it locally
-- **Added model `gemini-3.5-flash-2605`** (Gemini node, ecommerce prompt generator, GPT-Image-2 prompt optimizer)
-- **GPT-Image-2 prompt optimizer** adds `gemini-3.1-flash-2605`
-- **Reference-image prompt optimizer** adds `gemini-3.1-flash-2605`, `gemini-3.5-flash-2605`
+
+1. **Adds `短视频解析` node** (`💫SynVow_api/api/视频`)  
+2. Takes a Douyin share link or text containing one, extracts the URL, gets a watermark-free direct link from the API, and downloads it locally  
+3. **Adds model `gemini-3.5-flash-2605`** (Gemini node, e-commerce prompt generator, GPT-Image-2 prompt optimizer)  
+4. **GPT-Image-2 prompt optimizer** adds `gemini-3.1-flash-2605`  
+5. **Reference image prompt optimizer** adds `gemini-3.1-flash-2605`, `gemini-3.5-flash-2605`
 
 ### 2026-05-18
-- **Added `SynVow 阿里云OSS上传` node** (`💫SynVow_api/OSS`)
-  - Upload a single image to Aliyun OSS and output a public URL
-- **Added `图像列表数量校验` node** (`💫SynVow_api/Image`)
-  - Check that 2–5 image lists have matching counts; stop the workflow on mismatch
-- **Ecommerce detail-page prompt generator** adds a `prompts_count` output for the actual number of generated prompts
-- **Text stay editor** removes unused `seed` parameter
-- **Added `运行索引计数器` node** (`💫SynVow_api/Utils`)
-  - Auto-increments the current index on each run, and resets to zero when Run is clicked
-- **`图像列表组合器`** supports list inputs and expands batches/lists into ordered single images
-- **Added `SynVow Gemini 提示词生成 (T_batch)` node** (`💫SynVow_api/api/文本`)
-  - Accepts a `prompts_list` text list, calls Gemini concurrently for each prompt, and outputs a result list
-- **Added model `gemini-3.1-flash-2605`** (Gemini nodes, ecommerce prompt generation nodes)
+
+1. **Adds `SynVow 阿里云OSS上传` node** (`💫SynVow_api/OSS`)  
+2. Uploads a single image to Aliyun OSS and outputs the public URL  
+3. **Adds `图像列表数量校验` node** (`💫SynVow_api/Image`)  
+4. Checks whether 2-5 image lists have the same count and stops the workflow with an error if not  
+5. **E-commerce detail page prompt generator** adds a `prompts_count` output with the number of generated prompts  
+6. **Text pause editor** removes the unused `seed` parameter  
+7. **Adds `运行索引计数器` node** (`💫SynVow_api/Utils`)  
+8. Increments and outputs the current index on each run; resets when Run is clicked  
+9. **`图像列表组合器`** accepts list inputs and expands batches and lists into single images in order  
+10. **Adds `SynVow Gemini 提示词生成 (T_batch)` node** (`💫SynVow_api/api/文本`)  
+11. Takes a `prompts_list`, calls Gemini concurrently for each prompt, and outputs a result list  
+12. **Adds model `gemini-3.1-flash-2605`** (Gemini node, e-commerce prompt generator)
 
 ### 2026-05-17
-- Added model `gpt-image-2-稳定` (GPT-Image-2 series)
-- Added models `nano-banana-2-稳定`, `nano-banana-2-官方`, `nano-banana-pro-稳定`, `nano-banana-pro-官方` (NanoBanana series)
+
+1. Adds model `gpt-image-2-稳定` (GPT-Image-2 nodes)  
+2. Adds models `nano-banana-2-稳定`, `nano-banana-2-官方`, `nano-banana-pro-稳定`, `nano-banana-pro-官方` (NanoBanana nodes)
 
 ### 2026-05-15
-- **All nodes in this repository were refactored; previous nodes are deprecated**
-- **Added `字符串范围提取器` node** (`💫SynVow_api/Text`)
-  - Supports plain marker mode (`{|}`) and JSON field extraction (`{[field name]}`)
-  - Outputs matched fragment lists; pick a single item by index or output all
-- **Added `列表批次转换器` node** (`💫SynVow_api/Text`)
-  - Groups multi-line text or JSON arrays by `batch_size`, with groups separated by `---`
-- **Added `提示词范围选择器` node** (`💫SynVow_api/Text`)
-  - Selects a subset from a text list by start/end index; out-of-range values are clipped
-- **Added `提示词选择器` node** (`💫SynVow_api/Text`)
-  - Selects a single text item by index; returns the last item when out of range
-- **Added `TXT文件加载器` node** (`💫SynVow_api/Text`)
-  - Reads one or more TXT files by path; supports `file_index` for a single file
-- **Added `文件夹扫描器` node** (`💫SynVow_api/Utils`)
-  - Recursively scans a folder and outputs a path list and count
-  - Supports `file_type` filters: `all` / `images` / `txt` / `video` / `audio`
-  - Supports natural / time sorting and a max-depth limit
-- **Added `批次图像加载器` node** (`💫SynVow_api/Image`)
-  - Loads images from a folder by batch index; outputs tensors, count, and filename list
-- **Added `文件夹图像列表加载器` node** (`💫SynVow_api/Image`)
-  - Loads an image list from a folder by group index; outputs images, filenames, total groups, and current group frame count
-- **Added `图像范围选择器` node** (`💫SynVow_api/Image`)
-  - Selects images within a start/end index range from a list or batch
-- **Added `图像列表组合器` node** (`💫SynVow_api/Image`)
-  - Combines up to 10 image inputs into an ordered image list
-- **Added `图像加载器` node** (`💫SynVow_api/Image`)
-  - Loads a single image and also outputs filename, full path, folder path, and mask
+
+1. **Adds `字符串范围提取器` node** (`💫SynVow_api/Text`)  
+2. Supports marker mode (`{|}`) and JSON field mode (`{[字段名]}`)  
+3. Outputs a list of matched fragments; can output one by index or all  
+4. **Adds `列表批次转换器` node** (`💫SynVow_api/Text`)  
+5. Groups multi-line text or JSON arrays by `batch_size`, separating groups with `---`  
+6. **Adds `提示词范围选择器` node** (`💫SynVow_api/Text`)  
+7. Selects a subset of a text list by start/end index; out-of-range values are clamped  
+8. **Adds `提示词选择器` node** (`💫SynVow_api/Text`)  
+9. Selects one text by index; returns the last one when out of range  
+10. **Adds `TXT文件加载器` node** (`💫SynVow_api/Text`)  
+11. Reads one or more TXT files by path; `file_index` selects a single file  
+12. **Adds `文件夹扫描器` node** (`💫SynVow_api/Utils`)  
+13. Recursively scans a folder and outputs a path list and count  
+14. `file_type` filter: `all` / `images` / `txt` / `video` / `audio`  
+15. Supports natural and time-based sorting and a maximum depth limit  
+16. **Adds `批次图像加载器` node** (`💫SynVow_api/Image`)  
+17. Loads images from a folder by batch index, outputting tensors, count, and file names  
+18. **Adds `文件夹图像列表加载器` node** (`💫SynVow_api/Image`)  
+19. Loads an image list from a folder by group index, outputting images, file names, total groups, and current group frame count  
+20. **Adds `图像范围选择器` node** (`💫SynVow_api/Image`)  
+21. Selects images from a list or batch by start/end index  
+22. **Adds `图像列表组合器` node** (`💫SynVow_api/Image`)  
+23. Combines up to 10 image inputs into an image list in order  
+24. **Adds `图像加载器` node** (`💫SynVow_api/Image`)  
+25. Loads a single image and also outputs file name, full path, folder path, and mask
 
 ---
 

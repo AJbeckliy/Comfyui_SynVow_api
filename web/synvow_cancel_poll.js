@@ -140,13 +140,6 @@ function bindWidgetOptions(node) {
         });
         return;
     }
-    if (t.startsWith("SynVowJimeng")) {
-        bindByModel(node, "model_type", v => {
-            setCombo(widget(node, "resolution"),
-                v.includes("pro") || v.includes("Pro") ? ["1K", "2K"] : ["2K", "3K", "4K"]);
-        });
-        return;
-    }
     if (t === "SynVowOmniFlash") {
         bindByModel(node, "model", v => {
             const v11 = v === "omni-1.1-flash" || v.includes("O-1.1");

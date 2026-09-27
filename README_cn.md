@@ -8,214 +8,208 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 
 ## 更新日志
 
+### 2026-09-27
+
+1、`SynVow Gemini` 新增 `GM3.7-flash-2606` / `GM3.6-flash-2606`，去掉 `GM3.5-flash-2606`  
+2、`SynVow 即梦`（含批量）去掉 `即梦5.0`，新增 `即梦5.0-flash`；分辨率增加 `1.5K`，输出可选 `png` / `jpeg`  
+3、快速充值显示当前余额；近期活动放到支付方式上方；点微信支付或支付宝支付直接下单
+
 ### 2026-09-22
-- **账号 / Web**
-  - 个人中心展示账号角色（普通用户 / 企业用户 ）；
-- **图像节点**
-  - `SynVow GPT-Image-2`（含批量、产品六合一、Alpha）`PT2.5-1k-企业` 支持背景透明
+
+1、个人中心展示账号角色（普通用户 / 企业用户 ）；  
+2、`SynVow GPT-Image-2`（含批量、产品六合一、Alpha）`PT2.5-1k-企业` 支持背景透明
 
 ### 2026-09-17
-- **文本模型**
-  - `SynVow Gemini` 新增 `GM3.7-flash-稳定` / `GM3.8-flash-稳定`，去掉全部 Gemini 2605；去掉 `PT5.5-2605` / `PT5.4-2605`
-- **视频节点**
-  - 删除 `SynVow Seedance2.0 视频生成 (720P)`
-  - `SynVow Seedance` 新增 `sd2.0-特惠版`
-  - `SynVow Seedance 2.5` 去掉 `seedance-2.5-低价`；
-  - `SynVow MiniMax`（文生 / 首尾帧 / 多模态参考）新增 `MiniMax-H3-低价`；
+
+1、`SynVow Gemini` 新增 `GM3.7-flash-稳定` / `GM3.8-flash-稳定`，去掉全部 Gemini 2605；去掉 `PT5.5-2605` / `PT5.4-2605`  
+2、删除 `SynVow Seedance2.0 视频生成 (720P)`  
+3、`SynVow Seedance` 新增 `sd2.0-特惠版`  
+4、`SynVow Seedance 2.5` 去掉 `seedance-2.5-低价`；  
+5、`SynVow MiniMax`（文生 / 首尾帧 / 多模态参考）新增 `MiniMax-H3-低价`；
 
 ### 2026-09-15
-- **GPT-Image-2.5 图片分层**
-  - `SynVow GPT-Image-2 Alpha (T_batch)` 新增透明/不透明背景选择、分层质量自动路由和批量失败占位
-  - `SynVow 透明素材提示词生成器` 的参考图分层模式支持2～6层，由LLM规划完整画布坐标并生成精简提示词
-  - `SynVow 透明PNG保存预览` 保留模型返回的RGBA像素，按规划坐标归位；失败槽位使用黑图占位且不中断工作流
-  - 新增 `SynVow PSD图层合成`：将最终PNG写入可编辑PSD，可选加入隐藏原图参考层
-  - 不生成新蒙版，也不把原图像素重新贴回生成图层
+
+1、`SynVow GPT-Image-2 Alpha (T_batch)` 新增透明/不透明背景选择、分层质量自动路由和批量失败占位  
+2、`SynVow 透明素材提示词生成器` 的参考图分层模式支持2～6层，由LLM规划完整画布坐标并生成精简提示词  
+3、`SynVow 透明PNG保存预览` 保留模型返回的RGBA像素，按规划坐标归位；失败槽位使用黑图占位且不中断工作流  
+4、新增 `SynVow PSD图层合成`：将最终PNG写入可编辑PSD，可选加入隐藏原图参考层  
+5、不生成新蒙版，也不把原图像素重新贴回生成图层
 
 ### 2026-09-14
-- **图像节点**
-  - `SynVow NanoBanana`（含批量）比例选择更新。
+
+1、`SynVow NanoBanana`（含批量）比例选择更新。
 
 ### 2026-09-12
-- **音频节点**
-  -  `SynVow Suno`新增suno6模型；支持生成/翻唱/延长模式；
+
+1、`SynVow Suno`新增suno6模型；支持生成/翻唱/延长模式；
 
 ### 2026-09-11
-- **图像节点**
-  - `SynVow GPT-Image-2`（含批量、产品六合一、Alpha）按 新增PT2.5-1K-企业、稳定、官方。
-  - 新增背景透明支持(1k\稳定暂不支持)。
+
+1、`SynVow GPT-Image-2`（含批量、产品六合一、Alpha）按 新增PT2.5-1K-企业、稳定、官方。  
+2、新增背景透明支持(1k\稳定暂不支持)。
 
 ### 2026-09-10
-- **视频节点**
-  - `SynVow Omni-Flash` 新增 `omni-1.1-flash`；
-- **图像节点**
-  - `SynVow GPT-Image-2`（含批量与产品六合一）新增 PT2.5：`PT2.5-1k-2609`/ `PT2.5-sunburst-2609` / `PT2.5-flare-2609`；企业 `PT2.5-sunburst-企业` / `PT2.5-flare-企业`
+
+1、`SynVow Omni-Flash` 新增 `omni-1.1-flash`；  
+2、`SynVow GPT-Image-2`（含批量与产品六合一）新增 PT2.5：`PT2.5-1k-2609`/ `PT2.5-sunburst-2609` / `PT2.5-flare-2609`；企业 `PT2.5-sunburst-企业` / `PT2.5-flare-企业`
 
 ### 2026-08-25
-- **视频节点**
-  - `SynVow Seedance 2.5` 新增 `seedance-2.5-低价`：时长/分辨率同 2.5（4～30 秒，`480p`/`720p`/`1080p`），比例仅 `16:9` / `9:16`
-  - `SynVow Seedance` 去掉 `seedance2.0-全能` 及其模式 / 版本 / 4K 参数
-- **账号 / Web**
-  - 模型价格按标签筛选：可切文本/图像/视频/音频/解析/其它
+
+1、`SynVow Seedance 2.5` 新增 `seedance-2.5-低价`：时长/分辨率同 2.5（4～30 秒，`480p`/`720p`/`1080p`），比例仅 `16:9` / `9:16`  
+2、`SynVow Seedance` 去掉 `seedance2.0-全能` 及其模式 / 版本 / 4K 参数  
+3、模型价格按标签筛选：可切文本/图像/视频/音频/解析/其它
 
 ### 2026-08-24
-- **视频节点**
-  - 新增 `SynVow wan-video`（`wan3.0-video-wd` / 展示名 `wan3.0-video-稳定`）：文生视频，可选最多 9 张参考图、1 段参考视频、1 段参考音频；分辨率 `480P`/`720P`/`1080P`，画幅 `adaptive`/`16:9`/`4:3`/`1:1`/`3:4`/`9:16`，时长 2～30 秒
+
+1、新增 `SynVow wan-video`（`wan3.0-video-wd` / 展示名 `wan3.0-video-稳定`）：文生视频，可选最多 9 张参考图、1 段参考视频、1 段参考音频；分辨率 `480P`/`720P`/`1080P`，画幅 `adaptive`/`16:9`/`4:3`/`1:1`/`3:4`/`9:16`，时长 2～30 秒
 
 ### 2026-08-23
-- **文本模型**
-  - 新增独立节点 `SynVow LLM-Qwen` / `(T_batch)`：`qwen3.6-flash-稳定` / `qwen3.6-plus-稳定` / `qwen3.7-plus-稳定` / `qwen3.7-max-稳定` / `qwen3.8-max-稳定`
-  - `SynVow GPT 提示词生成` 新增 `(T_batch)`
-- **音频**
-  - 新增 `SynVow Doubao 语音`（`doubao-seed-audio-1.0`，wav/mp3，语速/响度/音高，最多 3 段参考音频）
+
+1、新增独立节点 `SynVow LLM-Qwen` / `(T_batch)`：`qwen3.6-flash-稳定` / `qwen3.6-plus-稳定` / `qwen3.7-plus-稳定` / `qwen3.7-max-稳定` / `qwen3.8-max-稳定`  
+2、`SynVow GPT 提示词生成` 新增 `(T_batch)`  
+3、新增 `SynVow Doubao 语音`（`doubao-seed-audio-1.0`，wav/mp3，语速/响度/音高，最多 3 段参考音频）
 
 ### 2026-08-19
-- **文本模型**
-  - 去掉 `gpt-5.5-2607` / `gpt-5.6-sol-2607`（PT2607），新增 `PT5.5-稳定`（请求 `gpt-5.5-稳定`）、`PT5.6-sol-稳定`（请求 `gpt-5.6-sol-稳定`）
-- **图像节点**
-  - 即梦 5.0 分辨率改为 `2K` / `3K` / `4K`，参考图最多 4 张
-  - 新增独立节点 `SynVow GK2.0` / `(T_batch)` / `(I_batch)` / `(T_I_batch)`（`grok-image-2.0-wd`，比例、`2k`/`1k`，参考图最多 3 张）
-- **视频节点**
-  - `SynVow Seedance 2.5` 画质增加 `1080p`
+
+1、去掉 `gpt-5.5-2607` / `gpt-5.6-sol-2607`（PT2607），新增 `PT5.5-稳定`（请求 `gpt-5.5-稳定`）、`PT5.6-sol-稳定`（请求 `gpt-5.6-sol-稳定`）  
+2、即梦 5.0 分辨率改为 `2K` / `3K` / `4K`，参考图最多 4 张  
+3、新增独立节点 `SynVow GK2.0` / `(T_batch)` / `(I_batch)` / `(T_I_batch)`（`grok-image-2.0-wd`，比例、`2k`/`1k`，参考图最多 3 张）  
+4、`SynVow Seedance 2.5` 画质增加 `1080p`
 
 ### 2026-08-17
-- **视频节点**
-  - 新增独立节点 `SynVow Seedance 2.5`（，480p/720p，时长 4～30 秒）
-  - 去掉 `seedance-2.0-face` / `seedance-2.0-fast-face`
-- **图像节点**
-  - 修复 `gpt-image-2-4k-qy` 文生图：无参考图时请求 `gpt-image-2-4k-qy-t2i`
-- **账号 / Web**
-  - 充值中心：增添更多挡位，自定义金额最低 5 rmb。
-  - 个人中心：添加用户 ID、设置密码 / 修改密码、绑定邮箱。
-  - 最新公告日期为本机当天时，「公告」按钮右上角显示红点；打开列表后红点暂时去掉。
-- **上传**
-  - 图像/视频/音频上传功能修改。
+
+1、新增独立节点 `SynVow Seedance 2.5`（，480p/720p，时长 4～30 秒）  
+2、去掉 `seedance-2.0-face` / `seedance-2.0-fast-face`  
+3、修复 `gpt-image-2-4k-qy` 文生图：无参考图时请求 `gpt-image-2-4k-qy-t2i`  
+4、充值中心：增添更多挡位，自定义金额最低 5 rmb。  
+5、个人中心：添加用户 ID、设置密码 / 修改密码、绑定邮箱。  
+6、最新公告日期为本机当天时，「公告」按钮右上角显示红点；打开列表后红点暂时去掉。  
+7、图像/视频/音频上传功能修改。
 
 ### 2026-08-06
-- **视频节点**
-  - 新增 `SynVow MiniMax 文生视频` / `SynVow MiniMax 首尾帧视频` / `SynVow MiniMax 多模态参考视频`（模型 `MiniMax-H3`，分辨率 `2K`，时长 4～15 秒）
-- **图像节点**
-  - 修复 `gpt-image-2-4k-qy` 模型文生图问题。
-- **账号 / Web**
-  - 悬浮菜单新增「公告」按钮。
+
+1、新增 `SynVow MiniMax 文生视频` / `SynVow MiniMax 首尾帧视频` / `SynVow MiniMax 多模态参考视频`（模型 `MiniMax-H3`，分辨率 `2K`，时长 4～15 秒）  
+2、修复 `gpt-image-2-4k-qy` 模型文生图问题。  
+3、悬浮菜单新增「公告」按钮。
 
 ### 2026-08-03
-- **图像节点**
-  - 即梦新增 `即梦5.0-pro`；
-  - 新增 `SynVow GK1.5` / `(T_batch)` / `(I_batch)` / `(T_I_batch)`，请求模型为 `grok-image-1.5-稳定`
-  - 新增 `SynVow 悠船 文生图`、`SynVow 悠船 多图融合`、`SynVow 悠船 图像编辑`
-  - GPT-Image-2 新增 `gpt-image-2-1k-qy` / `gpt-image-2-4k-qy`；1K 模型固定按 1K 请求，4K 模型支持 1K / 2K / 4K，速度快，价格实惠。
-  - NanoBanana 新增 `nanobanana2-qy` / `nanobananapro-qy`；速度快，价格实惠。
-- **视频节点**
-  - `SynVow Seedance2.0 视频生成 (720P)` 修复。
-- **账号 / Web**
-  - 登录 / 注册支持手机号与邮箱双通道
-- **文本模型**
-  - Gemini 新增 `gemini-3.5-flash-lite-稳定` / `gemini-3.6-flash-稳定`
-  - GPT 新增 `gpt-5.5-2607` / `gpt-5.6-sol-2607`
+
+1、即梦新增 `即梦5.0-pro`；  
+2、新增 `SynVow GK1.5` / `(T_batch)` / `(I_batch)` / `(T_I_batch)`，请求模型为 `grok-image-1.5-稳定`  
+3、新增 `SynVow 悠船 文生图`、`SynVow 悠船 多图融合`、`SynVow 悠船 图像编辑`  
+4、GPT-Image-2 新增 `gpt-image-2-1k-qy` / `gpt-image-2-4k-qy`；1K 模型固定按 1K 请求，4K 模型支持 1K / 2K / 4K，速度快，价格实惠。  
+5、NanoBanana 新增 `nanobanana2-qy` / `nanobananapro-qy`；速度快，价格实惠。  
+6、`SynVow Seedance2.0 视频生成 (720P)` 修复。  
+7、登录 / 注册支持手机号与邮箱双通道  
+8、Gemini 新增 `gemini-3.5-flash-lite-稳定` / `gemini-3.6-flash-稳定`  
+9、GPT 新增 `gpt-5.5-2607` / `gpt-5.6-sol-2607`
 
 ### 2026-07-22
-- **视频 / 音频节点更新**
-  - 新增 `SynVow Seedance`（`/image/edit`：全能 / mini / face / 分辨率 / 编辑 / 延长）
-  - **保留**旧接口节点 `SynVow Seedance2.0 视频生成 (720P)`（`/video/generate`，实际模型 `seedance_2_720p`）
-  - 新增 `SynVow Grok Video`（`grok-1.5-video`）
-  - 新增 `SynVow Omni-Flash`（`Omni-Flash-Ext` / `omni-flash-preview`）
-  - 新增 `SynVow Veo31`（`veo3.1`）
-  - 新增 `SynVow Suno 灵感模式` / `SynVow Suno 自定义模式`（`suno5.5`）
-  - 视频节点输出 ComfyUI `VIDEO`；Suno 输出 `AUDIO` 及路径/链接/歌词
-  - 短视频解析模型对齐：抖音 / 小红书 / 视频号 / bilibili / YouTube
-- **图像节点**
-  - 新增 `SynVow 即梦` / `(T_batch)` / `(I_batch)` / `(T_I_batch)`（模型 `即梦5.0`，分辨率 `2K`/`3K`）
-  - GPT-Image-2 新增 `gpt-image-2-2607`；NanoBanana 新增 `nano-banana-2-lite-2607`
-- **GPT-Image-2 产品与提示词工作流**
-  - 新增 `SynVow GPT-Image-2 产品六合一`：产品精修、产品融入场景、模糊图片高清、移除物品、蒙版引导产品功能科技光效和扩图
-  - 新增 **一镜到底提示词工作流（测试版 / Beta）**：人物设定、场景设定、路线分镜和 Seedance LLM 提示词编译器
-  - 一镜到底当前为测试版本，提示词结构、节点参数和输出效果后续会根据实际测试继续调整
-- **代码清理**
-  - 提交/轮询/下载/上传公共逻辑收敛到 `media_common.py`
-  - 删除重复下载重试与重复的 `IS_CHANGED` 实现
-  - 新视频/音频节点已注册取消轮询按钮
+
+1、新增 `SynVow Seedance`（`/image/edit`：全能 / mini / face / 分辨率 / 编辑 / 延长）  
+2、**保留**旧接口节点 `SynVow Seedance2.0 视频生成 (720P)`（`/video/generate`，实际模型 `seedance_2_720p`）  
+3、新增 `SynVow Grok Video`（`grok-1.5-video`）  
+4、新增 `SynVow Omni-Flash`（`Omni-Flash-Ext` / `omni-flash-preview`）  
+5、新增 `SynVow Veo31`（`veo3.1`）  
+6、新增 `SynVow Suno 灵感模式` / `SynVow Suno 自定义模式`（`suno5.5`）  
+7、视频节点输出 ComfyUI `VIDEO`；Suno 输出 `AUDIO` 及路径/链接/歌词  
+8、短视频解析模型对齐：抖音 / 小红书 / 视频号 / bilibili / YouTube  
+9、新增 `SynVow 即梦` / `(T_batch)` / `(I_batch)` / `(T_I_batch)`（模型 `即梦5.0`，分辨率 `2K`/`3K`）  
+10、GPT-Image-2 新增 `gpt-image-2-2607`；NanoBanana 新增 `nano-banana-2-lite-2607`  
+11、新增 `SynVow GPT-Image-2 产品六合一`：产品精修、产品融入场景、模糊图片高清、移除物品、蒙版引导产品功能科技光效和扩图  
+12、新增 **一镜到底提示词工作流（测试版 / Beta）**：人物设定、场景设定、路线分镜和 Seedance LLM 提示词编译器  
+13、一镜到底当前为测试版本，提示词结构、节点参数和输出效果后续会根据实际测试继续调整  
+14、提交/轮询/下载/上传公共逻辑收敛到 `media_common.py`  
+15、删除重复下载重试与重复的 `IS_CHANGED` 实现  
+16、新视频/音频节点已注册取消轮询按钮
 
 ### 2026-07-01
-- **新增透明 PNG 素材工作流节点**
-  - `SynVow 透明素材提示词生成器`：按场景生成可复用透明素材提示词
-  - `SynVow GPT-Image-2 Alpha (T_batch)`：URL 直出透明 PNG 生成（提示词列表批量）
-  - `SynVow 透明PNG保存预览`：按原始 URL 保存 RGBA PNG，保留真实透明通道；空 URL 或下载失败时用黑图占位并继续工作流
+
+1、`SynVow 透明素材提示词生成器`：按场景生成可复用透明素材提示词  
+2、`SynVow GPT-Image-2 Alpha (T_batch)`：URL 直出透明 PNG 生成（提示词列表批量）  
+3、`SynVow 透明PNG保存预览`：按原始 URL 保存 RGBA PNG，保留真实透明通道；空 URL 或下载失败时用黑图占位并继续工作流
 
 ### 2026-06-30
-- **代码清理**：删除无用/重复/失效代码，统一逻辑，行为保持不变
-  - 删除失效的模型池筛选脚本、孤立的后端接口及相关死代码
-  - 音视频加载、分页样式、时间/请求工具等重复逻辑统一收敛
-- **模型与界面对齐前端**
-  - GPT-Image-2 新增 `gpt-image-2-官方` 模型，图像输入扩展至 9 张
-  - Gemini 模型列表与默认模型对齐
-  - 模型价格弹窗改为卡片网格样式，显示名只取真实模型名
-- **修复消费记录"资源"打开**：按模型类型（图/视/音）正确解析链接，修复视频、音频记录取不到链接的问题
+
+1、**代码清理**：删除无用/重复/失效代码，统一逻辑，行为保持不变  
+2、删除失效的模型池筛选脚本、孤立的后端接口及相关死代码  
+3、音视频加载、分页样式、时间/请求工具等重复逻辑统一收敛  
+4、GPT-Image-2 新增 `gpt-image-2-官方` 模型，图像输入扩展至 9 张  
+5、Gemini 模型列表与默认模型对齐  
+6、模型价格弹窗改为卡片网格样式，显示名只取真实模型名  
+7、**修复消费记录"资源"打开**：按模型类型（图/视/音）正确解析链接，修复视频、音频记录取不到链接的问题
 
 ### 2026-06-23
-- **集成 YMAI 提示词节点**：新增 `YM-爆款封面`、`YM-故事板`、`YM-人物情绪`、`YM-角色卡`，复用 SynVow 登录与接口，无需额外配置
+
+1、**集成 YMAI 提示词节点**：新增 `YM-爆款封面`、`YM-故事板`、`YM-人物情绪`、`YM-角色卡`，复用 SynVow 登录与接口，无需额外配置
 
 ### 2026-06-01
-- **新增模型 `nano-banana-2-低价`、`nano-banana-pro-低价`**（NanoBanana 系列节点：单图生成、T_batch、I_batch、TI_batch）
-  - 低价版采用 `ratio` / `resolution` / `files` 请求结构，结果从 `result.url` 解析
+
+1、**新增模型 `nano-banana-2-低价`、`nano-banana-pro-低价`**（NanoBanana 系列节点：单图生成、T_batch、I_batch、TI_batch）  
+2、低价版采用 `ratio` / `resolution` / `files` 请求结构，结果从 `result.url` 解析
 
 ### 2026-05-29
-- **新增模型 `gpt-5.5-2606`、`gpt-5.4-2606`**（SynVow GPT 提示词生成、GPT-Image-2 文生图提示词控制器、图生图提示词控制器）
-  - 默认模型更新为 `gpt-5.5-2606`
-- **新增模型 `gemini-3.1-flash-2606`、`gemini-3.5-flash-2606`、`gemini-3.1-pro-2606`、`gemini-3-pro-2606`**（SynVow Gemini 提示词生成、🛒 电商详情页提示词生成器、GPT-Image-2 文生图提示词控制器、图生图提示词控制器）
-  - Gemini 节点及电商详情页提示词生成器默认模型更新为 `gemini-3.1-flash-2606`
+
+1、**新增模型 `gpt-5.5-2606`、`gpt-5.4-2606`**（SynVow GPT 提示词生成、GPT-Image-2 文生图提示词控制器、图生图提示词控制器）  
+2、默认模型更新为 `gpt-5.5-2606`  
+3、**新增模型 `gemini-3.1-flash-2606`、`gemini-3.5-flash-2606`、`gemini-3.1-pro-2606`、`gemini-3-pro-2606`**（SynVow Gemini 提示词生成、🛒 电商详情页提示词生成器、GPT-Image-2 文生图提示词控制器、图生图提示词控制器）  
+4、Gemini 节点及电商详情页提示词生成器默认模型更新为 `gemini-3.1-flash-2606`
 
 ### 2026-05-20
-- **新增 `短视频解析` 节点**（`💫SynVow_api/api/视频` 分类）
-  - 输入抖音分享链接或含链接的文本，自动提取 URL，调用 API 返回无水印直链并下载至本地
-- **新增模型 `gemini-3.5-flash-2605`**（Gemini 节点、电商提示词生成器、GPT-Image-2 提示词优化器）
-- **GPT-Image-2 提示词优化器** 补入模型 `gemini-3.1-flash-2605`
-- **参考图提示词优化器** 补入模型 `gemini-3.1-flash-2605`、`gemini-3.5-flash-2605`
+
+1、**新增 `短视频解析` 节点**（`💫SynVow_api/api/视频` 分类）  
+2、输入抖音分享链接或含链接的文本，自动提取 URL，调用 API 返回无水印直链并下载至本地  
+3、**新增模型 `gemini-3.5-flash-2605`**（Gemini 节点、电商提示词生成器、GPT-Image-2 提示词优化器）  
+4、**GPT-Image-2 提示词优化器** 补入模型 `gemini-3.1-flash-2605`  
+5、**参考图提示词优化器** 补入模型 `gemini-3.1-flash-2605`、`gemini-3.5-flash-2605`
 
 ### 2026-05-18
-- **新增 `SynVow 阿里云OSS上传` 节点**（`💫SynVow_api/OSS` 分类）
-  - 将单张图像上传至阿里云 OSS，输出公网访问 URL
-- **新增 `图像列表数量校验` 节点**（`💫SynVow_api/Image` 分类）
-  - 校验 2~5 组图像列表数量是否一致，不一致则报错阻断流程
-- **电商详情页提示词生成器** 新增 `prompts_count` 输出端，输出实际生成的提示词条数
-- **文本停留编辑器** 删除无用 `seed` 参数
-- **新增 `运行索引计数器` 节点**（`💫SynVow_api/Utils` 分类）
-  - 每次运行自动自增输出当前索引，点击运行时自动归零
-- **`图像列表组合器`** 支持列表输入，自动展开 batch 和列表为单张顺序输出
-- **新增 `SynVow Gemini 提示词生成 (T_batch)` 节点**（`💫SynVow_api/api/文本` 分类）
-  - 接收 `prompts_list` 文本列表，对每条 prompt 并发调用 Gemini，输出结果列表
-- **新增模型 `gemini-3.1-flash-2605`**（Gemini 节点、电商提示词生成节点）
+
+1、**新增 `SynVow 阿里云OSS上传` 节点**（`💫SynVow_api/OSS` 分类）  
+2、将单张图像上传至阿里云 OSS，输出公网访问 URL  
+3、**新增 `图像列表数量校验` 节点**（`💫SynVow_api/Image` 分类）  
+4、校验 2~5 组图像列表数量是否一致，不一致则报错阻断流程  
+5、**电商详情页提示词生成器** 新增 `prompts_count` 输出端，输出实际生成的提示词条数  
+6、**文本停留编辑器** 删除无用 `seed` 参数  
+7、**新增 `运行索引计数器` 节点**（`💫SynVow_api/Utils` 分类）  
+8、每次运行自动自增输出当前索引，点击运行时自动归零  
+9、**`图像列表组合器`** 支持列表输入，自动展开 batch 和列表为单张顺序输出  
+10、**新增 `SynVow Gemini 提示词生成 (T_batch)` 节点**（`💫SynVow_api/api/文本` 分类）  
+11、接收 `prompts_list` 文本列表，对每条 prompt 并发调用 Gemini，输出结果列表  
+12、**新增模型 `gemini-3.1-flash-2605`**（Gemini 节点、电商提示词生成节点）
 
 ### 2026-05-17
-- 新增模型 `gpt-image-2-稳定`（GPT-Image-2 系列节点）
-- 新增模型 `nano-banana-2-稳定`、`nano-banana-2-官方`、`nano-banana-pro-稳定`、`nano-banana-pro-官方`（NanoBanana 系列节点）
+
+1、新增模型 `gpt-image-2-稳定`（GPT-Image-2 系列节点）  
+2、新增模型 `nano-banana-2-稳定`、`nano-banana-2-官方`、`nano-banana-pro-稳定`、`nano-banana-pro-官方`（NanoBanana 系列节点）
 
 ### 2026-05-15
-- **仓库内所有节点进行重构，原有节点已废弃**
-- **新增 `字符串范围提取器` 节点**（`💫SynVow_api/Text` 分类）
-  - 支持普通标记模式（`{|}`）和 JSON 字段提取模式（`{[字段名]}`）
-  - 输出匹配片段列表，支持按索引取单条或全部输出
-- **新增 `列表批次转换器` 节点**（`💫SynVow_api/Text` 分类）
-  - 将多行文本或 JSON 数组按 `batch_size` 分组，组间以 `---` 分隔输出
-- **新增 `提示词范围选择器` 节点**（`💫SynVow_api/Text` 分类）
-  - 按起始/结束索引从文本列表中选取子集，超出范围自动截断
-- **新增 `提示词选择器` 节点**（`💫SynVow_api/Text` 分类）
-  - 按索引从文本列表中选取单条文本，越界时自动返回最后一条
-- **新增 `TXT文件加载器` 节点**（`💫SynVow_api/Text` 分类）
-  - 按路径读取一个或多个 TXT 文件，支持 `file_index` 指定单文件
-- **新增 `文件夹扫描器` 节点**（`💫SynVow_api/Utils` 分类）
-  - 递归扫描文件夹，输出路径列表和数量
-  - 支持 `file_type` 过滤：`all` / `images` / `txt` / `video` / `audio`
-  - 支持自然序、时间序多种排序方式及最大深度限制
-- **新增 `批次图像加载器` 节点**（`💫SynVow_api/Image` 分类）
-  - 按批次索引从文件夹加载图像，输出张量、数量及文件名列表
-- **新增 `文件夹图像列表加载器` 节点**（`💫SynVow_api/Image` 分类）
-  - 按组索引从文件夹加载图像列表，输出图像列表、文件名列表、总组数、当前组帧数
-- **新增 `图像范围选择器` 节点**（`💫SynVow_api/Image` 分类）
-  - 按起始/结束索引从图像列表或批次中选取范围内的图像
-- **新增 `图像列表组合器` 节点**（`💫SynVow_api/Image` 分类）
-  - 将最多 10 张图像输入按顺序组合为图像列表
-- **新增 `图像加载器` 节点**（`💫SynVow_api/Image` 分类）
-  - 加载单张图像，额外输出文件名、完整路径、所在文件夹路径及 mask
+
+1、**新增 `字符串范围提取器` 节点**（`💫SynVow_api/Text` 分类）  
+2、支持普通标记模式（`{|}`）和 JSON 字段提取模式（`{[字段名]}`）  
+3、输出匹配片段列表，支持按索引取单条或全部输出  
+4、**新增 `列表批次转换器` 节点**（`💫SynVow_api/Text` 分类）  
+5、将多行文本或 JSON 数组按 `batch_size` 分组，组间以 `---` 分隔输出  
+6、**新增 `提示词范围选择器` 节点**（`💫SynVow_api/Text` 分类）  
+7、按起始/结束索引从文本列表中选取子集，超出范围自动截断  
+8、**新增 `提示词选择器` 节点**（`💫SynVow_api/Text` 分类）  
+9、按索引从文本列表中选取单条文本，越界时自动返回最后一条  
+10、**新增 `TXT文件加载器` 节点**（`💫SynVow_api/Text` 分类）  
+11、按路径读取一个或多个 TXT 文件，支持 `file_index` 指定单文件  
+12、**新增 `文件夹扫描器` 节点**（`💫SynVow_api/Utils` 分类）  
+13、递归扫描文件夹，输出路径列表和数量  
+14、支持 `file_type` 过滤：`all` / `images` / `txt` / `video` / `audio`  
+15、支持自然序、时间序多种排序方式及最大深度限制  
+16、**新增 `批次图像加载器` 节点**（`💫SynVow_api/Image` 分类）  
+17、按批次索引从文件夹加载图像，输出张量、数量及文件名列表  
+18、**新增 `文件夹图像列表加载器` 节点**（`💫SynVow_api/Image` 分类）  
+19、按组索引从文件夹加载图像列表，输出图像列表、文件名列表、总组数、当前组帧数  
+20、**新增 `图像范围选择器` 节点**（`💫SynVow_api/Image` 分类）  
+21、按起始/结束索引从图像列表或批次中选取范围内的图像  
+22、**新增 `图像列表组合器` 节点**（`💫SynVow_api/Image` 分类）  
+23、将最多 10 张图像输入按顺序组合为图像列表  
+24、**新增 `图像加载器` 节点**（`💫SynVow_api/Image` 分类）  
+25、加载单张图像，额外输出文件名、完整路径、所在文件夹路径及 mask
 
 ---
 
