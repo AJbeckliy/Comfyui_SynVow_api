@@ -35,7 +35,6 @@ CATEGORY = "💫SynVow_api/api/图像"
 SUBMIT_RETRY_ATTEMPTS = 3
 POLL_WORKER_LIMIT = 4
 BLACK_PLACEHOLDER_TOKEN = "__SYNVOW_BLACK_PLACEHOLDER__"
-SPLIT_ROUTING_OPTIONS = ("质量优先自动路由", "统一使用所选模型")
 _ALPHA_CANCEL_EVENT = threading.Event()
 
 
@@ -258,11 +257,6 @@ def _is_background_layer_prompt(prompt):
     return bool(slot_marker or legacy_marker or concise_marker)
 
 
-def _layer_slot_id(prompt):
-    match = re.search(r"^\[Layer:\s*([a-z_]+)\]", str(prompt or ""), flags=re.IGNORECASE)
-    return match.group(1).lower() if match else ""
-
-
 def _run_tasks_with_background(
     tasks,
     model,
@@ -372,7 +366,6 @@ class SynVowGptImage2Alpha_TBatch:
             },
             "optional": {
                 "prompts_list": ("STRING", {"forceInput": True}),
-                "split_routing": (SPLIT_ROUTING_OPTIONS, {"default": "质量优先自动路由"}),
                 "image1": ("IMAGE",),
                 "image2": ("IMAGE",),
                 "image3": ("IMAGE",),
@@ -398,7 +391,6 @@ class SynVowGptImage2Alpha_TBatch:
         transparent=True,
         seed=None,
         prompts_list=None,
-        split_routing="质量优先自动路由",
         image1=None,
         image2=None,
         image3=None,
@@ -420,7 +412,6 @@ class SynVowGptImage2Alpha_TBatch:
         image6 = _unpack(image6)
         image7 = _unpack(image7)
         image8 = _unpack(image8)
-        split_routing = _unpack(split_routing) or "质量优先自动路由"
 
         images = [item for item in [image1, image2, image3, image4, image5, image6, image7, image8] if item is not None]
         is_img2img = len(images) > 0
@@ -443,52 +434,9 @@ class SynVowGptImage2Alpha_TBatch:
         prompts = [prompt for prompt in prompts if prompt is not None] or [""]
         background_layer_count = sum(_is_background_layer_prompt(prompt) for prompt in prompts)
         tasks = []
-        routed_slots = []
         for prompt in prompts:
             task_transparent = False if transparent and _is_background_layer_prompt(prompt) else transparent
-            options = {}
-            slot_id = _layer_slot_id(prompt)
-            if split_routing == "质量优先自动路由" and slot_id:
-                if slot_id == "text_logo":
-                    routed_model, routed_style, routed_quality, routed_resolution, routed_size = _prep_model(
-                        "PT2.5-官方", "high", _unpack(resolution) or "1K", requested_aspect, "sunburst",
-                    )
-                    options = {
-                        "model": routed_model,
-                        "gpt_style": routed_style,
-                        "quality": routed_quality,
-                        "resolution": routed_resolution,
-                        "size": routed_size,
-                    }
-                elif slot_id == "decorations":
-                    routed_model, routed_style, routed_quality, routed_resolution, routed_size = _prep_model(
-                        "PT2.5-2609", "medium", _unpack(resolution) or "1K", requested_aspect, "flare",
-                    )
-                    if images:
-                        routed_size = _reference_custom_size(images[0], routed_size)
-                    options = {
-                        "model": routed_model,
-                        "gpt_style": routed_style,
-                        "quality": routed_quality,
-                        "resolution": routed_resolution,
-                        "size": routed_size,
-                    }
-                elif slot_id in ("background", "subject_product"):
-                    routed_model, routed_style, routed_quality, routed_resolution, routed_size = _prep_model(
-                        "PT2.5-2609", "medium", _unpack(resolution) or "1K", requested_aspect, "sunburst",
-                    )
-                    if images:
-                        routed_size = _reference_custom_size(images[0], routed_size)
-                    options = {
-                        "model": routed_model,
-                        "gpt_style": routed_style,
-                        "quality": routed_quality,
-                        "resolution": routed_resolution,
-                        "size": routed_size,
-                    }
-                if options:
-                    routed_slots.append(slot_id)
-            tasks.append((prompt, images, task_transparent, options))
+            tasks.append((prompt, images, task_transparent))
 
         background_mode = "transparent" if transparent else "opaque"
         print(f"[GPT-Image-2 Alpha TBatch] {len(tasks)} 条 prompt, model={model}, background={background_mode}")
@@ -518,7 +466,6 @@ class SynVowGptImage2Alpha_TBatch:
             f"已完成 {successful}/{len(tasks)} model={model} size={size} quality={quality}；"
             f"输出URL {successful}/{len(image_urls)}；background={background_mode}；"
             f"分层背景自动不透明={background_layer_count}；"
-            f"质量优先分槽路由={len(routed_slots)}/{len(tasks)}；"
             f"失败黑图占位={failed}/{len(tasks)}；"
             "透明模式可将 image_urls 连接到 SynVow 透明PNG保存预览。"
         )
