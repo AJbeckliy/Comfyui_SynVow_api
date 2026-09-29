@@ -134,7 +134,9 @@ def build_messages(system_prompt: str, user_prompt: str, image_urls: Optional[It
     ]
 
 
-def post_chat_completion(payload: Dict[str, Any], timeout: int = 180) -> Dict[str, Any]:
+def post_chat_completion(payload: Dict[str, Any], timeout: int = 180, *, max_attempts: int = CHAT_MAX_RETRIES) -> Dict[str, Any]:
+    if type(max_attempts) is not int or max_attempts < 1:
+        raise ValueError("max_attempts must be a positive integer")
     api_key = synvow_auth.read_api_key()
     headers = synvow_auth.make_api_headers(api_key)
     url = f"{DIRECT_API_BASE}/api/models/completions"
@@ -142,7 +144,7 @@ def post_chat_completion(payload: Dict[str, Any], timeout: int = 180) -> Dict[st
     payload.setdefault("stream", False)
     last_error: Optional[RuntimeError] = None
 
-    for attempt in range(CHAT_MAX_RETRIES):
+    for attempt in range(max_attempts):
         if attempt:
             time.sleep(min(2 ** attempt, 5))
         response = requests.post(url, headers=headers, json=payload, timeout=timeout, verify=False)
@@ -247,6 +249,7 @@ def chat_completion(
     reasoning_effort: Optional[str] = None,
     timeout: int = 180,
     seed: Optional[int] = None,
+    max_attempts: int = CHAT_MAX_RETRIES,
 ) -> str:
     # Several prompt nodes use seed as a ComfyUI execution/cache salt. Keep it
     # out of the provider payload because not every routed model accepts it.
@@ -262,4 +265,4 @@ def chat_completion(
     }
     if reasoning_effort:
         payload["reasoning_effort"] = reasoning_effort
-    return extract_content(post_chat_completion(payload, timeout=timeout))
+    return extract_content(post_chat_completion(payload, timeout=timeout, max_attempts=max_attempts))
