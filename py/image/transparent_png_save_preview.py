@@ -303,10 +303,13 @@ def _infer_split_layer_names_from_prompt(prompt, count: int) -> List[str]:
         6: ["背景层", "主体/人物/产品层", "文字/Logo层", "装饰元素层", "光影氛围层", "其他可复用元素层"],
     }
     for node in prompt.values():
-        if not isinstance(node, dict) or node.get("class_type") != "SynVowTransparentAssetPromptGenerator":
+        if not isinstance(node, dict) or node.get("class_type") not in {
+            "SynVowTransparentAssetPromptGenerator", "SynVowReferenceLayerPromptGenerator",
+        }:
             continue
         inputs = node.get("inputs") if isinstance(node.get("inputs"), dict) else {}
-        if "参考图分层拆图" not in str(_unpack(inputs.get("scene_preset")) or ""):
+        if (node.get("class_type") != "SynVowReferenceLayerPromptGenerator"
+                and "参考图分层拆图" not in str(_unpack(inputs.get("scene_preset")) or "")):
             continue
         layer_count = int(_unpack(inputs.get("layer_count")) or count or 4)
         names = schemes.get(max(2, min(layer_count, 6)), schemes[4])
