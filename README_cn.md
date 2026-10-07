@@ -8,10 +8,16 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 
 ## 更新日志
 
+### 2026-10-07
+
+1、新增 `[荐]视频解析30+`节点，支持30+平台视频解析。  
+2、`SynVow NanoBanana`（含批量）新增 `全能N2.1-特惠`
+
 ### 2026-09-27
 
 1、`SynVow Gemini` 新增 `GM3.7-flash-2606` / `GM3.6-flash-2606`，去掉 `GM3.5-flash-2606`  
 2、`SynVow 即梦`（含批量）去掉 `即梦5.0`，新增 `即梦5.0-flash`；分辨率增加 `1.5K`，输出可选 `png` / `jpeg`  
+3、快速充值显示当前余额；近期活动放到支付方式上方；点微信支付或支付宝支付直接下单  
 
 ### 2026-09-22
 
@@ -256,7 +262,7 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 | SynVow Grok Video | grok-1.5-video | 文/图生视频（最多 6 张参考图） |
 | SynVow Omni-Flash | Omni-Flash-Ext / omni-flash-preview | 图/视频参考生视频 |
 | SynVow Veo31 | veo3.1 | 文/图生视频（最多 2 张参考图，1080p） |
-| 短视频解析 | 平台解析 | 抖音 / 小红书 / 视频号 / bilibili / YouTube 无水印下载 |
+| [荐]视频解析30+ | jiexi30+ | 30+ 平台无水印下载，多条链接每 2 秒最多 5 个 |
 
 ### 💫SynVow_api/api/音频
 

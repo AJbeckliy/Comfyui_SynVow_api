@@ -31,6 +31,7 @@ MODEL_DISPLAY_NAMES = {
     "gpt-5.4-2606": "PT5.4-2606",
     # 图像 NanoBanana
     "nano-banana-2-2605": "全能N2-2605",
+    "nanobanana2.1-dj": "全能N2.1-特惠",
     "nano-banana-2-lite-2607": "全能N2-lite-2607",
     "nano-banana-2-稳定": "全能N2-稳定",
     "nanobanana2-qy": "全能N2-企业",

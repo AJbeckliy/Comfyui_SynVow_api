@@ -1,0 +1,222 @@
+{
+  "id": "658f2f31-d584-4ea5-b4cd-cb87909e2afa",
+  "revision": 0,
+  "last_node_id": 57,
+  "last_link_id": 71,
+  "nodes": [
+    {
+      "id": 53,
+      "type": "SynVowVideoParse30",
+      "pos": [
+        6426.161126884957,
+        -2588.0502653996978
+      ],
+      "size": [
+        400,
+        200
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "video_url",
+          "type": "STRING",
+          "links": [
+            69
+          ]
+        },
+        {
+          "name": "video_path",
+          "type": "STRING",
+          "links": [
+            68
+          ]
+        },
+        {
+          "name": "status",
+          "type": "STRING",
+          "links": [
+            70
+          ]
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "9a9c5a53c1c544f847cd9b5bfdee8d4dc06061d2",
+        "Node name for S&R": "SynVowVideoParse30"
+      },
+      "widgets_values": [
+        "2.30 n@D.HV pDH:/ 09/18 :2pm 当德国老外组团要来中国过年，齐聚我家开中国游计划会，# 德国# 老外过中国年# 国庆节快乐# vlog日常# 老外吃中国美食。  https://v.douyin.com/S_UD7vfIaog/ 复制此链接，打开Dou音搜索，直接观看视频！",
+        ""
+      ],
+      "widgets_values_named": {
+        "url_text": "2.30 n@D.HV pDH:/ 09/18 :2pm 当德国老外组团要来中国过年，齐聚我家开中国游计划会，# 德国# 老外过中国年# 国庆节快乐# vlog日常# 老外吃中国美食。  https://v.douyin.com/S_UD7vfIaog/ 复制此链接，打开Dou音搜索，直接观看视频！",
+        "save_path": ""
+      }
+    },
+    {
+      "id": 54,
+      "type": "SynVowApiVideoPreview",
+      "pos": [
+        7192.602720581494,
+        -2605.305902389518
+      ],
+      "size": [
+        345.84559189089157,
+        326.0619510138231
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video_path",
+          "type": "STRING",
+          "link": 68
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "9a9c5a53c1c544f847cd9b5bfdee8d4dc06061d2",
+        "Node name for S&R": "SynVowApiVideoPreview"
+      },
+      "widgets_values": [],
+      "widgets_values_named": {}
+    },
+    {
+      "id": 55,
+      "type": "ShowText|pysssss",
+      "pos": [
+        6880.744971218669,
+        -2596.788052877138
+      ],
+      "size": [
+        285.1155301287704,
+        124.07258354856458
+      ],
+      "flags": {
+        "collapsed": false
+      },
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 69
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": [
+        "https://v26-luna.douyinvod.com/ec11cb9935783ceed5a1343340ad3532/6ac644ff/video/tos/cn/tos-cn-ve-15c000-ce/oIlezkwvfAQo7T1qjD9qt0BKNEEoFAuiWiSIBr/?a=6383&br=1859&bt=1859&btag=c0000e00030000&cd=0%7C0%7C0%7C3&ch=26&cquery=100z_100o_100w_100B_100x&cr=3&cs=0&cv=1&dr=0&ds=4&dy_q=1791367423&feature_id=37f92ebd2877ae8e7eba995d406c5150&ft=rVWEerwwZRcZseFo1PDS6kwc3RZtGW~1pU9eFzjYlsO12nzXT&is_ssr=1&l=202610071803432C45568F85D366CC1259&lr=all&mime_type=video_mp4&qs=0&rc=NWQ2Ojk2aTdpaWRlNzw3aEBpamxlb285cnY1ZDMzbGkzNUAxLzZjYDJjNV4xMmIxLjBiYSMvL2ppMmRzNnNhLS1kLTVzcw%3D%3D"
+      ],
+      "widgets_values_named": {
+        "text_0": "https://v26-luna.douyinvod.com/ec11cb9935783ceed5a1343340ad3532/6ac644ff/video/tos/cn/tos-cn-ve-15c000-ce/oIlezkwvfAQo7T1qjD9qt0BKNEEoFAuiWiSIBr/?a=6383&br=1859&bt=1859&btag=c0000e00030000&cd=0%7C0%7C0%7C3&ch=26&cquery=100z_100o_100w_100B_100x&cr=3&cs=0&cv=1&dr=0&ds=4&dy_q=1791367423&feature_id=37f92ebd2877ae8e7eba995d406c5150&ft=rVWEerwwZRcZseFo1PDS6kwc3RZtGW~1pU9eFzjYlsO12nzXT&is_ssr=1&l=202610071803432C45568F85D366CC1259&lr=all&mime_type=video_mp4&qs=0&rc=NWQ2Ojk2aTdpaWRlNzw3aEBpamxlb285cnY1ZDMzbGkzNUAxLzZjYDJjNV4xMmIxLjBiYSMvL2ppMmRzNnNhLS1kLTVzcw%3D%3D"
+      }
+    },
+    {
+      "id": 56,
+      "type": "ShowText|pysssss",
+      "pos": [
+        6882.022040604916,
+        -2397.8971545696677
+      ],
+      "size": [
+        269.9661066537892,
+        132.04596432487097
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "label": "文本",
+          "name": "text",
+          "type": "STRING",
+          "link": 70
+        }
+      ],
+      "outputs": [
+        {
+          "label": "字符串",
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": [
+        "已完成 jiexi30+ x1"
+      ],
+      "widgets_values_named": {
+        "text_0": "已完成 jiexi30+ x1"
+      }
+    }
+  ],
+  "links": [
+    [
+      68,
+      53,
+      1,
+      54,
+      0,
+      "STRING"
+    ],
+    [
+      69,
+      53,
+      0,
+      55,
+      0,
+      "STRING"
+    ],
+    [
+      70,
+      53,
+      2,
+      56,
+      0,
+      "STRING"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 2.357947691000002,
+      "offset": [
+        -6239.617177068819,
+        2797.240066577177
+      ]
+    },
+    "frontendVersion": "1.53.6",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4,
+  "seed_widgets": {}
+}

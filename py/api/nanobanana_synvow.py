@@ -30,6 +30,7 @@ _API_MODELS = [
     "nanobanana2-qy",
     "nano-banana-2-官方",
     "nano-banana-2-2605",
+    "nanobanana2.1-dj",
     "nano-banana-2-lite-2607",
     "nano-banana-pro-稳定",
     "nanobananapro-qy",

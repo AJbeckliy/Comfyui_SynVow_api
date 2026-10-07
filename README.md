@@ -8,10 +8,16 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 ## Changelog
 
+### 2026-10-07
+
+1. Adds the `[荐]视频解析30+` node, supporting video parsing on 30+ platforms.  
+2. `SynVow NanoBanana` (including batch) adds `全能N2.1-特惠`
+
 ### 2026-09-27
 
 1. `SynVow Gemini` adds `GM3.7-flash-2606` / `GM3.6-flash-2606`, removes `GM3.5-flash-2606`  
 2. `SynVow 即梦` (including batch) removes `即梦5.0`, adds `即梦5.0-flash`; resolution adds `1.5K`, output can be `png` / `jpeg`  
+3. Quick recharge shows the current balance; recent activity moves above payment methods; clicking WeChat Pay or Alipay places the order directly  
 
 ### 2026-09-22
 
@@ -256,7 +262,7 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 | SynVow Grok Video | grok-1.5-video | Text/image-to-video (up to 6 reference images) |
 | SynVow Omni-Flash | Omni-Flash-Ext / omni-flash-preview | Image/video-reference video generation |
 | SynVow Veo31 | veo3.1 | Text/image-to-video (up to 2 reference images, 1080p) |
-| 短视频解析 | platform parse | Watermark-free download for Douyin / Xiaohongshu / Channels / bilibili / YouTube |
+| [荐]视频解析30+ | jiexi30+ | Watermark-free download for 30+ platforms; up to 5 links every 2 seconds |
 
 ### 💫SynVow_api/api/音频
 
