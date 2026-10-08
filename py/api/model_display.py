@@ -35,6 +35,7 @@ MODEL_DISPLAY_NAMES = {
     "nano-banana-2-lite-2607": "全能N2-lite-2607",
     "nano-banana-2-稳定": "全能N2-稳定",
     "nanobanana2-qy": "全能N2-企业",
+    "nanobanana2.1-qy": "全能N2.1-企业",
     "nano-banana-2-官方": "全能N2-官方",
     "nano-banana-pro-2605": "全能Npro-2605",
     "nano-banana-pro-稳定": "全能Npro-稳定",

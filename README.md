@@ -8,6 +8,10 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 ## Changelog
 
+### 2026-10-08
+
+1. `SynVow NanoBanana` (including batch) adds `全能N2.1-企业`  
+
 ### 2026-10-07
 
 1. Adds the `[荐]视频解析30+` node, supporting video parsing on 30+ platforms.  

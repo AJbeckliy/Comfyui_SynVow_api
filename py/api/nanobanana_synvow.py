@@ -26,19 +26,20 @@ from .model_display import combo_models, display_name, resolve_model
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 _API_MODELS = [
+    "nanobanana2.1-qy",
+    "nanobanana2.1-dj",
     "nano-banana-2-稳定",
     "nanobanana2-qy",
     "nano-banana-2-官方",
     "nano-banana-2-2605",
-    "nanobanana2.1-dj",
-    "nano-banana-2-lite-2607",
     "nano-banana-pro-稳定",
     "nanobananapro-qy",
     "nano-banana-pro-官方",
     "nano-banana-pro-2605",
+    "nano-banana-2-lite-2607",
 ]
 _MODEL_OPTIONS = combo_models(_API_MODELS)
-_DEFAULT_NANO_BANANA_MODEL = "nano-banana-2-稳定"
+_DEFAULT_NANO_BANANA_MODEL = "nanobanana2.1-qy"
 _DEFAULT_NANO_BANANA_COMBO = display_name(_DEFAULT_NANO_BANANA_MODEL)
 
 
@@ -99,7 +100,7 @@ _MODERN_MODELS = {
     "nano-banana-2-稳定", "nano-banana-2-官方",
     "nano-banana-pro-稳定", "nano-banana-pro-官方",
 }
-_QY_MODELS = {"nanobanana2-qy", "nanobananapro-qy"}
+_QY_MODELS = {"nanobanana2.1-qy", "nanobanana2-qy", "nanobananapro-qy"}
 
 
 def _build_payload(model, prompt, aspect_ratio, image_size, is_img2img, img_tensors, api_key=None):
