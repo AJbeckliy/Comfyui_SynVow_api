@@ -8,6 +8,11 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 
 ## 更新日志
 
+### 2026-10-10
+
+1、`SynVow NanoBanana`（含批量）新增 `全能N2.1-稳定`、`全能N2.1-官方`。  
+2、新增 `SynVow MAI-image`（含批量）：`MAI-image-2.6-稳定`、`MAI-image-2.6-flash-稳定`，分辨率 `1K` / `2K`，最多 5 张参考图
+
 ### 2026-10-08
 
 1、`SynVow NanoBanana`（含批量）新增 `全能N2.1-企业`  
@@ -232,6 +237,10 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 | SynVow NanoBanana (T_batch) | nanobanana | 批量文生图 |
 | SynVow NanoBanana (I_batch) | nanobanana | 批量图生图 |
 | SynVow NanoBanana (T_I_batch) | nanobanana | 文生图 + 图生图混合批量 |
+| SynVow MAI-image | MAI-image-2.6 | 文生图·图生图（1K/2K，最多 5 张参考图） |
+| SynVow MAI-image (T_batch) | MAI-image-2.6 | 提示词列表批量 |
+| SynVow MAI-image (I_batch) | MAI-image-2.6 | 提示词 × 多组图批量 |
+| SynVow MAI-image (T_I_batch) | MAI-image-2.6 | 提示词与图像组配对批量 |
 | SynVow 即梦 | 即梦5.0 / 即梦5.0-pro | 文生图·图生图 |
 | SynVow 即梦 (T_batch) | 即梦5.0 / 即梦5.0-pro | 提示词列表批量 |
 | SynVow 即梦 (I_batch) | 即梦5.0 / 即梦5.0-pro | 提示词 × 多组图批量 |

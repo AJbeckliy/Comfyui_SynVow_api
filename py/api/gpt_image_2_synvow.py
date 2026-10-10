@@ -188,11 +188,10 @@ def _resolve_size_params(model, aspect_ratio, resolution):
     aspect = aspect_ratio if aspect_ratio in allowed else allowed[0]
     if family in _RAW_RATIO_MODELS or _is_wd(family) or _is_gf(family):
         return eff_resolution, aspect or "auto"
+    if not aspect or aspect == "auto":
+        return eff_resolution, "auto"
     ratio_map = _RATIO_MAPS.get(eff_resolution, _RATIO_TO_SIZE_1K)
-    ratio_key = aspect
-    if _is_gpt_image_25(family) and (not aspect or aspect == "auto"):
-        ratio_key = "1:1"
-    return eff_resolution, ratio_map.get(ratio_key, "auto")
+    return eff_resolution, ratio_map.get(aspect, "auto")
 
 
 def _param_inputs():
@@ -227,7 +226,7 @@ def _build_payload(model, prompt, size, quality, resolution, is_img2img, img_ten
     family = _family(model)
 
     if family in _RAW_RATIO_MODELS or _is_gf(family):
-        if size:
+        if size and size != "auto":
             payload["size"] = size
         if resolution:
             payload["resolution"] = resolution.lower()
@@ -239,21 +238,21 @@ def _build_payload(model, prompt, size, quality, resolution, is_img2img, img_ten
             payload["image_urls"] = image_urls
     elif _is_wd(family):
         payload["version"] = _style(gpt_style)
-        if size:
+        if size and size != "auto":
             payload["size"] = size
         if resolution:
             payload["resolution"] = resolution
         if image_urls:
             payload["image_urls"] = image_urls
     elif _is_qy_model(model):
-        if size:
+        if size and size != "auto":
             payload["size"] = size
         if quality:
             payload["quality"] = (quality or "auto").lower()
         if image_urls:
             payload["images"] = image_urls
     elif family in _NEW_MODELS:
-        if size:
+        if size and size != "auto":
             payload["size"] = size
         if resolution:
             payload["resolution"] = resolution
@@ -261,7 +260,7 @@ def _build_payload(model, prompt, size, quality, resolution, is_img2img, img_ten
             payload["image_urls"] = image_urls
     else:
         payload["replyType"] = "async"
-        if size:
+        if size and size != "auto":
             payload["aspectRatio"] = size
         if _is_gpt_image_25(family):
             if _shows_quality(family):

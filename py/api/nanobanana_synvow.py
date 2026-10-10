@@ -5,9 +5,7 @@ import random as _random
 import time
 
 import comfy.utils
-import numpy as np
 import urllib3
-from PIL import Image
 
 from . import synvow_auth
 from .media_common import (
@@ -28,6 +26,8 @@ urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 _API_MODELS = [
     "nanobanana2.1-qy",
     "nanobanana2.1-dj",
+    "nanobanana2.1-wd",
+    "nanobanana2.1-gf",
     "nano-banana-2-稳定",
     "nanobanana2-qy",
     "nano-banana-2-官方",
@@ -41,13 +41,6 @@ _API_MODELS = [
 _MODEL_OPTIONS = combo_models(_API_MODELS)
 _DEFAULT_NANO_BANANA_MODEL = "nanobanana2.1-qy"
 _DEFAULT_NANO_BANANA_COMBO = display_name(_DEFAULT_NANO_BANANA_MODEL)
-
-
-def _tensor_to_pil(image_tensor):
-    if len(image_tensor.shape) > 3:
-        image_tensor = image_tensor[0]
-    i = 255. * image_tensor.cpu().numpy()
-    return Image.fromarray(np.clip(i, 0, 255).astype(np.uint8))
 
 
 _N2_ULTRA = ("1:4", "4:1", "1:8", "8:1")
@@ -70,33 +63,16 @@ def _aspects_of(model):
     return _N2_ASPECTS
 
 
-def _find_closest_aspect_ratio(width, height, model):
-    input_ratio = width / height
-    best_match = "1:1"
-    min_diff = float("inf")
-    for name in _aspects_of(model):
-        if name == "auto" or ":" not in name:
-            continue
-        w, h = name.split(":", 1)
-        diff = abs(input_ratio - int(w) / int(h))
-        if diff < min_diff:
-            min_diff = diff
-            best_match = name
-    return best_match
-
-
 def _resolve_aspect(model, aspect_ratio, image_tensor=None):
     aspect_ratio = aspect_ratio or "1:1"
     if aspect_ratio == "auto":
-        if image_tensor is not None:
-            pil0 = _tensor_to_pil(image_tensor)
-            return _find_closest_aspect_ratio(pil0.width, pil0.height, model)
-        return "1:1"
+        return "auto"
     allowed = _aspects_of(model)
     return aspect_ratio if aspect_ratio in allowed else "1:1"
 
 
 _MODERN_MODELS = {
+    "nanobanana2.1-wd", "nanobanana2.1-gf",
     "nano-banana-2-稳定", "nano-banana-2-官方",
     "nano-banana-pro-稳定", "nano-banana-pro-官方",
 }

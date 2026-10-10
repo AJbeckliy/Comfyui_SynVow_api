@@ -7,7 +7,6 @@ their alpha channel.
 """
 
 import concurrent.futures
-import math
 import re
 import threading
 import time
@@ -204,24 +203,6 @@ def _apply_background_mode(payload, model, transparent):
     return mode
 
 
-def _nearest_reference_aspect(image):
-    shape = getattr(image, "shape", None)
-    if shape is None or len(shape) < 3:
-        return "1:1"
-    height = int(shape[-3])
-    width = int(shape[-2])
-    if height <= 0 or width <= 0:
-        return "1:1"
-    source_ratio = width / height
-    candidates = [value for value in _ASPECTS if value != "auto" and ":" in value]
-    return min(
-        candidates,
-        key=lambda value: abs(
-            math.log(source_ratio / (float(value.split(":")[0]) / float(value.split(":")[1])))
-        ),
-    )
-
-
 def _reference_custom_size(image, fallback_size):
     shape = getattr(image, "shape", None)
     match = re.fullmatch(r"(\d+)x(\d+)", str(fallback_size or ""))
@@ -416,8 +397,6 @@ class SynVowGptImage2Alpha_TBatch:
         images = [item for item in [image1, image2, image3, image4, image5, image6, image7, image8] if item is not None]
         is_img2img = len(images) > 0
         requested_aspect = _unpack(aspect_ratio) or "auto"
-        if requested_aspect == "auto" and images:
-            requested_aspect = _nearest_reference_aspect(images[0])
         model, style, quality, eff_resolution, size = _prep_model(
             _unpack(model_type),
             _unpack(quality),
@@ -425,7 +404,7 @@ class SynVowGptImage2Alpha_TBatch:
             requested_aspect,
             _unpack(gpt_style),
         )
-        if images and str(model).startswith("gpt-image-2.5") and "-gf" not in str(model) and "-wd" not in str(model):
+        if requested_aspect != "auto" and images and str(model).startswith("gpt-image-2.5") and "-gf" not in str(model) and "-wd" not in str(model):
             size = _reference_custom_size(images[0], size)
 
         api_key = synvow_auth.read_api_key()

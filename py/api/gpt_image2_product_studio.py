@@ -1,6 +1,5 @@
 """SynVow GPT-Image-2 six-in-one product image studio node."""
 
-import math
 import time
 from pathlib import Path
 
@@ -410,28 +409,6 @@ def _make_removal_overlay(image, mask_guide):
     return source * (1.0 - alpha) + magenta * alpha
 
 
-def _closest_supported_aspect_ratio(image):
-    """Return the supported ratio nearest to a ComfyUI IMAGE tensor."""
-    image = _unpack(image)
-    if image is None or image.ndim not in (3, 4):
-        return "1:1"
-    if image.ndim == 4:
-        height, width = int(image.shape[1]), int(image.shape[2])
-    else:
-        height, width = int(image.shape[0]), int(image.shape[1])
-    if height <= 0 or width <= 0:
-        return "1:1"
-
-    source_ratio = width / height
-    candidates = [ratio for ratio in _ASPECTS if ratio != "auto"]
-    return min(
-        candidates,
-        key=lambda ratio: abs(
-            math.log((int(ratio.split(":")[0]) / int(ratio.split(":")[1])) / source_ratio)
-        ),
-    )
-
-
 class SynVowGptImage2ProductStudio:
     """One-node access to six focused GPT-Image-2 product editing workflows."""
 
@@ -506,8 +483,6 @@ class SynVowGptImage2ProductStudio:
 
         mode = str(_unpack(mode) or MODE_PRODUCT_REFINE).strip()
         aspect_ratio = _unpack(aspect_ratio) or "auto"
-        if mode in (MODE_CLARITY_RESTORE, MODE_OUTPAINT) and aspect_ratio == "auto":
-            aspect_ratio = _closest_supported_aspect_ratio(image)
         model_type, style, quality, effective_resolution, size = _prep_model(
             _unpack(model_type), _unpack(quality) or "auto", _unpack(resolution) or "1K",
             aspect_ratio, _unpack(gpt_style),

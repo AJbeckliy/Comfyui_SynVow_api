@@ -8,6 +8,11 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 ## Changelog
 
+### 2026-10-10
+
+1. `SynVow NanoBanana` (including batch) adds `全能N2.1-稳定` and `全能N2.1-官方`  
+2. Adds `SynVow MAI-image` (including batch): `MAI-image-2.6-稳定` and `MAI-image-2.6-flash-稳定`, resolution `1K` / `2K`, up to 5 reference images
+
 ### 2026-10-08
 
 1. `SynVow NanoBanana` (including batch) adds `全能N2.1-企业`  
@@ -232,6 +237,10 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 | SynVow NanoBanana (T_batch) | nanobanana | Batch text-to-image |
 | SynVow NanoBanana (I_batch) | nanobanana | Batch image-to-image |
 | SynVow NanoBanana (T_I_batch) | nanobanana | Mixed text-to-image + image-to-image batch |
+| SynVow MAI-image | MAI-image-2.6 | Text-to-image / image-to-image (1K/2K, up to 5 reference images) |
+| SynVow MAI-image (T_batch) | MAI-image-2.6 | Prompt-list batch |
+| SynVow MAI-image (I_batch) | MAI-image-2.6 | Prompt × multi-image-group batch |
+| SynVow MAI-image (T_I_batch) | MAI-image-2.6 | Prompt and image-group paired batch |
 | SynVow 即梦 | 即梦5.0 / 即梦5.0-pro | Text-to-image / image-to-image |
 | SynVow 即梦 (T_batch) | 即梦5.0 / 即梦5.0-pro | Prompt-list batch |
 | SynVow 即梦 (I_batch) | 即梦5.0 / 即梦5.0-pro | Prompt × multi-image-group batch |

@@ -32,6 +32,8 @@ MODEL_DISPLAY_NAMES = {
     # 图像 NanoBanana
     "nano-banana-2-2605": "全能N2-2605",
     "nanobanana2.1-dj": "全能N2.1-特惠",
+    "nanobanana2.1-wd": "全能N2.1-稳定",
+    "nanobanana2.1-gf": "全能N2.1-官方",
     "nano-banana-2-lite-2607": "全能N2-lite-2607",
     "nano-banana-2-稳定": "全能N2-稳定",
     "nanobanana2-qy": "全能N2-企业",
@@ -41,6 +43,8 @@ MODEL_DISPLAY_NAMES = {
     "nano-banana-pro-稳定": "全能Npro-稳定",
     "nano-banana-pro-官方": "全能Npro-官方",
     "nanobananapro-qy": "全能Npro-企业",
+    "mai-image-2.6-wd": "MAI-image-2.6-稳定",
+    "mai-image-2.6-flash-wd": "MAI-image-2.6-flash-稳定",
     # 图像 GPT-Image
     "gpt-image-2.5-wd": "PT2.5-稳定",
     "gpt-image-2.5-qy": "PT2.5-企业",
