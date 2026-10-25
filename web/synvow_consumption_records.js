@@ -144,6 +144,33 @@ function extractResourceUrls(source, modelName) {
     return urls;
 }
 
+function messageContent(source) {
+    const data = parseConsumptionSource(source);
+    if (!data || typeof data !== "object") return "";
+    const choices = data.choices;
+    if (!Array.isArray(choices)) return "";
+    return choices
+        .map(choice => typeof choice?.message?.content === "string" ? choice.message.content.trim() : "")
+        .filter(Boolean)
+        .join("\n");
+}
+
+const COPY_ICON = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+
+function showCopyToast(msg) {
+    const toast = $el("div.sv-cr-toast", { textContent: msg });
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 1600);
+}
+
+async function copyText(text) {
+    if (!text) return;
+    try {
+        await navigator.clipboard.writeText(text);
+        showCopyToast("复制成功");
+    } catch {}
+}
+
 function isSuccess(item) {
     return item.status === 1 && parseFloat(item.amount || 0) !== 0;
 }
@@ -160,16 +187,20 @@ export function showConsumptionRecordsDialog() {
 
     injectStyle("sv-consumption-style", `
         .sv-cr-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:10001; }
-        .sv-cr-dialog { background:linear-gradient(180deg,#1a2a3a,#0d1a24); border-radius:12px; padding:30px; width:680px; max-height:80vh; position:relative; display:flex; flex-direction:column; }
+        .sv-cr-dialog { background:linear-gradient(180deg,#1a2a3a,#0d1a24); border-radius:12px; padding:30px; width:860px; max-width:92vw; max-height:80vh; position:relative; display:flex; flex-direction:column; }
         .sv-cr-title { color:#2dd4bf; font-size:18px; font-weight:bold; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
         .sv-cr-close { position:absolute; top:16px; right:16px; background:none; border:none; color:#667788; font-size:24px; cursor:pointer; }
         .sv-cr-close:hover { color:white; }
         .sv-cr-content { flex:1; overflow-y:auto; margin-bottom:16px; }
-        .sv-cr-table { width:100%; border-collapse:collapse; }
-        .sv-cr-table th { background:#1e3a4a; color:#8899aa; font-size:12px; font-weight:normal; padding:12px 8px; text-align:center; }
-        .sv-cr-table td { color:white; font-size:13px; padding:10px 8px; border-bottom:1px solid #334455; vertical-align:middle; text-align:center; }
-        .sv-cr-table tr:hover td { background:#1e3a4a; }
-        .sv-cr-table.loading { opacity:0.45; pointer-events:none; transition:opacity .15s; }
+        .sv-cr-head, .sv-cr-row { display:grid; grid-template-columns: 1.4fr 1.2fr 70px 120px 82px 72px; gap:8px; align-items:center; }
+        .sv-cr-head { color:#8899aa; font-size:12px; padding:8px; border-bottom:1px solid #334455; text-align:center; }
+        .sv-cr-row { color:white; font-size:12px; padding:8px; border-bottom:1px solid #334455; text-align:center; min-height:42px; }
+        .sv-cr-row:hover { background:#1e3a4a; }
+        .sv-cr-list.loading { opacity:0.45; pointer-events:none; transition:opacity .15s; }
+        .sv-cr-model { font-weight:600; overflow-wrap:anywhere; }
+        .sv-cr-copy { color:#8899aa; cursor:pointer; justify-self:center; display:inline-flex; }
+        .sv-cr-copy:hover { color:#2dd4bf; }
+        .sv-cr-toast { position:fixed; left:50%; bottom:48px; transform:translateX(-50%); background:#1e3a4a; color:#a7f3d0; border:1px solid #2dd4bf40; border-radius:8px; padding:8px 14px; z-index:10020; font-size:13px; }
         .sv-cr-badge { padding:3px 8px; border-radius:4px; font-size:12px; }
         .sv-cr-success { background:#22c55e20; color:#22c55e; }
         .sv-cr-fail    { background:#ef444420; color:#ef4444; }
@@ -259,11 +290,8 @@ export function showConsumptionRecordsDialog() {
         const token = getToken();
         if (!token) { showLoginDialog(); return; }
 
-        const isFirst = !contentDiv.querySelector("table");
-        if (!isFirst) {
-            const tbl = contentDiv.querySelector("table");
-            if (tbl) tbl.classList.add("loading");
-        }
+        const isFirst = !contentDiv.querySelector(".sv-cr-list");
+        if (!isFirst) contentDiv.querySelector(".sv-cr-list")?.classList.add("loading");
         prevBtn.disabled = true;
         nextBtn.disabled = true;
 
@@ -279,35 +307,40 @@ export function showConsumptionRecordsDialog() {
                 if (items.length === 0) {
                     contentDiv.innerHTML = '<div class="sv-cr-empty">暂无消费记录</div>';
                 } else {
-                    const tbody = $el("tbody");
+                    const list = $el("div.sv-cr-list");
+                    list.appendChild($el("div.sv-cr-head", {}, [
+                        $el("span", { textContent: "模型" }),
+                        $el("span", { textContent: "时间" }),
+                        $el("span", { textContent: "状态" }),
+                        $el("span", { textContent: "消费金额" }),
+                        $el("span", { textContent: "资源<2h" }),
+                        $el("span", { textContent: "资源网址" }),
+                    ]));
                     for (const item of items) {
                         const ok = isSuccess(item);
                         const modelLabel = recordModelLabel(item);
                         const urls = ok ? extractResourceUrls(item.source, modelLabel) : [];
                         const kind = consumptionResourceKind(modelLabel);
-                        const resCell = urls.length
-                            ? $el("a.sv-cr-link", { textContent: "打开", href: "#", onclick: (e) => { e.preventDefault(); openPreview(urls, kind); } })
-                            : $el("span.sv-cr-none", { textContent: "无" });
-                        tbody.appendChild($el("tr", {}, [
-                            $el("td", { textContent: fmtTime(item.created_at) }),
-                            $el("td", { textContent: item.custom_name || item.model_name || "-" }),
-                            $el("td", {}, [$el("span.sv-cr-badge", { textContent: ok ? "成功" : "失败", className: `sv-cr-badge ${ok ? "sv-cr-success" : "sv-cr-fail"}` })]),
-                            $el("td", { textContent: formatAmount(item), style: { color: ok ? "#ef4444" : "#22c55e" } }),
-                            $el("td", {}, [resCell]),
+                        const content = urls.length ? "" : messageContent(item.source);
+                        const resourceCell = urls.length
+                            ? $el("button.sv-cr-link", { textContent: "打开", onclick: () => openPreview(urls, kind) })
+                            : content
+                                ? $el("span.sv-cr-copy", { innerHTML: COPY_ICON, title: "复制", onclick: () => copyText(content) })
+                                : $el("span.sv-cr-none", { textContent: "无资源" });
+                        const urlCell = urls.length
+                            ? $el("span.sv-cr-copy", { innerHTML: COPY_ICON, title: "复制", onclick: () => copyText(urls.join("\n")) })
+                            : $el("span.sv-cr-none", { textContent: "-" });
+                        list.appendChild($el("div.sv-cr-row", {}, [
+                            $el("div.sv-cr-model", { textContent: item.custom_name || item.model_name || "-" }),
+                            $el("div", { textContent: fmtTime(item.created_at) }),
+                            $el("div", {}, [$el("span.sv-cr-badge", { textContent: ok ? "成功" : "失败", className: `sv-cr-badge ${ok ? "sv-cr-success" : "sv-cr-fail"}` })]),
+                            $el("div", { textContent: formatAmount(item), style: { color: ok ? "#ef4444" : "#22c55e", fontWeight: "700" } }),
+                            resourceCell,
+                            urlCell,
                         ]));
                     }
-                    const table = $el("table.sv-cr-table", {}, [
-                        $el("thead", {}, [$el("tr", {}, [
-                            $el("th", { textContent: "时间" }),
-                            $el("th", { textContent: "模型" }),
-                            $el("th", { textContent: "状态" }),
-                            $el("th", { textContent: "消费金额" }),
-                            $el("th", { textContent: "资源(2h)" }),
-                        ])]),
-                        tbody
-                    ]);
                     contentDiv.innerHTML = "";
-                    contentDiv.appendChild(table);
+                    contentDiv.appendChild(list);
                 }
 
                 pageInfo.textContent = `第 ${currentPage} / ${totalPages} 页，共 ${total} 条`;

@@ -20,9 +20,22 @@ function savePos(x, y) {
     localStorage.setItem("sv_float_pos", JSON.stringify({ x, y }));
 }
 
+const LOW_BALANCE = 3;
+
 function setBalanceDefault() {
     const el = document.getElementById("sv-main-balance");
     if (el) el.textContent = "0.00";
+    applyLowBalance(false);
+}
+
+function applyLowBalance(low) {
+    const btn = document.getElementById("sv-main-btn");
+    const warn = document.getElementById("sv-balance-warn");
+    if (btn) {
+        btn.classList.toggle("sv-balance-low", low);
+        btn.title = low ? "余额低于 3 元，请及时充值" : "";
+    }
+    if (warn) warn.hidden = !low;
 }
 
 app.registerExtension({
@@ -64,6 +77,14 @@ app.registerExtension({
             .sv-main-btn:hover { filter: brightness(1.15); }
             .sv-main-label { font-size: 12px; }
             .sv-main-balance { font-size: 14px; min-width: 32px; text-align:left; display:inline-block; }
+            .sv-balance-warn {
+                position: absolute; top: -5px; right: -6px; z-index: 2;
+                width: 12px; height: 12px; border-radius: 50%;
+                background: #f5222d; color: #fff; font-size: 10px; font-weight: 700;
+                line-height: 12px; text-align: center; pointer-events: none;
+            }
+            .sv-balance-low .sv-main-balance { animation: sv-balance-blink 2s ease-in-out infinite; }
+            @keyframes sv-balance-blink { 50% { opacity: 0.25; } }
             /* 登录状态按钮 */
             .sv-user-btn {
                 background: #3a3a3a; color: white; border: none;
@@ -115,10 +136,12 @@ app.registerExtension({
         const mainBtn = $el("button.sv-main-btn", { id: "sv-main-btn" });
         mainBtn.innerHTML = svIcon;
         mainBtn.appendChild($el("span.sv-main-balance", { id: "sv-main-balance", textContent: "0.00" }));
+        const balanceWarn = $el("span.sv-balance-warn", { id: "sv-balance-warn", textContent: "!" });
+        balanceWarn.hidden = true;
 
         const mainMenu = $el("div.sv-dropdown", { id: "sv-main-menu" });
         mainMenu.style.left = "0";
-        const mainBtnWrap = $el("div", { style: "position:relative" }, [mainBtn, mainMenu]);
+        const mainBtnWrap = $el("div", { style: "position:relative" }, [mainBtn, balanceWarn, mainMenu]);
 
         const userIcon = $el("span.sv-user-icon", { innerHTML: `<svg viewBox="0 0 24 24" width="16" height="16" style="vertical-align:middle"><circle cx="12" cy="8" r="4" fill="#4a9eff"/><path d="M4 20c0-4 4-7 8-7s8 3 8 7" fill="#2dd4bf"/></svg>` });
         const userLabel = document.createTextNode(
@@ -247,8 +270,9 @@ app.registerExtension({
                 const res = await fetch("/sv_api/account/balance", { headers: { "Authorization": "Bearer " + token } });
                 const data = await res.json();
                 if (data.code === 200) {
-                    const balance = data.data?.balance ?? data.data?.account?.balance ?? 0;
-                    if (mainBalanceEl) mainBalanceEl.textContent = " " + parseFloat(balance).toFixed(2);
+                    const balance = parseFloat(data.data?.balance ?? data.data?.account?.balance ?? 0);
+                    if (mainBalanceEl) mainBalanceEl.textContent = " " + balance.toFixed(2);
+                    applyLowBalance(Number.isFinite(balance) && balance < LOW_BALANCE);
                 } else if (data.code === 401) {
                     localStorage.removeItem("sv_token");
                     localStorage.removeItem("sv_refresh_token");

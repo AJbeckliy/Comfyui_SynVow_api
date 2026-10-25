@@ -87,12 +87,14 @@ _RATIO_MAPS = {"1K": _RATIO_TO_SIZE_1K, "2K": _RATIO_TO_SIZE_2K, "4K": _RATIO_TO
 
 _API_MODELS = [
     "gpt-image-2.5-wd",
+    "gpt-image-2.5-ch",
     "gpt-image-2.5-qy",
     "gpt-image-2.5-1k-qy",
     "gpt-image-2.5-gf",
     "gpt-image-2.5-2609",
     "gpt-image-2.5-1k-2609",
     "gpt-image-2-稳定",
+    "gpt-image-2-ch",
     "gpt-image-2-4k-qy",
     "gpt-image-2-1k-qy",
     "gpt-image-2-官方",
@@ -134,6 +136,10 @@ def _is_gf(family):
     return family == "gpt-image-2.5-gf"
 
 
+def _is_ch(family):
+    return family in ("gpt-image-2.5-ch", "gpt-image-2-ch")
+
+
 def _is_qy_model(model):
     return "-qy" in str(model or "")
 
@@ -173,7 +179,11 @@ def _locked_resolution(model):
 
 def _request_model(model, is_img2img):
     m = str(model or "")
-    if is_img2img or "-qy" not in m or m.endswith("-t2i"):
+    if is_img2img or m.endswith("-t2i"):
+        return m
+    if _is_ch(_family(m)):
+        return f"{m}-t2i"
+    if "-qy" not in m:
         return m
     if m.startswith("gpt-image-2.5") or "-1k-" not in m:
         return f"{m}-t2i"
@@ -188,6 +198,8 @@ def _resolve_size_params(model, aspect_ratio, resolution):
     aspect = aspect_ratio if aspect_ratio in allowed else allowed[0]
     if family in _RAW_RATIO_MODELS or _is_wd(family) or _is_gf(family):
         return eff_resolution, aspect or "auto"
+    if _is_ch(family) and family.startswith("gpt-image-2.5") and (not aspect or aspect == "auto"):
+        aspect = "1:1"
     if not aspect or aspect == "auto":
         return eff_resolution, "auto"
     ratio_map = _RATIO_MAPS.get(eff_resolution, _RATIO_TO_SIZE_1K)
@@ -244,6 +256,15 @@ def _build_payload(model, prompt, size, quality, resolution, is_img2img, img_ten
             payload["resolution"] = resolution
         if image_urls:
             payload["image_urls"] = image_urls
+    elif _is_ch(family):
+        if size:
+            payload["size"] = size
+        if quality:
+            payload["quality"] = quality.lower()
+        payload["async"] = True
+        payload["response_format"] = "url"
+        if image_urls:
+            payload["images"] = [{"image_url": url} for url in image_urls]
     elif _is_qy_model(model):
         if size and size != "auto":
             payload["size"] = size

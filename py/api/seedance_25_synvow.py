@@ -13,11 +13,13 @@ from .media_common import (
     upload_media_file,
 )
 
-_API_MODELS = ["doubao-seedance-2.5"]
+_API_MODELS = ["doubao-seedance-2.5", "sd2.5-dj"]
 _DEFAULT_MODEL = "doubao-seedance-2.5"
 _MODELS = combo_models(_API_MODELS)
 _RATIOS = ["adaptive", "16:9", "9:16", "4:3", "3:4", "1:1", "21:9"]
+_DJ_RATIOS = ["16:9", "9:16"]
 _RESOLUTIONS = ["480p", "720p", "1080p"]
+_DJ_MODEL = "sd2.5-dj"
 _DURATIONS = [str(i) for i in range(4, 31)]
 _IMAGE_SLOTS = 21
 _TAG = "Seedance25"
@@ -33,14 +35,18 @@ def _clamp_duration(raw):
 
 def _build_body(model, prompt, ratio, duration, resolution, image_urls, video_url, audio_url, generate_audio):
     model = pick_model(model, _API_MODELS, _DEFAULT_MODEL)
+    dj = model == _DJ_MODEL
     body = {
         "model": model,
         "prompt": prompt or "",
-        "resolution": resolution if resolution in _RESOLUTIONS else "720p",
+        "resolution": "720p" if dj else (resolution if resolution in _RESOLUTIONS else "720p"),
         "duration": _clamp_duration(duration),
-        "generate_audio": bool(generate_audio),
-        "size": ratio if ratio in _RATIOS else "adaptive",
     }
+    if dj:
+        body["ratio"] = ratio if ratio in _DJ_RATIOS else _DJ_RATIOS[0]
+    else:
+        body["generate_audio"] = bool(generate_audio)
+        body["size"] = ratio if ratio in _RATIOS else "adaptive"
     if image_urls:
         body["image_urls"] = image_urls
     if video_url:

@@ -8,6 +8,12 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 ## Changelog
 
+### 2026-10-25
+
+1. `SynVow GPT-Image-2` (including batch, product six-in-one, and Alpha) adds `PT2.5-超惠` and `全能G2-超惠`  
+2. Consumption records: with a resource, 「资源<2h」 opens it and 「资源网址」 copies every URL; without a resource but with a chat reply, the copy button copies that reply  
+3. `SynVow Seedance 2.5` adds `sd2.5-特惠版`. Ratio is only `16:9` / `9:16`, resolution is only `720p`, duration is 4–30 seconds
+
 ### 2026-10-10
 
 1. `SynVow NanoBanana` (including batch) adds `全能N2.1-稳定` and `全能N2.1-官方`  
@@ -269,7 +275,7 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 | Node | Model | Description |
 |------|-------|-------------|
 | SynVow wan-video | wan3.0-video-wd | Text/image/video/audio-reference video; 480P/720P/1080P, duration 2–30 seconds |
-| SynVow Seedance 2.5 | doubao-seedance-2.5 / sd2-5-dj | 480p/720p/1080p, duration 4–30 seconds; low-price ratio is 16:9 / 9:16 only |
+| SynVow Seedance 2.5 | seedance-2.5 / sd2.5-特惠版 | 2.5: 480p/720p/1080p; discount: 720p only, ratio 16:9 / 9:16, duration 4–30 seconds |
 | SynVow Seedance | seedance-2.0-* | `/image/edit`: text/image/video/audio reference; outputs path/URL/info |
 | SynVow Seedance2.0 视频生成 (720P) | seedance_2_720p | `/image/edit` + `content[]`, fixed 720P; outputs path/URL/info |
 | SynVow Grok Video | grok-1.5-video | Text/image-to-video (up to 6 reference images) |

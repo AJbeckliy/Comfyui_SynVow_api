@@ -8,6 +8,12 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 
 ## 更新日志
 
+### 2026-10-25
+
+1、`SynVow GPT-Image-2`（含批量、产品六合一、Alpha）新增： `PT2.5-超惠`、`全能G2-超惠`模型；
+2、消费记录新增：有资源时「资源<2h」为打开，「资源网址」复制全部地址；没有资源但有对话回复时，复制回复内容  
+3、`SynVow Seedance 2.5` 新增： `sd2.5-特惠版`，比例仅 `16:9` / `9:16`，画质只有 `720p`，时长 4～30 秒。
+
 ### 2026-10-10
 
 1、`SynVow NanoBanana`（含批量）新增 `全能N2.1-稳定`、`全能N2.1-官方`。  
@@ -269,7 +275,7 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 | 节点名称 | 模型 | 描述 |
 |----------|------|------|
 | SynVow wan-video | wan3.0-video-wd | 文/图/视频/音频参考生视频；480P/720P/1080P，时长 2～30 秒 |
-| SynVow Seedance 2.5 | doubao-seedance-2.5 / sd2-5-dj | 480p/720p/1080p，时长 4～30 秒；低价比例仅 16:9 / 9:16 |
+| SynVow Seedance 2.5 | seedance-2.5 / sd2.5-特惠版 | 2.5：480p/720p/1080p；特惠版仅 720p、比例 16:9 / 9:16，时长 4～30 秒 |
 | SynVow Seedance | seedance-2.0-* | `/image/edit`：文/图/视频/音频参考；输出路径/URL/信息 |
 | SynVow Seedance2.0 视频生成 (720P) | seedance_2_720p | `/image/edit` + `content[]`，固定 720P；输出路径/URL/信息 |
 | SynVow Grok Video | grok-1.5-video | 文/图生视频（最多 6 张参考图） |

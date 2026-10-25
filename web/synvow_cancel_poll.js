@@ -134,6 +134,15 @@ function bindByModel(node, modelName, apply) {
 
 function bindWidgetOptions(node) {
     const t = String(node.type || "");
+    if (t === "SynVowSeedance25") {
+        bindByModel(node, "model", v => {
+            const dj = v === "sd2.5-dj" || v === "sd2.5-特惠版";
+            setCombo(widget(node, "resolution"), dj ? ["720p"] : ["480p", "720p", "1080p"], "720p");
+            setCombo(widget(node, "ratio"), dj ? SEEDANCE_DJ_RATIOS : SEEDANCE_RATIOS, dj ? "16:9" : "adaptive");
+            setHidden(widget(node, "generate_audio"), dj);
+        });
+        return;
+    }
     if (t === "SynVowSeedance") {
         bindByModel(node, "model", v => {
             const dj = v === "sd2.0-dj" || v === "sd2.0-特惠版";

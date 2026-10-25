@@ -47,6 +47,7 @@ MODEL_DISPLAY_NAMES = {
     "mai-image-2.6-flash-wd": "MAI-image-2.6-flash-稳定",
     # 图像 GPT-Image
     "gpt-image-2.5-wd": "PT2.5-稳定",
+    "gpt-image-2.5-ch": "PT2.5-超惠",
     "gpt-image-2.5-qy": "PT2.5-企业",
     "gpt-image-2.5-1k-qy": "PT2.5-1k-企业",
     "gpt-image-2.5-gf": "PT2.5-官方",
@@ -54,6 +55,7 @@ MODEL_DISPLAY_NAMES = {
     "gpt-image-2.5-1k-2609": "PT2.5-1k-2609",
     "gpt-image-2-1k-2605": "全能G2-1k-2605",
     "gpt-image-2-稳定": "全能G2-稳定",
+    "gpt-image-2-ch": "全能G2-超惠",
     "gpt-image-2-官方": "全能G2-官方",
     "gpt-image-2-1k-qy": "全能G2-1k-企业",
     "gpt-image-2-4k-qy": "全能G2-4k-企业",
@@ -62,6 +64,7 @@ MODEL_DISPLAY_NAMES = {
     "grok-image-2.0-wd": "GK2.0-稳定",
     # 视频
     "doubao-seedance-2.5": "seedance-2.5",
+    "sd2.5-dj": "sd2.5-特惠版",
     "sd2.0-dj": "sd2.0-特惠版",
     "MiniMax-H3": "MiniMax-H3-稳定",
     "MiniMax-H3-dj": "MiniMax-H3-低价",
