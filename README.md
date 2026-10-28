@@ -12,7 +12,7 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 1. Removes request models `qwen3.8-max-稳定`, `GM3.7-flash-2606`, `GM3.6-flash-2606`, `PT5.5-企业`, `PT5.5-2606`, `PT5.4-2606`, and `MiniMax-H3-低价`  
 2. `sd2.5-特惠版` and `sd2.0-特惠版` ratios are `16:9`, `9:16`, `4:3`, `3:4`, `1:1`, `21:9`. `seedance-2.5`, `seedance-2.0`, and `sd2.0-特惠版` add `4k`. mini and fast stay `480p` / `720p`; `sd2.5-特惠版` stays `720p` only  
-3. Consumption records add 「详情」 to the right of the resource URL. An info icon appears when `usage` exists and opens that object to its left; otherwise the cell is 「-」. Streaming records use the last `data` line that contains `usage`. An empty resource URL is also 「-」
+3. Consumption records add a 「详情」 column. Click it to show the token usage details
 
 ### 2026-10-25
 
