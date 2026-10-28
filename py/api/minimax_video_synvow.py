@@ -13,7 +13,7 @@ from .media_common import (
     upload_media_file,
 )
 
-_API_MODELS = ["MiniMax-H3", "MiniMax-H3-dj"]
+_API_MODELS = ["MiniMax-H3"]
 _MODELS = combo_models(_API_MODELS)
 _DEFAULT_MODEL = "MiniMax-H3"
 _RESOLUTIONS = ["2K", "768P"]

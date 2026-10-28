@@ -9,7 +9,7 @@ const PRICE_TAG_TABS = [
     { id: 6, label: "视频" },
     { id: 5, label: "音频" },
     { id: 8, label: "解析" },
-    { id: 7, label: "其它" },
+    { id: 7, label: "流式" },
 ];
 
 let priceDialog = null;

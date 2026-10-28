@@ -62,7 +62,9 @@ function addCancelWidget(node) {
 }
 
 const SEEDANCE_RATIOS = ["adaptive", "16:9", "9:16", "4:3", "3:4", "1:1", "21:9"];
-const SEEDANCE_DJ_RATIOS = ["16:9", "9:16"];
+const SEEDANCE_DJ_RATIOS = SEEDANCE_RATIOS.slice(1);
+const SEEDANCE_RES_4K = ["480p", "720p", "1080p", "4k"];
+const SEEDANCE_RES_720 = SEEDANCE_RES_4K.slice(0, 2);
 const OMNI_11_RESOLUTIONS = ["360p", "720p", "1080p", "4k"];
 const OMNI_RESOLUTIONS = OMNI_11_RESOLUTIONS.slice(1);
 const GPT_IMAGE_RESOLUTIONS = ["1K", "2K", "4K"];
@@ -137,7 +139,7 @@ function bindWidgetOptions(node) {
     if (t === "SynVowSeedance25") {
         bindByModel(node, "model", v => {
             const dj = v === "sd2.5-dj" || v === "sd2.5-特惠版";
-            setCombo(widget(node, "resolution"), dj ? ["720p"] : ["480p", "720p", "1080p"], "720p");
+            setCombo(widget(node, "resolution"), dj ? ["720p"] : SEEDANCE_RES_4K, "720p");
             setCombo(widget(node, "ratio"), dj ? SEEDANCE_DJ_RATIOS : SEEDANCE_RATIOS, dj ? "16:9" : "adaptive");
             setHidden(widget(node, "generate_audio"), dj);
         });
@@ -146,8 +148,8 @@ function bindWidgetOptions(node) {
     if (t === "SynVowSeedance") {
         bindByModel(node, "model", v => {
             const dj = v === "sd2.0-dj" || v === "sd2.0-特惠版";
-            setCombo(widget(node, "resolution"),
-                v === "seedance-2.0" ? ["480p", "720p", "1080p"] : ["480p", "720p"]);
+            const res4k = v === "seedance-2.0" || dj;
+            setCombo(widget(node, "resolution"), res4k ? SEEDANCE_RES_4K : SEEDANCE_RES_720, "720p");
             setCombo(widget(node, "ratio"), dj ? SEEDANCE_DJ_RATIOS : SEEDANCE_RATIOS, dj ? "16:9" : "adaptive");
             setHidden(widget(node, "with_audio"), dj);
         });

@@ -24,10 +24,12 @@ _API_MODELS = [
 _MODELS = combo_models(_API_MODELS)
 _DEFAULT_MODEL = "seedance-2.0-mini"
 _RATIOS = ["adaptive", "16:9", "9:16", "4:3", "3:4", "1:1", "21:9"]
+_DJ_RATIOS = _RATIOS[1:]
 _DURATIONS = [str(i) for i in range(4, 16)]
-_RESOLUTIONS = ["480p", "720p", "1080p"]
+_RES_4K = ["480p", "720p", "1080p", "4k"]
+_RES_720 = _RES_4K[:2]
+_RESOLUTIONS = _RES_4K
 _DJ_MODEL = "sd2.0-dj"
-_DJ_RATIOS = ["16:9", "9:16"]
 _TAG = "Seedance"
 
 
@@ -40,10 +42,8 @@ def _clamp_duration(raw):
 
 
 def _normalize_resolution(model, resolution):
-    res = resolution if resolution in _RESOLUTIONS else "720p"
-    if res == "1080p" and model != "seedance-2.0":
-        return "720p"
-    return res
+    allowed = _RES_4K if model in ("seedance-2.0", _DJ_MODEL) else _RES_720
+    return resolution if resolution in allowed else "720p"
 
 
 def _collect_refs(api_key, image_tensors, video_path, audio_path):

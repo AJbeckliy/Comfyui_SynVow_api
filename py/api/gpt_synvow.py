@@ -13,10 +13,7 @@ GPT_API_MODELS = [
     "gpt-5.5-稳定",
     "gpt-5.6-sol-稳定",
     "gpt-5.4-qy",
-    "gpt-5.5-qy",
     "gpt-5.6-sol-qy",
-    "gpt-5.5-2606",
-    "gpt-5.4-2606",
 ]
 GPT_MODEL_OPTIONS = combo_models(GPT_API_MODELS)
 DEFAULT_GPT_MODEL = GPT_MODEL_OPTIONS[0]

@@ -156,6 +156,54 @@ function messageContent(source) {
 }
 
 const COPY_ICON = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>`;
+const INFO_ICON = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>`;
+
+function usageObject(data) {
+    return data && typeof data === "object" && data.usage && typeof data.usage === "object" ? data.usage : null;
+}
+
+function usageJson(source) {
+    let text = typeof source === "string" ? source : "";
+    if (typeof source === "string") {
+        try {
+            const parsed = JSON.parse(source);
+            const usage = usageObject(parsed);
+            if (usage) return JSON.stringify(usage, null, 2);
+            if (typeof parsed === "string") text = parsed;
+        } catch {}
+    } else {
+        const usage = usageObject(source);
+        return usage ? JSON.stringify(usage, null, 2) : "";
+    }
+    let found = null;
+    for (const line of text.split(/\r?\n/)) {
+        const payload = line.trim().replace(/^data:\s*/, "");
+        if (!payload.startsWith("{")) continue;
+        try {
+            const usage = usageObject(JSON.parse(payload));
+            if (usage) found = usage;
+        } catch {}
+    }
+    return found ? JSON.stringify(found, null, 2) : "";
+}
+
+function hideUsagePop() {
+    document.querySelector(".sv-cr-usage")?.remove();
+}
+
+function openUsage(e, text) {
+    hideUsagePop();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const pop = $el("pre.sv-cr-usage", {
+        textContent: text,
+        style: {
+            top: Math.max(8, Math.min(rect.top, window.innerHeight - 328)) + "px",
+            left: Math.max(8, rect.left - 368) + "px",
+        },
+    });
+    pop.addEventListener("click", (ev) => ev.stopPropagation());
+    document.body.appendChild(pop);
+}
 
 function showCopyToast(msg) {
     const toast = $el("div.sv-cr-toast", { textContent: msg });
@@ -187,12 +235,13 @@ export function showConsumptionRecordsDialog() {
 
     injectStyle("sv-consumption-style", `
         .sv-cr-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:10001; }
-        .sv-cr-dialog { background:linear-gradient(180deg,#1a2a3a,#0d1a24); border-radius:12px; padding:30px; width:860px; max-width:92vw; max-height:80vh; position:relative; display:flex; flex-direction:column; }
+        .sv-cr-dialog { background:linear-gradient(180deg,#1a2a3a,#0d1a24); border-radius:12px; padding:30px; width:940px; max-width:92vw; max-height:80vh; position:relative; display:flex; flex-direction:column; }
         .sv-cr-title { color:#2dd4bf; font-size:18px; font-weight:bold; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
         .sv-cr-close { position:absolute; top:16px; right:16px; background:none; border:none; color:#667788; font-size:24px; cursor:pointer; }
         .sv-cr-close:hover { color:white; }
         .sv-cr-content { flex:1; overflow-y:auto; margin-bottom:16px; }
-        .sv-cr-head, .sv-cr-row { display:grid; grid-template-columns: 1.4fr 1.2fr 70px 120px 82px 72px; gap:8px; align-items:center; }
+        .sv-cr-head, .sv-cr-row { display:grid; grid-template-columns: 1.4fr 1.2fr 70px 120px 82px 72px 72px; gap:8px; align-items:center; }
+        .sv-cr-usage { position:fixed; z-index:10020; width:360px; max-height:320px; overflow:auto; margin:0; background:#102938; color:#d7e3ea; border:1px solid #334455; border-radius:8px; box-shadow:0 8px 24px rgba(0,0,0,.35); padding:10px 12px; font-size:12px; line-height:1.5; white-space:pre-wrap; word-break:break-word; }
         .sv-cr-head { color:#8899aa; font-size:12px; padding:8px; border-bottom:1px solid #334455; text-align:center; }
         .sv-cr-row { color:white; font-size:12px; padding:8px; border-bottom:1px solid #334455; text-align:center; min-height:42px; }
         .sv-cr-row:hover { background:#1e3a4a; }
@@ -225,10 +274,12 @@ export function showConsumptionRecordsDialog() {
     const nextBtn  = $el("button.sv-cr-page-btn", { textContent: "下一页", onclick: () => loadPage(currentPage + 1) });
     const pageInfo = $el("span.sv-cr-page-info");
 
+    contentDiv.addEventListener("scroll", hideUsagePop);
+
     recordsDialog = $el("div.sv-cr-overlay", {
         onclick: (e) => { if (e.target === recordsDialog) hideConsumptionDialog(); }
     }, [
-        $el("div.sv-cr-dialog", {}, [
+        $el("div.sv-cr-dialog", { onclick: hideUsagePop }, [
             $el("button.sv-cr-close", { textContent: "×", onclick: hideConsumptionDialog }),
             $el("div.sv-cr-title", { innerHTML: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> 消费记录` }),
             contentDiv,
@@ -315,6 +366,7 @@ export function showConsumptionRecordsDialog() {
                         $el("span", { textContent: "消费金额" }),
                         $el("span", { textContent: "资源<2h" }),
                         $el("span", { textContent: "资源网址" }),
+                        $el("span", { textContent: "详情" }),
                     ]));
                     for (const item of items) {
                         const ok = isSuccess(item);
@@ -326,9 +378,13 @@ export function showConsumptionRecordsDialog() {
                             ? $el("button.sv-cr-link", { textContent: "打开", onclick: () => openPreview(urls, kind) })
                             : content
                                 ? $el("span.sv-cr-copy", { innerHTML: COPY_ICON, title: "复制", onclick: () => copyText(content) })
-                                : $el("span.sv-cr-none", { textContent: "无资源" });
+                                : $el("span.sv-cr-none", { textContent: "-" });
                         const urlCell = urls.length
                             ? $el("span.sv-cr-copy", { innerHTML: COPY_ICON, title: "复制", onclick: () => copyText(urls.join("\n")) })
+                            : $el("span.sv-cr-none", { textContent: "-" });
+                        const usage = usageJson(item.source);
+                        const detailCell = usage
+                            ? $el("span.sv-cr-copy", { innerHTML: INFO_ICON, title: "详情", onclick: (e) => { e.stopPropagation(); openUsage(e, usage); } })
                             : $el("span.sv-cr-none", { textContent: "-" });
                         list.appendChild($el("div.sv-cr-row", {}, [
                             $el("div.sv-cr-model", { textContent: item.custom_name || item.model_name || "-" }),
@@ -337,6 +393,7 @@ export function showConsumptionRecordsDialog() {
                             $el("div", { textContent: formatAmount(item), style: { color: ok ? "#ef4444" : "#22c55e", fontWeight: "700" } }),
                             resourceCell,
                             urlCell,
+                            detailCell,
                         ]));
                     }
                     contentDiv.innerHTML = "";
@@ -356,5 +413,6 @@ export function showConsumptionRecordsDialog() {
 }
 
 export function hideConsumptionDialog() {
+    hideUsagePop();
     if (recordsDialog) recordsDialog.style.display = "none";
 }

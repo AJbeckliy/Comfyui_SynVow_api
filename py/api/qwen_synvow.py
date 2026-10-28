@@ -14,7 +14,6 @@ QWEN_API_MODELS = [
     "qwen3.6-plus-wd",
     "qwen3.7-plus-wd",
     "qwen3.7-max-wd",
-    "qwen3.8-max-wd",
 ]
 QWEN_MODEL_OPTIONS = combo_models(QWEN_API_MODELS)
 DEFAULT_QWEN_MODEL = QWEN_MODEL_OPTIONS[0]
