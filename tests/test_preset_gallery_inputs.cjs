@@ -1,0 +1,5 @@
+const fs=require('fs'),vm=require('vm'),assert=require('assert');let extension;
+const source=fs.readFileSync('I:/ComfyUI/custom_nodes/Comfyui_SynVow_api/web/preset_gallery.js','utf8').replace(/^import[^\n]+\n/,'');
+vm.runInNewContext(source,{app:{registerExtension(e){extension=e}}});
+class Node {constructor(){this.inputs=[{name:'image_1',type:'IMAGE',link:42},{name:'image_2',type:'IMAGE',link:null}];this.widgets=[{name:'preset'}]}addInput(name,type){this.inputs.push({name,type,link:null})}addWidget(){}onConfigure(){return 'preserved'}}
+(async()=>{await extension.beforeRegisterNodeDef(Node,{name:'PresetGallery'});const node=new Node();assert.equal(node.onConfigure(),'preserved');assert.equal(node.inputs.length,8);assert.equal(node.inputs[0].link,42);node.onConfigure();assert.equal(node.inputs.length,8);node.onNodeCreated();assert.equal(node.inputs.length,8);console.log('PASS: old nodes expand to 8, existing links retained, no duplicate slots')})().catch(e=>{console.error(e);process.exitCode=1});

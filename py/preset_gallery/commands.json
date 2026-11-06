@@ -1,0 +1,1199 @@
+[
+ {
+  "code": "/3dbillboard",
+  "zh": "街头大楼 3D 立体广告看板",
+  "category": "产品广告",
+  "zh_t": "街頭大樓 3D 立體廣告看板"
+ },
+ {
+  "code": "/timessquare",
+  "zh": "时代广场多屏幕看板",
+  "category": "产品广告",
+  "zh_t": "時代廣場多螢幕看板"
+ },
+ {
+  "code": "/subwayad",
+  "zh": "地铁站台广告",
+  "category": "产品广告",
+  "zh_t": "捷運月台廣告"
+ },
+ {
+  "code": "/storefront",
+  "zh": "店面招牌与橱窗",
+  "category": "产品广告",
+  "zh_t": "店面招牌與櫥窗"
+ },
+ {
+  "code": "/magazinead",
+  "zh": "杂志跨页广告",
+  "category": "产品广告",
+  "zh_t": "雜誌跨頁廣告"
+ },
+ {
+  "code": "/poster",
+  "zh": "活动海报",
+  "category": "产品广告",
+  "zh_t": "活動海報"
+ },
+ {
+  "code": "/feedad",
+  "zh": "IG 信息流广告",
+  "category": "产品广告",
+  "zh_t": "IG 動態贊助貼文樣式"
+ },
+ {
+  "code": "/storyad",
+  "zh": "快拍竖版广告",
+  "category": "产品广告",
+  "zh_t": "限時動態直式廣告"
+ },
+ {
+  "code": "/premiumshowcase",
+  "zh": "高级质感陈设",
+  "category": "产品摄影",
+  "zh_t": "高級質感陳設"
+ },
+ {
+  "code": "/whitebackground",
+  "zh": "纯白底电商主图",
+  "category": "产品摄影",
+  "zh_t": "純白底電商主圖"
+ },
+ {
+  "code": "/blackbackground",
+  "zh": "黑底高对比",
+  "category": "产品摄影",
+  "zh_t": "黑底高對比"
+ },
+ {
+  "code": "/floating",
+  "zh": "产品悬浮",
+  "category": "产品摄影",
+  "zh_t": "產品懸浮"
+ },
+ {
+  "code": "/explodedview",
+  "zh": "爆炸分解图",
+  "category": "产品摄影",
+  "zh_t": "爆炸分解圖"
+ },
+ {
+  "code": "/knolling",
+  "zh": "俯拍整齐平铺",
+  "category": "产品摄影",
+  "zh_t": "俯拍整齊平鋪"
+ },
+ {
+  "code": "/flatlay",
+  "zh": "平拍构图",
+  "category": "产品摄影",
+  "zh_t": "平拍構圖"
+ },
+ {
+  "code": "/macro",
+  "zh": "微距特写",
+  "category": "产品摄影",
+  "zh_t": "微距特寫"
+ },
+ {
+  "code": "/splash",
+  "zh": "水花液体飞溅",
+  "category": "产品摄影",
+  "zh_t": "水花液體飛濺"
+ },
+ {
+  "code": "/podium",
+  "zh": "展示台",
+  "category": "产品摄影",
+  "zh_t": "展示台"
+ },
+ {
+  "code": "/gradientbackdrop",
+  "zh": "渐变背景",
+  "category": "产品摄影",
+  "zh_t": "漸層背景"
+ },
+ {
+  "code": "/mirrorfloor",
+  "zh": "镜面反射地板",
+  "category": "产品摄影",
+  "zh_t": "鏡面反射地板"
+ },
+ {
+  "code": "/lifestyle",
+  "zh": "真人使用场景",
+  "category": "产品摄影",
+  "zh_t": "真人使用情境"
+ },
+ {
+  "code": "/kitchen",
+  "zh": "厨房料理台",
+  "category": "产品摄影",
+  "zh_t": "廚房流理台"
+ },
+ {
+  "code": "/cafe",
+  "zh": "咖啡店桌面",
+  "category": "产品摄影",
+  "zh_t": "咖啡店桌面"
+ },
+ {
+  "code": "/desksetup",
+  "zh": "办公桌",
+  "category": "产品摄影",
+  "zh_t": "辦公桌"
+ },
+ {
+  "code": "/bathroomshelf",
+  "zh": "浴室层架",
+  "category": "产品摄影",
+  "zh_t": "浴室層架"
+ },
+ {
+  "code": "/gym",
+  "zh": "健身房",
+  "category": "产品摄影",
+  "zh_t": "健身房"
+ },
+ {
+  "code": "/camping",
+  "zh": "露营",
+  "category": "产品摄影",
+  "zh_t": "露營"
+ },
+ {
+  "code": "/streetstyle",
+  "zh": "街拍",
+  "category": "人物写真",
+  "zh_t": "街拍"
+ },
+ {
+  "code": "/claymation",
+  "zh": "黏土定格",
+  "category": "风格",
+  "zh_t": "黏土定格"
+ },
+ {
+  "code": "/packagingmockup",
+  "zh": "包装盒",
+  "category": "产品摄影",
+  "zh_t": "包裝盒"
+ },
+ {
+  "code": "/bottlemockup",
+  "zh": "瓶身",
+  "category": "产品摄影",
+  "zh_t": "瓶身"
+ },
+ {
+  "code": "/canmockup",
+  "zh": "罐装",
+  "category": "产品摄影",
+  "zh_t": "罐裝"
+ },
+ {
+  "code": "/giftbox",
+  "zh": "礼盒",
+  "category": "产品摄影",
+  "zh_t": "禮盒"
+ },
+ {
+  "code": "/shoppingbag",
+  "zh": "购物袋",
+  "category": "产品摄影",
+  "zh_t": "購物袋"
+ },
+ {
+  "code": "/tshirtmockup",
+  "zh": "T 恤",
+  "category": "产品摄影",
+  "zh_t": "T 恤"
+ },
+ {
+  "code": "/mugmockup",
+  "zh": "马克杯",
+  "category": "产品摄影",
+  "zh_t": "馬克杯"
+ },
+ {
+  "code": "/unboxing",
+  "zh": "开箱画面",
+  "category": "产品摄影",
+  "zh_t": "開箱畫面"
+ },
+ {
+  "code": "/profilepic",
+  "zh": "头像",
+  "category": "人物写真",
+  "zh_t": "頭像"
+ },
+ {
+  "code": "/actionfigure",
+  "zh": "盒装公仔",
+  "category": "风格",
+  "zh_t": "盒裝公仔"
+ },
+ {
+  "code": "/bobblehead",
+  "zh": "摇头公仔",
+  "category": "风格",
+  "zh_t": "搖頭公仔"
+ },
+ {
+  "code": "/3dcartoon",
+  "zh": "3D 动画电影风",
+  "category": "风格",
+  "zh_t": "3D 動畫電影風"
+ },
+ {
+  "code": "/chibi",
+  "zh": "Q 版",
+  "category": "风格",
+  "zh_t": "Q 版"
+ },
+ {
+  "code": "/caricature",
+  "zh": "夸张肖像",
+  "category": "风格",
+  "zh_t": "誇張肖像"
+ },
+ {
+  "code": "/headshot",
+  "zh": "专业大头照",
+  "category": "人物写真",
+  "zh_t": "專業大頭照"
+ },
+ {
+  "code": "/sticker",
+  "zh": "表情贴纸",
+  "category": "风格",
+  "zh_t": "貼圖"
+ },
+ {
+  "code": "/anime",
+  "zh": "动画风",
+  "category": "风格",
+  "zh_t": "動畫風"
+ },
+ {
+  "code": "/goldenhour",
+  "zh": "黄金时刻",
+  "category": "人物写真",
+  "zh_t": "黃金時刻"
+ },
+ {
+  "code": "/dramaticlighting",
+  "zh": "戏剧光",
+  "category": "人物写真",
+  "zh_t": "戲劇光"
+ },
+ {
+  "code": "/doubleexposure",
+  "zh": "双重曝光",
+  "category": "人物写真",
+  "zh_t": "雙重曝光"
+ },
+ {
+  "code": "/filmgrain",
+  "zh": "胶片颗粒",
+  "category": "人物写真",
+  "zh_t": "底片顆粒"
+ },
+ {
+  "code": "/giantmode",
+  "zh": "巨物街头广告",
+  "category": "产品广告"
+ },
+ {
+  "code": "/tinyhumans",
+  "zh": "小人国微缩施工",
+  "category": "产品广告"
+ },
+ {
+  "code": "/surrealad",
+  "zh": "超现实砸地广告",
+  "category": "产品广告"
+ },
+ {
+  "code": "/ugc model",
+  "zh": "UGC真人模特手持产品",
+  "category": "产品广告",
+  "zh_t": "UGC真人模特手持產品"
+ },
+ {
+  "code": "/meta ads",
+  "zh": "Meta信息流广告素材",
+  "category": "产品广告",
+  "zh_t": "Meta資訊流動廣告素材"
+ },
+ {
+  "code": "/producthero",
+  "zh": "专业棚拍产品英雄图",
+  "category": "产品摄影",
+  "zh_t": "專業棚拍產品英雄圖"
+ },
+ {
+  "code": "/busstop",
+  "zh": "公交站灯箱广告",
+  "category": "产品广告",
+  "zh_t": "公交站燈箱廣告"
+ },
+ {
+  "code": "/trainwrap",
+  "zh": "列车车身广告",
+  "category": "产品广告",
+  "zh_t": "列車車身廣告"
+ },
+ {
+  "code": "/taxitop",
+  "zh": "出租车顶灯广告",
+  "category": "产品广告",
+  "zh_t": "出租車頂燈廣告"
+ },
+ {
+  "code": "/truckwrap",
+  "zh": "货车车身广告",
+  "category": "产品广告",
+  "zh_t": "貨車車身廣告"
+ },
+ {
+  "code": "/newspaperad",
+  "zh": "报纸广告",
+  "category": "产品广告",
+  "zh_t": "報紙廣告"
+ },
+ {
+  "code": "/flyer",
+  "zh": "宣传单",
+  "category": "产品广告",
+  "zh_t": "宣傳單"
+ },
+ {
+  "code": "/rollupbanner",
+  "zh": "易拉宝",
+  "category": "产品广告",
+  "zh_t": "易拉寶"
+ },
+ {
+  "code": "/airportad",
+  "zh": "机场灯箱广告",
+  "category": "产品广告",
+  "zh_t": "機場燈箱廣告"
+ },
+ {
+  "code": "/stadiumled",
+  "zh": "体育场环屏广告",
+  "category": "产品广告",
+  "zh_t": "體育場環屏廣告"
+ },
+ {
+  "code": "/elevatorad",
+  "zh": "电梯广告",
+  "category": "产品广告",
+  "zh_t": "電梯廣告"
+ },
+ {
+  "code": "/buildingprojection",
+  "zh": "建筑外墙投影",
+  "category": "产品广告",
+  "zh_t": "建筑外墻投影"
+ },
+ {
+  "code": "/hotairballoon",
+  "zh": "热气球广告",
+  "category": "产品广告",
+  "zh_t": "熱氣球廣告"
+ },
+ {
+  "code": "/bannerad",
+  "zh": "网页横幅广告",
+  "category": "产品广告",
+  "zh_t": "網頁橫幅廣告"
+ },
+ {
+  "code": "/popupad",
+  "zh": "应用弹窗广告",
+  "category": "产品广告",
+  "zh_t": "應用彈窗廣告"
+ },
+ {
+  "code": "/displayad",
+  "zh": "展示广告",
+  "category": "产品广告",
+  "zh_t": "展示廣告"
+ },
+ {
+  "code": "/emailheader",
+  "zh": "邮件头图",
+  "category": "产品广告",
+  "zh_t": "郵件頭圖"
+ },
+ {
+  "code": "/splashscreen",
+  "zh": "应用启动画面",
+  "category": "产品广告",
+  "zh_t": "應用啟動畫面"
+ },
+ {
+  "code": "/shortsframe",
+  "zh": "竖版短视频封面",
+  "category": "产品广告",
+  "zh_t": "豎版短視頻封面"
+ },
+ {
+  "code": "/labeldesign",
+  "zh": "标签设计",
+  "category": "产品广告",
+  "zh_t": "標簽設計"
+ },
+ {
+  "code": "/stickersheet",
+  "zh": "整版贴纸",
+  "category": "产品广告",
+  "zh_t": "整版貼紙"
+ },
+ {
+  "code": "/businesscard",
+  "zh": "名片",
+  "category": "产品广告",
+  "zh_t": "名片"
+ },
+ {
+  "code": "/brandboard",
+  "zh": "品牌视觉板",
+  "category": "产品广告",
+  "zh_t": "品牌視覺板"
+ },
+ {
+  "code": "/colorpalette",
+  "zh": "配色卡",
+  "category": "产品广告",
+  "zh_t": "配色卡"
+ },
+ {
+  "code": "/pattern",
+  "zh": "重复图案",
+  "category": "产品广告",
+  "zh_t": "重復圖案"
+ },
+ {
+  "code": "/carouselcover",
+  "zh": "轮播封面",
+  "category": "产品广告",
+  "zh_t": "輪播封面"
+ },
+ {
+  "code": "/postscreenshot",
+  "zh": "社交帖子截图风",
+  "category": "产品广告",
+  "zh_t": "社交帖子截圖風"
+ },
+ {
+  "code": "/beforeafter",
+  "zh": "前后对比",
+  "category": "产品广告",
+  "zh_t": "前后對比"
+ },
+ {
+  "code": "/comparison",
+  "zh": "对比图",
+  "category": "产品广告",
+  "zh_t": "對比圖"
+ },
+ {
+  "code": "/infographic",
+  "zh": "信息图",
+  "category": "产品广告",
+  "zh_t": "信息圖"
+ },
+ {
+  "code": "/stepbystep",
+  "zh": "步骤图",
+  "category": "产品广告",
+  "zh_t": "步驟圖"
+ },
+ {
+  "code": "/checklist",
+  "zh": "清单卡",
+  "category": "产品广告",
+  "zh_t": "清單卡"
+ },
+ {
+  "code": "/quotecard",
+  "zh": "金句卡",
+  "category": "产品广告",
+  "zh_t": "金句卡"
+ },
+ {
+  "code": "/testimonial",
+  "zh": "用户评价卡",
+  "category": "产品广告",
+  "zh_t": "用戶評價卡"
+ },
+ {
+  "code": "/pricingtable",
+  "zh": "价格表",
+  "category": "产品广告",
+  "zh_t": "價格表"
+ },
+ {
+  "code": "/countdown",
+  "zh": "倒计时卡",
+  "category": "产品广告",
+  "zh_t": "倒計時卡"
+ },
+ {
+  "code": "/announcement",
+  "zh": "公告图",
+  "category": "产品广告",
+  "zh_t": "公告圖"
+ },
+ {
+  "code": "/giveaway",
+  "zh": "抽奖活动图",
+  "category": "产品广告",
+  "zh_t": "抽獎活動圖"
+ },
+ {
+  "code": "/newarrival",
+  "zh": "新品上市图",
+  "category": "产品广告",
+  "zh_t": "新品上市圖"
+ },
+ {
+  "code": "/salebanner",
+  "zh": "促销横幅",
+  "category": "产品广告",
+  "zh_t": "促銷橫幅"
+ },
+ {
+  "code": "/bundle",
+  "zh": "组合套装",
+  "category": "产品广告",
+  "zh_t": "組合套裝"
+ },
+ {
+  "code": "/coverphoto",
+  "zh": "主页封面",
+  "category": "产品广告",
+  "zh_t": "主頁封面"
+ },
+ {
+  "code": "/frozenmotion",
+  "zh": "动态凝固",
+  "category": "产品摄影",
+  "zh_t": "動態凝固"
+ },
+ {
+  "code": "/studiolight",
+  "zh": "摄影棚灯光",
+  "category": "产品摄影",
+  "zh_t": "攝影棚燈光"
+ },
+ {
+  "code": "/rimlight",
+  "zh": "轮廓光",
+  "category": "产品摄影",
+  "zh_t": "輪廓光"
+ },
+ {
+  "code": "/glassshelf",
+  "zh": "玻璃层架",
+  "category": "产品摄影",
+  "zh_t": "玻璃層架"
+ },
+ {
+  "code": "/spotlight",
+  "zh": "聚光灯",
+  "category": "产品摄影",
+  "zh_t": "聚光燈"
+ },
+ {
+  "code": "/silhouette",
+  "zh": "剪影",
+  "category": "产品摄影",
+  "zh_t": "剪影"
+ },
+ {
+  "code": "/colorblock",
+  "zh": "色块背景",
+  "category": "产品摄影",
+  "zh_t": "色塊背景"
+ },
+ {
+  "code": "/monochrome",
+  "zh": "单色系",
+  "category": "产品摄影",
+  "zh_t": "單色系"
+ },
+ {
+  "code": "/picnic",
+  "zh": "野餐场景",
+  "category": "产品摄影",
+  "zh_t": "野餐場景"
+ },
+ {
+  "code": "/beach",
+  "zh": "海滩场景",
+  "category": "产品摄影",
+  "zh_t": "海灘場景"
+ },
+ {
+  "code": "/poolside",
+  "zh": "泳池边",
+  "category": "产品摄影",
+  "zh_t": "泳池邊"
+ },
+ {
+  "code": "/rooftop",
+  "zh": "屋顶场景",
+  "category": "产品摄影",
+  "zh_t": "屋頂場景"
+ },
+ {
+  "code": "/nightmarket",
+  "zh": "夜市场景",
+  "category": "产品摄影",
+  "zh_t": "夜市場景"
+ },
+ {
+  "code": "/conveniencestore",
+  "zh": "便利店场景",
+  "category": "产品摄影",
+  "zh_t": "便利店場景"
+ },
+ {
+  "code": "/supermarket",
+  "zh": "超市场景",
+  "category": "产品摄影",
+  "zh_t": "超市場景"
+ },
+ {
+  "code": "/vendingmachine",
+  "zh": "自动售货机",
+  "category": "产品摄影",
+  "zh_t": "自動售貨機"
+ },
+ {
+  "code": "/carinterior",
+  "zh": "车内场景",
+  "category": "产品摄影",
+  "zh_t": "車內場景"
+ },
+ {
+  "code": "/hotelroom",
+  "zh": "酒店客房",
+  "category": "产品摄影",
+  "zh_t": "酒店客房"
+ },
+ {
+  "code": "/livingroom",
+  "zh": "客厅场景",
+  "category": "产品摄影",
+  "zh_t": "客廳場景"
+ },
+ {
+  "code": "/balcony",
+  "zh": "阳台场景",
+  "category": "产品摄影",
+  "zh_t": "陽臺場景"
+ },
+ {
+  "code": "/pouchmockup",
+  "zh": "软袋包装样机",
+  "category": "产品摄影",
+  "zh_t": "軟袋包裝樣機"
+ },
+ {
+  "code": "/totebag",
+  "zh": "手提布袋",
+  "category": "产品摄影",
+  "zh_t": "手提布袋"
+ },
+ {
+  "code": "/hoodiemockup",
+  "zh": "连帽卫衣样机",
+  "category": "产品摄影",
+  "zh_t": "連帽衛衣樣機"
+ },
+ {
+  "code": "/capmockup",
+  "zh": "帽子样机",
+  "category": "产品摄影",
+  "zh_t": "帽子樣機"
+ },
+ {
+  "code": "/phonecase",
+  "zh": "手机壳",
+  "category": "产品摄影",
+  "zh_t": "手機殼"
+ },
+ {
+  "code": "/longexposure",
+  "zh": "长曝光",
+  "category": "产品摄影",
+  "zh_t": "長曝光"
+ },
+ {
+  "code": "/bokeh",
+  "zh": "背景散景",
+  "category": "产品摄影",
+  "zh_t": "背景散景"
+ },
+ {
+  "code": "/tiltshift",
+  "zh": "移轴摄影",
+  "category": "产品摄影",
+  "zh_t": "移軸攝影"
+ },
+ {
+  "code": "/droneview",
+  "zh": "航拍视角",
+  "category": "产品摄影",
+  "zh_t": "航拍視角"
+ },
+ {
+  "code": "/birdseye",
+  "zh": "鸟瞰视角",
+  "category": "产品摄影",
+  "zh_t": "鳥瞰視角"
+ },
+ {
+  "code": "/dutchangle",
+  "zh": "倾斜构图",
+  "category": "产品摄影",
+  "zh_t": "傾斜構圖"
+ },
+ {
+  "code": "/microscopic",
+  "zh": "显微观察",
+  "category": "产品摄影",
+  "zh_t": "顯微觀察"
+ },
+ {
+  "code": "/cutaway",
+  "zh": "剖切透视",
+  "category": "产品摄影",
+  "zh_t": "剖切透視"
+ },
+ {
+  "code": "/patentdrawing",
+  "zh": "专利线稿",
+  "category": "产品摄影",
+  "zh_t": "專利線稿"
+ },
+ {
+  "code": "/orthographic",
+  "zh": "正交视图",
+  "category": "产品摄影",
+  "zh_t": "正交視圖"
+ },
+ {
+  "code": "/mascot",
+  "zh": "品牌吉祥物",
+  "category": "人物写真",
+  "zh_t": "品牌吉祥物"
+ },
+ {
+  "code": "/superhero",
+  "zh": "超级英雄",
+  "category": "人物写真",
+  "zh_t": "超級英雄"
+ },
+ {
+  "code": "/papercraft",
+  "zh": "纸艺",
+  "category": "风格",
+  "zh_t": "紙藝"
+ },
+ {
+  "code": "/origami",
+  "zh": "折纸",
+  "category": "风格",
+  "zh_t": "折紙"
+ },
+ {
+  "code": "/felt",
+  "zh": "毛毡",
+  "category": "风格",
+  "zh_t": "毛氈"
+ },
+ {
+  "code": "/toybricks",
+  "zh": "积木",
+  "category": "风格",
+  "zh_t": "積木"
+ },
+ {
+  "code": "/plush",
+  "zh": "毛绒玩偶",
+  "category": "风格",
+  "zh_t": "毛絨玩偶"
+ },
+ {
+  "code": "/woodcarving",
+  "zh": "木雕",
+  "category": "风格",
+  "zh_t": "木雕"
+ },
+ {
+  "code": "/ceramic",
+  "zh": "陶瓷",
+  "category": "风格",
+  "zh_t": "陶瓷"
+ },
+ {
+  "code": "/glassart",
+  "zh": "玻璃艺术",
+  "category": "风格",
+  "zh_t": "玻璃藝術"
+ },
+ {
+  "code": "/chrome",
+  "zh": "镀铬金属",
+  "category": "风格",
+  "zh_t": "鍍鉻金屬"
+ },
+ {
+  "code": "/goldfoil",
+  "zh": "金箔工艺",
+  "category": "风格",
+  "zh_t": "金箔工藝"
+ },
+ {
+  "code": "/marble",
+  "zh": "大理石",
+  "category": "风格",
+  "zh_t": "大理石"
+ },
+ {
+  "code": "/neonsign",
+  "zh": "霓虹灯牌",
+  "category": "风格",
+  "zh_t": "霓虹燈牌"
+ },
+ {
+  "code": "/iceblock",
+  "zh": "冰块",
+  "category": "风格",
+  "zh_t": "冰塊"
+ },
+ {
+  "code": "/candy",
+  "zh": "糖果",
+  "category": "风格",
+  "zh_t": "糖果"
+ },
+ {
+  "code": "/chocolate",
+  "zh": "巧克力",
+  "category": "风格",
+  "zh_t": "巧克力"
+ },
+ {
+  "code": "/balloon",
+  "zh": "气球",
+  "category": "风格",
+  "zh_t": "氣球"
+ },
+ {
+  "code": "/knitted",
+  "zh": "针织",
+  "category": "风格",
+  "zh_t": "針織"
+ },
+ {
+  "code": "/embroidery",
+  "zh": "刺绣",
+  "category": "风格",
+  "zh_t": "刺繡"
+ },
+ {
+  "code": "/stainedglass",
+  "zh": "彩绘玻璃",
+  "category": "风格",
+  "zh_t": "彩繪玻璃"
+ },
+ {
+  "code": "/watercolor",
+  "zh": "水彩画风",
+  "category": "风格",
+  "zh_t": "水彩畫風"
+ },
+ {
+  "code": "/oilpainting",
+  "zh": "油画风",
+  "category": "风格",
+  "zh_t": "油畫風"
+ },
+ {
+  "code": "/pencilsketch",
+  "zh": "铅笔素描",
+  "category": "风格",
+  "zh_t": "鉛筆素描"
+ },
+ {
+  "code": "/inkdrawing",
+  "zh": "墨线绘画",
+  "category": "风格",
+  "zh_t": "墨線繪畫"
+ },
+ {
+  "code": "/lineart",
+  "zh": "线稿",
+  "category": "风格",
+  "zh_t": "線稿"
+ },
+ {
+  "code": "/popart",
+  "zh": "波普艺术",
+  "category": "风格",
+  "zh_t": "波普藝術"
+ },
+ {
+  "code": "/comicbook",
+  "zh": "美式漫画",
+  "category": "风格",
+  "zh_t": "美式漫畫"
+ },
+ {
+  "code": "/manga",
+  "zh": "日式漫画",
+  "category": "风格",
+  "zh_t": "日式漫畫"
+ },
+ {
+  "code": "/ukiyoe",
+  "zh": "浮世绘",
+  "category": "风格",
+  "zh_t": "浮世繪"
+ },
+ {
+  "code": "/pixelart",
+  "zh": "像素画风",
+  "category": "风格",
+  "zh_t": "像素畫風"
+ },
+ {
+  "code": "/lowpoly",
+  "zh": "低多边形",
+  "category": "风格",
+  "zh_t": "低多邊形"
+ },
+ {
+  "code": "/isometric",
+  "zh": "等轴测视图",
+  "category": "风格",
+  "zh_t": "等軸測視圖"
+ },
+ {
+  "code": "/blueprint",
+  "zh": "蓝图",
+  "category": "风格",
+  "zh_t": "藍圖"
+ },
+ {
+  "code": "/vintageposter",
+  "zh": "复古海报",
+  "category": "风格",
+  "zh_t": "復古海報"
+ },
+ {
+  "code": "/artdeco",
+  "zh": "装饰艺术",
+  "category": "风格",
+  "zh_t": "裝飾藝術"
+ },
+ {
+  "code": "/bauhaus",
+  "zh": "包豪斯",
+  "category": "风格",
+  "zh_t": "包豪斯"
+ },
+ {
+  "code": "/retro80s",
+  "zh": "八十年代复古风",
+  "category": "风格",
+  "zh_t": "八十年代復古風"
+ },
+ {
+  "code": "/y2k",
+  "zh": "千禧风",
+  "category": "风格",
+  "zh_t": "千禧風"
+ },
+ {
+  "code": "/vaporwave",
+  "zh": "蒸汽波",
+  "category": "风格",
+  "zh_t": "蒸汽波"
+ },
+ {
+  "code": "/cyberpunk",
+  "zh": "赛博朋克",
+  "category": "风格",
+  "zh_t": "賽博朋克"
+ },
+ {
+  "code": "/3drender",
+  "zh": "三维渲染",
+  "category": "风格",
+  "zh_t": "三維渲染"
+ },
+ {
+  "code": "/glassmorphism",
+  "zh": "毛玻璃风",
+  "category": "风格",
+  "zh_t": "毛玻璃風"
+ },
+ {
+  "code": "/holographic",
+  "zh": "全息炫彩",
+  "category": "风格",
+  "zh_t": "全息炫彩"
+ },
+ {
+  "code": "/wireframe",
+  "zh": "线框",
+  "category": "风格",
+  "zh_t": "線框"
+ },
+ {
+  "code": "/voxel",
+  "zh": "体素风",
+  "category": "风格",
+  "zh_t": "體素風"
+ },
+ {
+  "code": "/liquidmetal",
+  "zh": "液态金属",
+  "category": "风格",
+  "zh_t": "液態金屬"
+ },
+ {
+  "code": "/crystal",
+  "zh": "水晶",
+  "category": "风格",
+  "zh_t": "水晶"
+ },
+ {
+  "code": "/neonglow",
+  "zh": "霓虹光效",
+  "category": "风格",
+  "zh_t": "霓虹光效"
+ },
+ {
+  "code": "/xray",
+  "zh": "X光透视",
+  "category": "风格",
+  "zh_t": "X光透視"
+ },
+ {
+  "code": "/thermal",
+  "zh": "热成像风",
+  "category": "风格",
+  "zh_t": "熱成像風"
+ },
+ {
+  "code": "/glitch",
+  "zh": "故障艺术",
+  "category": "风格",
+  "zh_t": "故障藝術"
+ },
+ {
+  "code": "/minimal3d",
+  "zh": "极简三维",
+  "category": "风格",
+  "zh_t": "極簡三維"
+ },
+ {
+  "code": "/christmas",
+  "zh": "圣诞主题",
+  "category": "风格",
+  "zh_t": "圣誕主題"
+ },
+ {
+  "code": "/lunarnewyear",
+  "zh": "春节主题",
+  "category": "风格",
+  "zh_t": "春節主題"
+ },
+ {
+  "code": "/valentines",
+  "zh": "情人节主题",
+  "category": "风格",
+  "zh_t": "情人節主題"
+ },
+ {
+  "code": "/halloween",
+  "zh": "万圣节主题",
+  "category": "风格",
+  "zh_t": "萬圣節主題"
+ },
+ {
+  "code": "/midautumn",
+  "zh": "中秋主题",
+  "category": "风格",
+  "zh_t": "中秋主題"
+ },
+ {
+  "code": "/dragonboat",
+  "zh": "端午主题",
+  "category": "风格",
+  "zh_t": "端午主題"
+ },
+ {
+  "code": "/mothersday",
+  "zh": "母亲节主题",
+  "category": "风格",
+  "zh_t": "母親節主題"
+ },
+ {
+  "code": "/summer",
+  "zh": "夏季主题",
+  "category": "风格",
+  "zh_t": "夏季主題"
+ },
+ {
+  "code": "/autumn",
+  "zh": "秋季主题",
+  "category": "风格",
+  "zh_t": "秋季主題"
+ },
+ {
+  "code": "/winter",
+  "zh": "冬季主题",
+  "category": "风格",
+  "zh_t": "冬季主題"
+ },
+ {
+  "code": "/spring",
+  "zh": "春季主题",
+  "category": "风格",
+  "zh_t": "春季主題"
+ },
+ {
+  "code": "/blackfriday",
+  "zh": "黑五促销主题",
+  "category": "风格",
+  "zh_t": "黑五促銷主題"
+ },
+ {
+  "code": "/doubleeleven",
+  "zh": "双十一主题",
+  "category": "风格",
+  "zh_t": "雙十一主題"
+ },
+ {
+  "code": "/anniversary",
+  "zh": "周年庆主题",
+  "category": "风格",
+  "zh_t": "周年慶主題"
+ },
+ {
+  "code": "/birthday",
+  "zh": "生日主题",
+  "category": "风格",
+  "zh_t": "生日主題"
+ }
+]
