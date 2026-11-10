@@ -11,10 +11,10 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 ### 2026-11-10
 
 1. `SynVow Omni-Flash` keeps only `omni-1.2-flash` and drops the older models.
-3. `SynVow 即梦` adds `即梦5.5`.
-4. `SynVow GPT-Image-2` (including batch) adds `PT2.6-稳定`, `PT2.6-1k-企业`, `PT2.6-1k-低价`, and `PT2.6-超惠`.
-5. `SynVow LLM-Qwen` adds `qwen3.8-flash-稳定`.
-6. Adds `SynVow Muse Video` with the `muse-video-稳定` model.
+2. `SynVow 即梦` adds `即梦5.5`.
+3. `SynVow GPT-Image-2` (including batch) adds `PT2.6-稳定`, `PT2.6-1k-企业`, `PT2.6-1k-低价`, and `PT2.6-超惠`.
+4. `SynVow LLM-Qwen` adds `qwen3.8-flash-稳定`.
+5. Adds `SynVow Muse Video` with the `muse-video-稳定` model.
 
 ### 2026-10-28
 

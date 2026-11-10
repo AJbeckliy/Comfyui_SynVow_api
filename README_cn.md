@@ -11,10 +11,10 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 ### 2026-11-10
 
 1、`SynVow Omni-Flash` 只保留 `omni-1.2-flash`，去掉旧模型。
-3、`SynVow 即梦` 新增 `即梦5.5`。
-4、`SynVow GPT-Image-2`（含批量）新增 `PT2.6-稳定`、`PT2.6-1k-企业`、`PT2.6-1k-低价`、`PT2.6-超惠`。
-5、`SynVow LLM-Qwen` 新增 `qwen3.8-flash-稳定`。
-6、新增 `SynVow Muse Video`：`muse-video-稳定`模型。
+2、`SynVow 即梦` 新增 `即梦5.5`。
+3、`SynVow GPT-Image-2`（含批量）新增 `PT2.6-稳定`、`PT2.6-1k-企业`、`PT2.6-1k-低价`、`PT2.6-超惠`。
+4、`SynVow LLM-Qwen` 新增 `qwen3.8-flash-稳定`。
+5、新增 `SynVow Muse Video`：`muse-video-稳定`模型。
 
 ### 2026-10-28
 
