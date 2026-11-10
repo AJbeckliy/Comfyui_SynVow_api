@@ -8,6 +8,14 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 
 ## 更新日志
 
+### 2026-11-10
+
+1、`SynVow Omni-Flash` 只保留 `omni-1.2-flash`，去掉旧模型。
+3、`SynVow 即梦` 新增 `即梦5.5`。
+4、`SynVow GPT-Image-2`（含批量）新增 `PT2.6-稳定`、`PT2.6-1k-企业`、`PT2.6-1k-低价`、`PT2.6-超惠`。
+5、`SynVow LLM-Qwen` 新增 `qwen3.8-flash-稳定`。
+6、新增 `SynVow Muse Video`：`muse-video-稳定`模型。
+
 ### 2026-10-28
 
 1、去掉请求模型 `qwen3.8-max-稳定`、`GM3.7-flash-2606`、`GM3.6-flash-2606`、`PT5.5-企业`、`PT5.5-2606`、`PT5.4-2606`、`MiniMax-H3-低价`  
@@ -253,10 +261,10 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 | SynVow MAI-image (T_batch) | MAI-image-2.6 | 提示词列表批量 |
 | SynVow MAI-image (I_batch) | MAI-image-2.6 | 提示词 × 多组图批量 |
 | SynVow MAI-image (T_I_batch) | MAI-image-2.6 | 提示词与图像组配对批量 |
-| SynVow 即梦 | 即梦5.0 / 即梦5.0-pro | 文生图·图生图 |
-| SynVow 即梦 (T_batch) | 即梦5.0 / 即梦5.0-pro | 提示词列表批量 |
-| SynVow 即梦 (I_batch) | 即梦5.0 / 即梦5.0-pro | 提示词 × 多组图批量 |
-| SynVow 即梦 (T_I_batch) | 即梦5.0 / 即梦5.0-pro | 提示词与图像组配对批量 |
+| SynVow 即梦 | 即梦5.5 / 即梦5.0-pro / 即梦5.0-flash | 文生图·图生图 |
+| SynVow 即梦 (T_batch) | 即梦5.5 / 即梦5.0-pro / 即梦5.0-flash | 提示词列表批量 |
+| SynVow 即梦 (I_batch) | 即梦5.5 / 即梦5.0-pro / 即梦5.0-flash | 提示词 × 多组图批量 |
+| SynVow 即梦 (T_I_batch) | 即梦5.5 / 即梦5.0-pro / 即梦5.0-flash | 提示词与图像组配对批量 |
 | SynVow GK1.5 | grok-image-1.5-稳定 | 文生图·图生图（最多 1 张参考图） |
 | SynVow GK1.5 (T_batch) | grok-image-1.5-稳定 | 提示词列表批量 |
 | SynVow GK1.5 (I_batch) | grok-image-1.5-稳定 | 提示词 × 图像列表批量 |
@@ -285,7 +293,8 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 | SynVow Seedance | seedance-2.0-* | `/image/edit`：文/图/视频/音频参考；输出路径/URL/信息 |
 | SynVow Seedance2.0 视频生成 (720P) | seedance_2_720p | `/image/edit` + `content[]`，固定 720P；输出路径/URL/信息 |
 | SynVow Grok Video | grok-1.5-video | 文/图生视频（最多 6 张参考图） |
-| SynVow Omni-Flash | Omni-Flash-Ext / omni-flash-preview | 图/视频参考生视频 |
+| SynVow Omni-Flash | omni-1.2-flash | 图/视频参考生视频，时长 3～15 秒 |
+| SynVow Muse Video | muse-video-稳定 | 最多 9 张参考图，时长 10 秒，720p |
 | SynVow Veo31 | veo3.1 | 文/图生视频（最多 2 张参考图，1080p） |
 | [荐]视频解析30+ | jiexi30+ | 30+ 平台无水印下载，多条链接每 2 秒最多 5 个 |
 

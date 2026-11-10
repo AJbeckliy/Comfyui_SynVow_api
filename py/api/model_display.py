@@ -18,6 +18,7 @@ MODEL_DISPLAY_NAMES = {
     "qwen3.6-plus-wd": "qwen3.6-plus-稳定",
     "qwen3.7-plus-wd": "qwen3.7-plus-稳定",
     "qwen3.7-max-wd": "qwen3.7-max-稳定",
+    "qwen3.8-flash-wd": "qwen3.8-flash-稳定",
     # 文本 GPT / PT
     "gpt-5.5-稳定": "PT5.5-稳定",
     "gpt-5.6-sol-稳定": "PT5.6-sol-稳定",
@@ -40,6 +41,10 @@ MODEL_DISPLAY_NAMES = {
     "mai-image-2.6-wd": "MAI-image-2.6-稳定",
     "mai-image-2.6-flash-wd": "MAI-image-2.6-flash-稳定",
     # 图像 GPT-Image
+    "gpt-image-2.6-wd": "PT2.6-稳定",
+    "gpt-image-2.6-1k-qy": "PT2.6-1k-企业",
+    "gpt-image-2.6-1k-dj": "PT2.6-1k-低价",
+    "gpt-image-2.6-ch": "PT2.6-超惠",
     "gpt-image-2.5-wd": "PT2.5-稳定",
     "gpt-image-2.5-ch": "PT2.5-超惠",
     "gpt-image-2.5-qy": "PT2.5-企业",
@@ -63,9 +68,8 @@ MODEL_DISPLAY_NAMES = {
     "MiniMax-H3": "MiniMax-H3-稳定",
     "veo3.1": "Veo 3.1",
     "grok-1.5-video": "GK视频",
-    "Omni-Flash-Ext": "O-Flash-Ext",
-    "omni-flash-preview": "O-flash-preview",
-    "omni-1.1-flash": "O-1.1-flash",
+    "omni-1.2-flash": "omni-1.2-flash",
+    "muse-video-wd": "muse-video-稳定",
     "wan3.0-video-wd": "wan3.0-video-稳定",
     # 音频
     "suno5.5": "Suno 5.5",
@@ -73,6 +77,7 @@ MODEL_DISPLAY_NAMES = {
     "suno6-fc": "Suno 6 翻唱",
     "suno6-yc": "Suno 6 延长",
     "doubao-seed-audio-1.0": "豆包语音1.0",
+    "seedream-5-5": "即梦5.5",
     "seedream-5-0-flash": "即梦5.0-flash",
 }
 

@@ -8,6 +8,14 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 ## Changelog
 
+### 2026-11-10
+
+1. `SynVow Omni-Flash` keeps only `omni-1.2-flash` and drops the older models.
+3. `SynVow 即梦` adds `即梦5.5`.
+4. `SynVow GPT-Image-2` (including batch) adds `PT2.6-稳定`, `PT2.6-1k-企业`, `PT2.6-1k-低价`, and `PT2.6-超惠`.
+5. `SynVow LLM-Qwen` adds `qwen3.8-flash-稳定`.
+6. Adds `SynVow Muse Video` with the `muse-video-稳定` model.
+
 ### 2026-10-28
 
 1. Removes request models `qwen3.8-max-稳定`, `GM3.7-flash-2606`, `GM3.6-flash-2606`, `PT5.5-企业`, `PT5.5-2606`, `PT5.4-2606`, and `MiniMax-H3-低价`  
@@ -253,10 +261,10 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 | SynVow MAI-image (T_batch) | MAI-image-2.6 | Prompt-list batch |
 | SynVow MAI-image (I_batch) | MAI-image-2.6 | Prompt × multi-image-group batch |
 | SynVow MAI-image (T_I_batch) | MAI-image-2.6 | Prompt and image-group paired batch |
-| SynVow 即梦 | 即梦5.0 / 即梦5.0-pro | Text-to-image / image-to-image |
-| SynVow 即梦 (T_batch) | 即梦5.0 / 即梦5.0-pro | Prompt-list batch |
-| SynVow 即梦 (I_batch) | 即梦5.0 / 即梦5.0-pro | Prompt × multi-image-group batch |
-| SynVow 即梦 (T_I_batch) | 即梦5.0 / 即梦5.0-pro | Paired prompt and image-group batch |
+| SynVow 即梦 | 即梦5.5 / 即梦5.0-pro / 即梦5.0-flash | Text-to-image / image-to-image |
+| SynVow 即梦 (T_batch) | 即梦5.5 / 即梦5.0-pro / 即梦5.0-flash | Prompt-list batch |
+| SynVow 即梦 (I_batch) | 即梦5.5 / 即梦5.0-pro / 即梦5.0-flash | Prompt × multi-image-group batch |
+| SynVow 即梦 (T_I_batch) | 即梦5.5 / 即梦5.0-pro / 即梦5.0-flash | Paired prompt and image-group batch |
 | SynVow GK1.5 | grok-image-1.5-稳定 | Text-to-image / image-to-image (up to 1 reference image) |
 | SynVow GK1.5 (T_batch) | grok-image-1.5-稳定 | Prompt-list batch |
 | SynVow GK1.5 (I_batch) | grok-image-1.5-稳定 | Prompt × image-list batch |
@@ -285,7 +293,8 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 | SynVow Seedance | seedance-2.0-* | `/image/edit`: text/image/video/audio reference; outputs path/URL/info |
 | SynVow Seedance2.0 视频生成 (720P) | seedance_2_720p | `/image/edit` + `content[]`, fixed 720P; outputs path/URL/info |
 | SynVow Grok Video | grok-1.5-video | Text/image-to-video (up to 6 reference images) |
-| SynVow Omni-Flash | Omni-Flash-Ext / omni-flash-preview | Image/video-reference video generation |
+| SynVow Omni-Flash | omni-1.2-flash | Image/video-reference video, duration 3–15 seconds |
+| SynVow Muse Video | muse-video-稳定 | Up to 9 reference images, duration 10 seconds, 720p |
 | SynVow Veo31 | veo3.1 | Text/image-to-video (up to 2 reference images, 1080p) |
 | [荐]视频解析30+ | jiexi30+ | Watermark-free download for 30+ platforms; up to 5 links every 2 seconds |
 

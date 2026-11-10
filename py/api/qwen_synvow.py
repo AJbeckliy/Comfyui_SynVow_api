@@ -14,9 +14,15 @@ QWEN_API_MODELS = [
     "qwen3.6-plus-wd",
     "qwen3.7-plus-wd",
     "qwen3.7-max-wd",
+    "qwen3.8-flash-wd",
 ]
 QWEN_MODEL_OPTIONS = combo_models(QWEN_API_MODELS)
 DEFAULT_QWEN_MODEL = QWEN_MODEL_OPTIONS[0]
+
+
+def _qwen_model(raw):
+    name = resolve_model(raw, QWEN_API_MODELS[0])
+    return name if name in QWEN_API_MODELS else QWEN_API_MODELS[0]
 
 
 def _request_qwen(img_tensors, model_name, user_prompt, api_key, video_path=""):
@@ -97,7 +103,7 @@ class SynVowQwenAPI:
                  image_9=None, image_10=None, video_path=""):
         del seed
         api_key = synvow_auth.read_api_key()
-        model_name = resolve_model(模型, QWEN_API_MODELS[0])
+        model_name = _qwen_model(模型)
         imgs = [img for img in [image_1, image_2, image_3, image_4, image_5,
                                 image_6, image_7, image_8, image_9, image_10]
                 if img is not None]
@@ -150,7 +156,7 @@ class SynVowQwenAPI_TBatch:
         def _u(v, d=None):
             return v[0] if isinstance(v, list) and v else (v if v is not None else d)
 
-        model_name = resolve_model(_u(模型), QWEN_API_MODELS[0])
+        model_name = _qwen_model(_u(模型))
         video = _u(video_path, "") or ""
         api_key = synvow_auth.read_api_key()
         imgs = [_u(t) for t in [image_1, image_2, image_3, image_4, image_5,

@@ -86,6 +86,10 @@ _RATIO_TO_SIZE_4K = {
 _RATIO_MAPS = {"1K": _RATIO_TO_SIZE_1K, "2K": _RATIO_TO_SIZE_2K, "4K": _RATIO_TO_SIZE_4K}
 
 _API_MODELS = [
+    "gpt-image-2.6-wd",
+    "gpt-image-2.6-1k-qy",
+    "gpt-image-2.6-1k-dj",
+    "gpt-image-2.6-ch",
     "gpt-image-2.5-wd",
     "gpt-image-2.5-ch",
     "gpt-image-2.5-qy",
@@ -101,7 +105,7 @@ _API_MODELS = [
     "gpt-image-2-1k-2605",
 ]
 _MODEL_TYPE_OPTIONS = combo_models(_API_MODELS)
-_DEFAULT_GPT_IMAGE_MODEL = "gpt-image-2.5-wd"
+_DEFAULT_GPT_IMAGE_MODEL = "gpt-image-2.6-wd"
 _DEFAULT_GPT_IMAGE_COMBO = display_name(_DEFAULT_GPT_IMAGE_MODEL)
 _NEW_MODELS = {"gpt-image-2-稳定"}
 _RAW_RATIO_MODELS = {"gpt-image-2-官方"}
@@ -124,8 +128,23 @@ def _style(style=None):
     return style if style in _STYLES else "sunburst"
 
 
+def _is_26(family):
+    return family == "gpt-image-2.6-wd"
+
+
+def _is_26_qy(family):
+    return family == "gpt-image-2.6-1k-qy"
+
+
+def _is_26_dj(family):
+    return family == "gpt-image-2.6-1k-dj"
+
+
 def _shows_style(family):
-    return family.startswith("gpt-image-2.5") and family != "gpt-image-2.5-1k-2609"
+    return (
+        _is_26(family) or _is_26_qy(family) or family == "gpt-image-2.6-ch"
+        or (family.startswith("gpt-image-2.5") and family != "gpt-image-2.5-1k-2609")
+    )
 
 
 def _is_wd(family):
@@ -137,7 +156,7 @@ def _is_gf(family):
 
 
 def _is_ch(family):
-    return family in ("gpt-image-2.5-ch", "gpt-image-2-ch")
+    return family in ("gpt-image-2.5-ch", "gpt-image-2.6-ch", "gpt-image-2-ch")
 
 
 def _is_qy_model(model):
@@ -149,27 +168,31 @@ def _is_gpt_image_25(family):
 
 
 def _shows_quality(family):
-    return family not in _NEW_MODELS and family != "gpt-image-2.5-1k-2609" and not _is_wd(family)
+    return family not in _NEW_MODELS and family != "gpt-image-2.5-1k-2609" and not _is_wd(family) and not _is_26_dj(family)
 
 
 def _shows_transparent(family):
-    return _shows_style(family) and not _is_wd(family)
+    return _shows_style(family) and str(family).startswith("gpt-image-2.5") and not _is_wd(family)
 
 
 def _qualities_of(family):
+    if _is_26(family) or _is_26_qy(family):
+        return _QUALITIES_EXT
     return _QUALITIES_EXT if _shows_quality(family) and _shows_style(family) else _QUALITIES
 
 
 def _aspects_of(family):
-    return _WD_ASPECTS if _is_wd(family) else _ASPECTS
+    return _WD_ASPECTS if _is_wd(family) or _is_26(family) else _ASPECTS
 
 
 def _compose(family, style):
-    if not _shows_style(family) or _is_wd(family):
+    if not _shows_style(family) or _is_wd(family) or _is_26(family):
         return family
     s = style if style in _STYLES else "sunburst"
     if "-1k-" in family:
         return family.replace("-1k-", f"-1k-{s}-")
+    if family.startswith("gpt-image-2.6-"):
+        return family.replace("gpt-image-2.6-", f"gpt-image-2.6-{s}-")
     return family.replace("gpt-image-2.5-", f"gpt-image-2.5-{s}-")
 
 
@@ -196,9 +219,11 @@ def _resolve_size_params(model, aspect_ratio, resolution):
     eff_resolution = locked or (resolution or "1K")
     allowed = _aspects_of(family)
     aspect = aspect_ratio if aspect_ratio in allowed else allowed[0]
-    if family in _RAW_RATIO_MODELS or _is_wd(family) or _is_gf(family):
+    if family in _RAW_RATIO_MODELS or _is_wd(family) or _is_gf(family) or _is_26(family):
         return eff_resolution, aspect or "auto"
-    if _is_ch(family) and family.startswith("gpt-image-2.5") and (not aspect or aspect == "auto"):
+    if _is_ch(family) and family.startswith(("gpt-image-2.5", "gpt-image-2.6")) and (not aspect or aspect == "auto"):
+        aspect = "1:1"
+    if _is_26_dj(family) and (not aspect or aspect == "auto"):
         aspect = "1:1"
     if not aspect or aspect == "auto":
         return eff_resolution, "auto"
@@ -213,6 +238,9 @@ def _param_inputs():
         "quality": (_QUALITIES_EXT, {"default": "auto"}),
         "resolution": (["1K", "2K", "4K"], {"default": "1K"}),
         "aspect_ratio": (_ASPECTS, {"default": "1:1"}),
+        "output_mode": (["image", "gif"], {"default": "image"}),
+        "frame_count": ("INT", {"default": 9, "min": 2, "max": 16}),
+        "frame_duration_ms": ("INT", {"default": 200, "min": 20, "max": 2000}),
         "transparent": ("BOOLEAN", {"default": False}),
         "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
     }
@@ -223,13 +251,15 @@ def _prep_model(model_type, quality, resolution, aspect_ratio, gpt_style=None):
     style = _style(gpt_style)
     model = _compose(family, style)
     allowed_q = _qualities_of(family)
-    quality = quality if quality in allowed_q else "auto"
+    fallback = "medium" if _is_26(family) else "auto"
+    quality = quality if quality in allowed_q else fallback
     eff_resolution, size = _resolve_size_params(model, aspect_ratio, resolution)
     return model, style, quality, eff_resolution, size
 
 
 def _build_payload(model, prompt, size, quality, resolution, is_img2img, img_tensors,
-                   api_key=None, gpt_style=None, transparent=False):
+                   api_key=None, gpt_style=None, transparent=False,
+                   output_mode="image", frame_count=9, frame_duration_ms=200):
     payload = {"model": model, "prompt": prompt}
     image_urls = []
     if is_img2img and img_tensors and api_key:
@@ -248,6 +278,45 @@ def _build_payload(model, prompt, size, quality, resolution, is_img2img, img_ten
             payload["n"] = 1
         if image_urls:
             payload["image_urls"] = image_urls
+    elif _is_26(family):
+        level = quality if quality in _QUALITIES_EXT else "medium"
+        payload["version"] = _style(gpt_style)
+        if output_mode == "gif":
+            payload["output_format"] = "gif"
+            payload["quality"] = level
+        else:
+            if size:
+                payload["size"] = size
+            if resolution:
+                payload["resolution"] = resolution
+            payload["quality"] = level
+        if image_urls:
+            payload["image_urls"] = image_urls
+    elif _is_26_qy(family):
+        level = (quality or "auto").lower()
+        if output_mode == "gif":
+            if size and size != "auto":
+                payload["size"] = size
+            payload["output_format"] = "gif"
+            payload["quality"] = level
+            payload["frame_count"] = max(2, min(16, int(frame_count or 9)))
+            payload["frame_duration_ms"] = max(20, min(2000, int(frame_duration_ms or 200)))
+            if image_urls:
+                payload["images"] = image_urls
+        else:
+            if not image_urls:
+                payload["model"] = f"{payload['model']}-t2i"
+            if size and size != "auto":
+                payload["size"] = size
+            payload["quality"] = level
+            if image_urls:
+                payload["images"] = image_urls
+    elif _is_26_dj(family):
+        payload["replyType"] = "async"
+        if size and size != "auto":
+            payload["aspectRatio"] = size
+        if image_urls:
+            payload["images"] = image_urls
     elif _is_wd(family):
         payload["version"] = _style(gpt_style)
         if size and size != "auto":
@@ -312,7 +381,7 @@ def _poll_urls(api_key, task_id, model, consumption_id=""):
 
 
 def _run_tasks(tasks, model, size, quality, resolution, is_img2img, api_key,
-               gpt_style=None, transparent=False):
+               gpt_style=None, transparent=False, output_mode="image", frame_count=9, frame_duration_ms=200):
     total = len(tasks)
     pbar = comfy.utils.ProgressBar(total)
     request_model = _request_model(model, is_img2img)
@@ -322,6 +391,7 @@ def _run_tasks(tasks, model, size, quality, resolution, is_img2img, api_key,
         payload = _build_payload(
             model, p, size, quality, resolution, is_img2img, imgs,
             api_key=api_key, gpt_style=gpt_style, transparent=transparent,
+            output_mode=output_mode, frame_count=frame_count, frame_duration_ms=frame_duration_ms,
         )
         try:
             task_id, consumption_id = submit_edit_async(api_key, payload, "GPT-Image-2")
@@ -385,7 +455,8 @@ class SynVowGptImage2:
     def generate(self, model_type=None, gpt_style=None, quality=None, resolution=None,
                  aspect_ratio=None, transparent=None, seed=None, prompt=None,
                  image1=None, image2=None, image3=None, image4=None,
-                 image5=None, image6=None, image7=None, image8=None):
+                 image5=None, image6=None, image7=None, image8=None,
+                 output_mode="image", frame_count=9, frame_duration_ms=200):
         model, style, quality, eff_resolution, size = _prep_model(
             _unpack(model_type), _unpack(quality), _unpack(resolution) or "1K",
             _unpack(aspect_ratio), _unpack(gpt_style),
@@ -406,6 +477,9 @@ class SynVowGptImage2:
         image_urls = _run_tasks(
             tasks, model, size, quality, eff_resolution, is_img2img, api_key,
             gpt_style=style, transparent=transparent,
+            output_mode=_unpack(output_mode) or "image",
+            frame_count=_unpack(frame_count) or 9,
+            frame_duration_ms=_unpack(frame_duration_ms) or 200,
         )
         successful = sum(1 for u in image_urls if u)
         status_str = f"已完成 model={model} size={size} quality={quality}" if successful else f"[ERROR] 生成失败 model={model} size={size}"
@@ -447,7 +521,8 @@ class SynVowGptImage2_TBatch:
     def process_batch(self, model_type=None, gpt_style=None, quality=None,
                       resolution=None, aspect_ratio=None, transparent=None, seed=None, prompts_list=None,
                       image1=None, image2=None, image3=None, image4=None,
-                      image5=None, image6=None, image7=None, image8=None):
+                      image5=None, image6=None, image7=None, image8=None,
+                 output_mode="image", frame_count=9, frame_duration_ms=200):
         model, style, quality, eff_resolution, size = _prep_model(
             _unpack(model_type), _unpack(quality), _unpack(resolution) or "1K",
             _unpack(aspect_ratio), _unpack(gpt_style),
@@ -471,6 +546,9 @@ class SynVowGptImage2_TBatch:
         image_urls = _run_tasks(
             tasks, model, size, quality, eff_resolution, is_img2img, api_key,
             gpt_style=style, transparent=transparent,
+            output_mode=_unpack(output_mode) or "image",
+            frame_count=_unpack(frame_count) or 9,
+            frame_duration_ms=_unpack(frame_duration_ms) or 200,
         )
         image_list = download_image_tensors(image_urls, tag="GPT-Image-2")
 
@@ -507,7 +585,7 @@ class SynVowGptImage2_IBatch:
 
     def process_batch(self, images_list1, model_type=None, gpt_style=None,
                       quality=None, resolution=None, aspect_ratio=None, transparent=None,
-                      prompt=None, seed=None,
+                      prompt=None, seed=None, output_mode="image", frame_count=9, frame_duration_ms=200,
                       images_list2=None, images_list3=None, images_list4=None, images_list5=None):
         model, style, quality, eff_resolution, size = _prep_model(
             _unpack(model_type), _unpack(quality), _unpack(resolution) or "1K",
@@ -542,6 +620,9 @@ class SynVowGptImage2_IBatch:
         image_urls = _run_tasks(
             tasks, model, size, quality, eff_resolution, True, api_key,
             gpt_style=style, transparent=transparent,
+            output_mode=_unpack(output_mode) or "image",
+            frame_count=_unpack(frame_count) or 9,
+            frame_duration_ms=_unpack(frame_duration_ms) or 200,
         )
         image_list = download_image_tensors(image_urls, tag="GPT-Image-2")
 
@@ -585,7 +666,7 @@ class SynVowGptImage2_TIBatch:
     def process_batch(self, images_list1, model_type=None, gpt_style=None, quality=None,
                       resolution=None, aspect_ratio=None, transparent=None, prompt_order=None, seed=None,
                       images_list2=None, images_list3=None, images_list4=None, images_list5=None,
-                      prompts_list=None):
+                      prompts_list=None, output_mode="image", frame_count=9, frame_duration_ms=200):
         model, style, quality, eff_resolution, size = _prep_model(
             _unpack(model_type), _unpack(quality), _unpack(resolution) or "1K",
             _unpack(aspect_ratio), _unpack(gpt_style),
@@ -630,6 +711,9 @@ class SynVowGptImage2_TIBatch:
         image_urls = _run_tasks(
             tasks, model, size, quality, eff_resolution, True, api_key,
             gpt_style=style, transparent=transparent,
+            output_mode=_unpack(output_mode) or "image",
+            frame_count=_unpack(frame_count) or 9,
+            frame_duration_ms=_unpack(frame_duration_ms) or 200,
         )
         image_list = download_image_tensors(image_urls, tag="GPT-Image-2")
 

@@ -159,7 +159,10 @@ const COPY_ICON = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" s
 const INFO_ICON = `<svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M12 16v-4M12 8h.01"/></svg>`;
 
 function usageObject(data) {
-    return data && typeof data === "object" && data.usage && typeof data.usage === "object" ? data.usage : null;
+    if (!data || typeof data !== "object") return null;
+    if (data.usage && typeof data.usage === "object") return data.usage;
+    const inner = data.data;
+    return inner && typeof inner === "object" && inner.usage && typeof inner.usage === "object" ? inner.usage : null;
 }
 
 function usageJson(source) {

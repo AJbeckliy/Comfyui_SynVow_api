@@ -11,6 +11,7 @@ const SYNVOW_NODE_TYPES = new Set([
     "SynVowGrokVideo",
     "SynVowVeo31",
     "SynVowOmniFlash",
+    "SynVowMuseVideo",
     "SynVowMiniMaxTextToVideo",
     "SynVowMiniMaxFirstLastFrame",
     "SynVowMiniMaxReferenceToVideo",
@@ -65,8 +66,6 @@ const SEEDANCE_RATIOS = ["adaptive", "16:9", "9:16", "4:3", "3:4", "1:1", "21:9"
 const SEEDANCE_DJ_RATIOS = SEEDANCE_RATIOS.slice(1);
 const SEEDANCE_RES_4K = ["480p", "720p", "1080p", "4k"];
 const SEEDANCE_RES_720 = SEEDANCE_RES_4K.slice(0, 2);
-const OMNI_11_RESOLUTIONS = ["360p", "720p", "1080p", "4k"];
-const OMNI_RESOLUTIONS = OMNI_11_RESOLUTIONS.slice(1);
 const GPT_IMAGE_RESOLUTIONS = ["1K", "2K", "4K"];
 const GPT_Q6 = ["auto", "low", "medium", "high", "xhigh", "max"];
 const GPT_Q4 = GPT_Q6.slice(0, 4);
@@ -155,35 +154,44 @@ function bindWidgetOptions(node) {
         });
         return;
     }
-    if (t === "SynVowOmniFlash") {
-        bindByModel(node, "model", v => {
-            const v11 = v === "omni-1.1-flash" || v.includes("O-1.1");
-            const preview = v === "omni-flash-preview" || v.includes("O-flash-preview");
-            const resW = widget(node, "resolution");
-            setCombo(resW, v11 ? OMNI_11_RESOLUTIONS : preview ? ["720p"] : OMNI_RESOLUTIONS, "720p");
-            setHidden(widget(node, "mode"), preview || v11);
-            setHidden(widget(node, "duration"), preview || v11);
-            setHidden(resW, preview);
+    if (t.startsWith("SynVowJimeng")) {
+        bindByWidgets(node, ["model_type", "background"], () => {
+            const v = String(widget(node, "model_type")?.value || "");
+            const is55 = v === "seedream-5-5" || v.includes("即梦5.5");
+            const transparent = widget(node, "background")?.value === "transparent";
+            setHidden(widget(node, "background"), !is55);
+            setCombo(widget(node, "output_format"), is55 && transparent ? ["png"] : ["png", "jpeg"], "png");
         });
         return;
     }
     if (t.startsWith("SynVowGptImage2")) {
-        bindByModel(node, "model_type", v => {
+        bindByWidgets(node, ["model_type", "output_mode"], () => {
+            const v = String(widget(node, "model_type")?.value || "");
             const lock1k = v.includes("1k-");
             const wd = v === "gpt-image-2.5-wd" || v.includes("PT2.5-稳定");
+            const pt26 = v === "gpt-image-2.6-wd" || v.includes("PT2.6-稳定");
+            const pt26qy = v.includes("gpt-image-2.6-1k-qy") || v.includes("PT2.6-1k-企业");
+            const pt26dj = v.includes("gpt-image-2.6-1k-dj") || v.includes("PT2.6-1k-低价");
+            const pt26ch = v.includes("gpt-image-2.6-ch") || v.includes("PT2.6-超惠");
             const pt25 = v.includes("gpt-image-2.5") || v.includes("PT2.5");
             const is1k2609 = v.includes("1k-2609");
             const g2stable = v === "gpt-image-2-稳定" || v.includes("全能G2-稳定");
-            const showStyle = pt25 && !is1k2609;
-            const showQuality = !g2stable && !is1k2609 && !wd;
+            const showStyle = pt26 || pt26qy || pt26ch || (pt25 && !is1k2609);
+            const showQuality = !g2stable && !is1k2609 && !wd && !pt26dj;
+            const gif = (pt26 || pt26qy) && widget(node, "output_mode")?.value === "gif";
             const qW = widget(node, "quality");
             const aW = widget(node, "aspect_ratio");
             setCombo(widget(node, "resolution"), lock1k ? ["1K"] : GPT_IMAGE_RESOLUTIONS, "1K");
-            setCombo(qW, pt25 && showQuality ? GPT_Q6 : GPT_Q4, "auto");
-            setCombo(aW, wd ? GPT_WD_ASPECTS : GPT_ASPECTS, aW?.value === "auto" ? "auto" : "1:1");
+            setCombo(qW, (pt25 || pt26 || pt26qy || pt26ch) && showQuality ? GPT_Q6 : GPT_Q4, pt26 ? "medium" : "auto");
+            setCombo(aW, wd || pt26 ? GPT_WD_ASPECTS : GPT_ASPECTS, aW?.value === "auto" ? "auto" : "1:1");
             setHidden(widget(node, "gpt_style"), !showStyle);
             setHidden(qW, !showQuality);
-            setHidden(widget(node, "transparent"), !(showStyle && !wd));
+            setHidden(widget(node, "transparent"), !(showStyle && !wd && !pt26 && !pt26qy && !pt26ch));
+            setHidden(widget(node, "output_mode"), !(pt26 || pt26qy));
+            setHidden(aW, pt26 && gif);
+            setHidden(widget(node, "resolution"), (pt26 && gif) || pt26dj);
+            setHidden(widget(node, "frame_count"), !(pt26qy && gif));
+            setHidden(widget(node, "frame_duration_ms"), !(pt26qy && gif));
         });
         return;
     }

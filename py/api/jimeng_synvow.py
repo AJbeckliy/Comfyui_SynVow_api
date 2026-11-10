@@ -19,15 +19,17 @@ from .media_common import (
     upload_image as _upload_image,
 )
 
-_API_MODELS = ["即梦5.0-pro", "seedream-5-0-flash"]
+_API_MODELS = ["seedream-5-5", "即梦5.0-pro", "seedream-5-0-flash"]
 _MODELS = combo_models(_API_MODELS)
-_DEFAULT_MODEL = "即梦5.0-pro"
+_DEFAULT_MODEL = "seedream-5-5"
 _ASPECT_RATIOS = ["1:1", "4:3", "3:4", "16:9", "9:16", "3:2", "2:3", "21:9"]
 _RESOLUTIONS = ["1K", "1.5K", "2K"]
 _OUTPUT_FORMATS = ["png", "jpeg"]
 _DEFAULT_RATIO = "1:1"
 _DEFAULT_RESOLUTION = "1.5K"
 _DEFAULT_FORMAT = "png"
+_BACKGROUNDS = ["auto", "transparent", "opaque"]
+_DEFAULT_BACKGROUND = "auto"
 _MAX_IMAGES = 9
 _TAG = "Jimeng"
 _POLL_TIMEOUT = 900
@@ -46,17 +48,20 @@ def _normalize_format(fmt):
     return fmt if fmt in _OUTPUT_FORMATS else _DEFAULT_FORMAT
 
 
-def _build_body(model, prompt, aspect_ratio, resolution, image_urls, output_format):
+def _build_body(model, prompt, aspect_ratio, resolution, image_urls, output_format, background=None):
     model = _normalize_model(model)
     ratio = aspect_ratio if aspect_ratio in _ASPECT_RATIOS else _DEFAULT_RATIO
     urls = [u for u in (image_urls or []) if u][:_MAX_IMAGES]
+    bg = (background if background in _BACKGROUNDS else _DEFAULT_BACKGROUND) if model == _API_MODELS[0] else None
     body = {
         "model": model,
         "prompt": prompt or "",
         "size": ratio,
         "resolution": _normalize_resolution(resolution),
-        "output_format": _normalize_format(output_format),
+        "output_format": _DEFAULT_FORMAT if bg == "transparent" else _normalize_format(output_format),
     }
+    if bg:
+        body["background"] = bg
     if urls:
         body["image_urls"] = urls
     return body
@@ -66,14 +71,14 @@ def _upload_tensors(api_key, tensors):
     return [_upload_image(api_key, t) for t in (tensors or []) if t is not None][:_MAX_IMAGES]
 
 
-def _run_tasks(tasks, model, aspect_ratio, resolution, output_format, api_key):
+def _run_tasks(tasks, model, aspect_ratio, resolution, output_format, api_key, background=None):
     total = len(tasks)
     pbar = comfy.utils.ProgressBar(total)
     submitted = []
     for i, (prompt, imgs) in enumerate(tasks):
         try:
             urls = _upload_tensors(api_key, imgs)
-            body = _build_body(model, prompt, aspect_ratio, resolution, urls, output_format)
+            body = _build_body(model, prompt, aspect_ratio, resolution, urls, output_format, background)
             task_id, consumption_id = submit_edit_async(api_key, body, _TAG)
             submitted.append((task_id, consumption_id, body.get("model") or model))
             print(f"[{_TAG}] [{i + 1}/{total}] 提交成功 task_id=...{task_id[-8:]}")
@@ -118,10 +123,11 @@ class SynVowJimeng:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "model_type": (_MODELS, {"default": _DEFAULT_MODEL}),
+                "model_type": (_MODELS, {"default": _MODELS[0]}),
                 "aspect_ratio": (_ASPECT_RATIOS, {"default": _DEFAULT_RATIO}),
                 "resolution": (_RESOLUTIONS, {"default": _DEFAULT_RESOLUTION}),
                 "output_format": (_OUTPUT_FORMATS, {"default": _DEFAULT_FORMAT}),
+                "background": (_BACKGROUNDS, {"default": _DEFAULT_BACKGROUND}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
             "optional": {
@@ -136,7 +142,7 @@ class SynVowJimeng:
     RETURN_NAMES = ("images", "status")
     IS_CHANGED = staticmethod(_is_changed)
 
-    def generate(self, model_type=None, aspect_ratio=None, resolution=None, output_format=None, seed=None,
+    def generate(self, model_type=None, aspect_ratio=None, resolution=None, output_format=None, background=None, seed=None,
                  prompt=None, image1=None, image2=None, image3=None, image4=None,
                  image5=None, image6=None, image7=None, image8=None, image9=None):
         del seed
@@ -144,6 +150,7 @@ class SynVowJimeng:
         aspect_ratio = _unpack(aspect_ratio) or _DEFAULT_RATIO
         resolution = _unpack(resolution) or _DEFAULT_RESOLUTION
         output_format = _unpack(output_format) or _DEFAULT_FORMAT
+        background = _unpack(background) or _DEFAULT_BACKGROUND
         prompt = _unpack(prompt)
         imgs = [
             _unpack(t) for t in [image1, image2, image3, image4, image5, image6, image7, image8, image9]
@@ -151,7 +158,7 @@ class SynVowJimeng:
         ]
         api_key = synvow_auth.read_api_key()
         p = str(prompt).strip() if prompt else ""
-        image_urls = _run_tasks([(p, imgs)], model, aspect_ratio, resolution, output_format, api_key)
+        image_urls = _run_tasks([(p, imgs)], model, aspect_ratio, resolution, output_format, api_key, background)
         ok = sum(1 for u in image_urls if u)
         status = (
             f"已完成 model={model} aspect_ratio={aspect_ratio} size={resolution}"
@@ -173,10 +180,11 @@ class SynVowJimeng_TBatch:
     def INPUT_TYPES(cls):
         return {
             "required": {
-                "model_type": (_MODELS, {"default": _DEFAULT_MODEL}),
+                "model_type": (_MODELS, {"default": _MODELS[0]}),
                 "aspect_ratio": (_ASPECT_RATIOS, {"default": _DEFAULT_RATIO}),
                 "resolution": (_RESOLUTIONS, {"default": _DEFAULT_RESOLUTION}),
                 "output_format": (_OUTPUT_FORMATS, {"default": _DEFAULT_FORMAT}),
+                "background": (_BACKGROUNDS, {"default": _DEFAULT_BACKGROUND}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
             "optional": {
@@ -191,7 +199,7 @@ class SynVowJimeng_TBatch:
     RETURN_NAMES = ("images", "status")
     IS_CHANGED = staticmethod(_is_changed)
 
-    def process_batch(self, model_type=None, aspect_ratio=None, resolution=None, output_format=None, seed=None,
+    def process_batch(self, model_type=None, aspect_ratio=None, resolution=None, output_format=None, background=None, seed=None,
                       prompts_list=None, image1=None, image2=None, image3=None, image4=None,
                       image5=None, image6=None, image7=None, image8=None, image9=None):
         del seed
@@ -199,6 +207,7 @@ class SynVowJimeng_TBatch:
         aspect_ratio = _unpack(aspect_ratio) or _DEFAULT_RATIO
         resolution = _unpack(resolution) or _DEFAULT_RESOLUTION
         output_format = _unpack(output_format) or _DEFAULT_FORMAT
+        background = _unpack(background) or _DEFAULT_BACKGROUND
         imgs = [
             _unpack(t) for t in [image1, image2, image3, image4, image5, image6, image7, image8, image9]
             if _unpack(t) is not None
@@ -207,7 +216,7 @@ class SynVowJimeng_TBatch:
         prompts = _normalize_prompts(prompts_list)
         tasks = [(p, imgs) for p in prompts]
         print(f"[{_TAG} TBatch] {len(tasks)} 条 prompt, model={model}")
-        image_urls = _run_tasks(tasks, model, aspect_ratio, resolution, output_format, api_key)
+        image_urls = _run_tasks(tasks, model, aspect_ratio, resolution, output_format, api_key, background)
         image_list = download_image_tensors(image_urls, tag=_TAG)
         ok = sum(1 for u in image_urls if u)
         status = (
@@ -230,10 +239,11 @@ class SynVowJimeng_IBatch:
         return {
             "required": {
                 "images_list1": ("IMAGE",),
-                "model_type": (_MODELS, {"default": _DEFAULT_MODEL}),
+                "model_type": (_MODELS, {"default": _MODELS[0]}),
                 "aspect_ratio": (_ASPECT_RATIOS, {"default": _DEFAULT_RATIO}),
                 "resolution": (_RESOLUTIONS, {"default": _DEFAULT_RESOLUTION}),
                 "output_format": (_OUTPUT_FORMATS, {"default": _DEFAULT_FORMAT}),
+                "background": (_BACKGROUNDS, {"default": _DEFAULT_BACKGROUND}),
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
@@ -250,13 +260,14 @@ class SynVowJimeng_IBatch:
     IS_CHANGED = staticmethod(_is_changed)
 
     def process_batch(self, images_list1, model_type=None, aspect_ratio=None, resolution=None,
-                      output_format=None, prompt=None, seed=None,
+                      output_format=None, background=None, prompt=None, seed=None,
                       images_list2=None, images_list3=None, images_list4=None, images_list5=None):
         del seed
         model = _unpack(model_type) or _DEFAULT_MODEL
         aspect_ratio = _unpack(aspect_ratio) or _DEFAULT_RATIO
         resolution = _unpack(resolution) or _DEFAULT_RESOLUTION
         output_format = _unpack(output_format) or _DEFAULT_FORMAT
+        background = _unpack(background) or _DEFAULT_BACKGROUND
         prompt = _unpack(prompt)
         api_key = synvow_auth.read_api_key()
         all_lists = [
@@ -270,7 +281,7 @@ class SynVowJimeng_IBatch:
         p = str(prompt).strip() if prompt else ""
         tasks = [(p, _pick_group_images(all_lists, i, model)) for i in range(batch_size)]
         print(f"[{_TAG} IBatch] {batch_size} 组图, model={model}")
-        image_urls = _run_tasks(tasks, model, aspect_ratio, resolution, output_format, api_key)
+        image_urls = _run_tasks(tasks, model, aspect_ratio, resolution, output_format, api_key, background)
         image_list = download_image_tensors(image_urls, tag=_TAG)
         ok = sum(1 for u in image_urls if u)
         status = (
@@ -293,10 +304,11 @@ class SynVowJimeng_TIBatch:
         return {
             "required": {
                 "images_list1": ("IMAGE",),
-                "model_type": (_MODELS, {"default": _DEFAULT_MODEL}),
+                "model_type": (_MODELS, {"default": _MODELS[0]}),
                 "aspect_ratio": (_ASPECT_RATIOS, {"default": _DEFAULT_RATIO}),
                 "resolution": (_RESOLUTIONS, {"default": _DEFAULT_RESOLUTION}),
                 "output_format": (_OUTPUT_FORMATS, {"default": _DEFAULT_FORMAT}),
+                "background": (_BACKGROUNDS, {"default": _DEFAULT_BACKGROUND}),
                 "prompt_order": (["sequential", "reverse", "random"], {"default": "sequential"}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
@@ -314,7 +326,7 @@ class SynVowJimeng_TIBatch:
     IS_CHANGED = staticmethod(_is_changed)
 
     def process_batch(self, images_list1, model_type=None, aspect_ratio=None, resolution=None,
-                      output_format=None, prompt_order=None, seed=None,
+                      output_format=None, background=None, prompt_order=None, seed=None,
                       prompts_list=None, images_list2=None, images_list3=None,
                       images_list4=None, images_list5=None):
         del seed
@@ -322,6 +334,7 @@ class SynVowJimeng_TIBatch:
         aspect_ratio = _unpack(aspect_ratio) or _DEFAULT_RATIO
         resolution = _unpack(resolution) or _DEFAULT_RESOLUTION
         output_format = _unpack(output_format) or _DEFAULT_FORMAT
+        background = _unpack(background) or _DEFAULT_BACKGROUND
         prompt_order = _unpack(prompt_order) or "sequential"
         api_key = synvow_auth.read_api_key()
         all_lists = [
@@ -342,7 +355,7 @@ class SynVowJimeng_TIBatch:
         ]
         print(f"[{_TAG} TIBatch] {batch_size} 组图, {count} 条 prompt, order={prompt_order}, model={model}")
         tasks = [(assigned[i], _pick_group_images(all_lists, i, model)) for i in range(batch_size)]
-        image_urls = _run_tasks(tasks, model, aspect_ratio, resolution, output_format, api_key)
+        image_urls = _run_tasks(tasks, model, aspect_ratio, resolution, output_format, api_key, background)
         image_list = download_image_tensors(image_urls, tag=_TAG)
         ok = sum(1 for u in image_urls if u)
         status = (
