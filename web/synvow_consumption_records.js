@@ -246,7 +246,8 @@ export function showConsumptionRecordsDialog() {
     injectStyle("sv-consumption-style", `
         .sv-cr-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:10001; }
         .sv-cr-dialog { background:linear-gradient(180deg,#1a2a3a,#0d1a24); border-radius:12px; padding:30px; width:1360px; max-width:94vw; max-height:80vh; position:relative; display:flex; flex-direction:column; }
-        .sv-cr-title { color:#2dd4bf; font-size:18px; font-weight:bold; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
+        .sv-cr-title { color:#2dd4bf; font-size:18px; font-weight:bold; margin-bottom:12px; display:flex; align-items:center; gap:8px; }
+        .sv-cr-filter { display:none; margin-bottom:12px; background:#0d1a24; color:white; border:1px solid #334455; border-radius:4px; padding:6px 10px; }
         .sv-cr-close { position:absolute; top:16px; right:16px; background:none; border:none; color:#667788; font-size:24px; cursor:pointer; }
         .sv-cr-close:hover { color:white; }
         .sv-cr-content { flex:1; overflow-y:auto; margin-bottom:16px; }
@@ -277,6 +278,9 @@ export function showConsumptionRecordsDialog() {
         .sv-cr-preview-count { position:absolute; bottom:-28px; left:50%; transform:translateX(-50%); color:#8899aa; font-size:13px; }
     ` + paginationCss("sv-cr"));
 
+    let memberId = 0;
+    const filter = $el("select.sv-cr-filter");
+    filter.onchange = () => { memberId = Number(filter.value) || 0; loadPage(1); };
     const contentDiv = $el("div.sv-cr-content", {}, [
         $el("div.sv-cr-empty", { textContent: "加载中..." })
     ]);
@@ -292,12 +296,20 @@ export function showConsumptionRecordsDialog() {
         $el("div.sv-cr-dialog", { onclick: hideUsagePop }, [
             $el("button.sv-cr-close", { textContent: "×", onclick: hideConsumptionDialog }),
             $el("div.sv-cr-title", { innerHTML: `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" style="width:18px;height:18px"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg> 消费记录` }),
+            filter,
             contentDiv,
             $el("div.sv-cr-pagination", {}, [prevBtn, pageInfo, nextBtn])
         ])
     ]);
 
     document.body.appendChild(recordsDialog);
+    authedGet("/account/team", getToken()).then((res) => {
+        const joined = (res?.data?.owned || []).filter((row) => row.status === 2);
+        if (!joined.length) return;
+        filter.appendChild(new Option("全部", "0"));
+        for (const row of joined) filter.appendChild(new Option(`成员 ${row.member_id}`, String(row.member_id)));
+        filter.style.display = "inline-block";
+    }).catch(() => {});
     loadPage(1);
 
     let previewUrls = [], previewIdx = 0, previewKind = "image", previewEl = null;
@@ -357,7 +369,8 @@ export function showConsumptionRecordsDialog() {
         nextBtn.disabled = true;
 
         try {
-            const data = await authedGet(`/account/consumption-records?page=${page}&page_size=20`, token);
+            const member = memberId ? `&member_id=${memberId}` : "";
+            const data = await authedGet(`/account/consumption-records?page=${page}&page_size=20${member}`, token);
             if (data.code === 200 && data.data) {
                 const d           = data.data;
                 const items       = d.list || [];

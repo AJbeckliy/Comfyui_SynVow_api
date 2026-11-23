@@ -71,6 +71,8 @@ _JWT_ROUTES = [
     ("POST", "/sv_api/api-key",                     "/api-key",                     True),
     ("PUT",  "/sv_api/user/info",                   "/user/info",                   True),
     ("GET",  "/sv_api/account/balance",             "/account/balance",             False),
+    ("GET",  "/sv_api/account/team",                "/account/team",                False),
+    ("POST", "/sv_api/account/team/invite",         "/account/team/invite",         True),
     ("GET",  "/sv_api/account/info",                "/account/info",                False),
     ("GET",  "/sv_api/account/summary",             "/account/summary",             False),
     ("GET",  "/sv_api/user/info",                   "/user/info",                   False),
@@ -151,6 +153,13 @@ async def _sv_wechat_check_session(request):
         return web.json_response({"code": 500, "message": str(e)})
 
 
+@server.PromptServer.instance.routes.post("/sv_api/account/team/{team_id}/{action}")
+async def _sv_team_act(request):
+    team_id = request.match_info["team_id"]
+    action = request.match_info["action"]
+    return await _proxy("POST", f"/account/team/{team_id}/{action}", request, with_body=True)
+
+
 @server.PromptServer.instance.routes.get("/sv_api/account/recharge-records")
 async def _sv_recharge_records(request):
     """GET 带分页 query 参数"""
@@ -173,7 +182,10 @@ async def _sv_consumption_records(request):
         token = request.headers.get("Authorization", "").replace("Bearer ", "")
         page = request.query.get("page", "1")
         page_size = request.query.get("page_size", "20")
+        member_id = request.query.get("member_id", "")
         url = f"{API_BASE}/account/consumption-records?page={page}&page_size={page_size}"
+        if member_id:
+            url += f"&member_id={member_id}"
         async with aiohttp.ClientSession() as sess:
             async with sess.get(url, headers={"Authorization": f"Bearer {token}"}) as resp:
                 return web.json_response(await resp.json())

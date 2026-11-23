@@ -4,12 +4,12 @@
  */
 import { app } from "../../../scripts/app.js";
 import { api } from "../../../scripts/api.js";
-import { $el, getToken } from "./dom.js";
+import { $el, getToken, authedGet } from "./dom.js";
 import { showLoginDialog, clearAuthFile } from "./synvow_login.js";
 import { showRechargeDialog } from "./synvow_recharge.js";
 import { showRechargeRecordsDialog } from "./synvow_recharge_records.js";
 import { showConsumptionRecordsDialog } from "./synvow_consumption_records.js";
-import { showProfileDialog } from "./synvow_profile.js";
+import { showProfileDialog, teamHasApply } from "./synvow_profile.js";
 import { showModelPriceDialog } from "./synvow_model_price.js";
 import { checkAnnouncementUnread, showAnnouncementDialog } from "./synvow_announcement.js";
 
@@ -26,6 +26,16 @@ function setBalanceDefault() {
     const el = document.getElementById("sv-main-balance");
     if (el) el.textContent = "0.00";
     applyLowBalance(false);
+    setTeamDot(false);
+}
+
+function ownerPays(data) {
+    const mine = data?.mine;
+    return mine?.status === 2 && mine?.billing_mode === 2;
+}
+
+function setTeamDot(on) {
+    document.querySelectorAll(".sv-team-dot").forEach((dot) => { dot.hidden = !on; });
 }
 
 function applyLowBalance(low) {
@@ -90,6 +100,7 @@ app.registerExtension({
                 background: #3a3a3a; color: white; border: none;
                 padding: 7px 13px; font-size: 13px; cursor: pointer;
                 border-radius: 6px; display: flex; align-items: center; gap: 6px;
+                position: relative;
             }
             .sv-user-btn:hover { background: #484848; }
             .sv-user-icon { font-size: 14px; line-height: 1; }
@@ -99,6 +110,11 @@ app.registerExtension({
                 padding: 7px 10px; font-size: 16px; cursor: pointer;
                 border-radius: 6px; line-height: 1; position: relative;
             }
+            .sv-team-dot {
+                position: absolute; top: 2px; right: 2px; width: 7px; height: 7px;
+                border-radius: 50%; background: #ef4444; box-shadow: 0 0 0 1.5px #2a2a2a;
+            }
+            .sv-dropdown-item .sv-team-dot { position: static; margin-left: 6px; box-shadow: none; }
             .sv-settings-btn:hover { background: #484848; color: white; }
             .sv-announcement-btn {
                 background: #3a3a3a; color: #ddd; border: none;
@@ -150,7 +166,10 @@ app.registerExtension({
                 try { return JSON.parse(localStorage.getItem("sv_user") || "null")?.nickname || "已登录"; } catch { return "已登录"; }
             })()
         );
-        const userBtn = $el("button.sv-user-btn", { id: "sv-user-btn" }, [userIcon]);
+        const userBtn = $el("button.sv-user-btn", { id: "sv-user-btn" }, [
+            userIcon,
+            $el("span.sv-team-dot", { hidden: true }),
+        ]);
         userBtn.appendChild(userLabel);
 
         const userMenu = $el("div.sv-dropdown", { id: "sv-user-menu" }, [
@@ -169,10 +188,16 @@ app.registerExtension({
         ]);
         userMenu.style.right = "0";
 
-        const settingsBtn = $el("button.sv-settings-btn", { id: "sv-settings-btn", textContent: "⚙" });
+        const settingsBtn = $el("button.sv-settings-btn", { id: "sv-settings-btn" }, [
+            document.createTextNode("⚙"),
+            $el("span.sv-team-dot", { hidden: true }),
+        ]);
 
         const settingsMenu = $el("div.sv-dropdown", { id: "sv-settings-menu" }, [
-            $el("div.sv-dropdown-item", { textContent: "个人中心", onclick: () => { hideMenus(); getToken() ? showProfileDialog() : showLoginDialog(); } }),
+            $el("div.sv-dropdown-item", { onclick: () => { hideMenus(); getToken() ? showProfileDialog() : showLoginDialog(); } }, [
+                document.createTextNode("个人中心"),
+                $el("span.sv-team-dot", { hidden: true }),
+            ]),
             $el("div.sv-dropdown-item", { textContent: "充值星币", onclick: () => { hideMenus(); getToken() ? showRechargeDialog() : showLoginDialog(); } }),
             $el("div.sv-dropdown-item", { textContent: "充值记录", onclick: () => { hideMenus(); getToken() ? showRechargeRecordsDialog() : showLoginDialog(); } }),
             $el("div.sv-dropdown-item", { textContent: "消费记录", onclick: () => { hideMenus(); getToken() ? showConsumptionRecordsDialog() : showLoginDialog(); } }),
@@ -267,13 +292,16 @@ app.registerExtension({
                 return;
             }
             try {
-                const res = await fetch("/sv_api/account/balance", { headers: { "Authorization": "Bearer " + token } });
-                const data = await res.json();
-                if (data.code === 200) {
-                    const balance = parseFloat(data.data?.balance ?? data.data?.account?.balance ?? 0);
+                const [res, team] = await Promise.all([
+                    fetch("/sv_api/account/balance", { headers: { "Authorization": "Bearer " + token } }).then((r) => r.json()),
+                    authedGet("/account/team", token).catch(() => null),
+                ]);
+                if (team?.code === 200) setTeamDot(teamHasApply(team.data));
+                if (res.code === 200) {
+                    const balance = parseFloat(res.data?.balance ?? res.data?.account?.balance ?? 0);
                     if (mainBalanceEl) mainBalanceEl.textContent = " " + balance.toFixed(2);
-                    applyLowBalance(Number.isFinite(balance) && balance < LOW_BALANCE);
-                } else if (data.code === 401) {
+                    applyLowBalance(!(team?.code === 200 && ownerPays(team.data)) && Number.isFinite(balance) && balance < LOW_BALANCE);
+                } else if (res.code === 401) {
                     localStorage.removeItem("sv_token");
                     localStorage.removeItem("sv_refresh_token");
                     localStorage.removeItem("sv_user");
@@ -322,7 +350,8 @@ app.registerExtension({
         mainMenu.appendChild($el("div.sv-dropdown-item", { textContent: "🔄 刷新余额", onclick: () => { hideMenus(); window.synvowRefreshAccount?.(); } }));
         mainMenu.appendChild($el("div.sv-dropdown-item", { textContent: "📋 消费记录", onclick: () => { hideMenus(); getToken() ? showConsumptionRecordsDialog() : showLoginDialog(); } }));
 
-        api.addEventListener("synvow_refresh_balance", () => {
+            window.addEventListener("sv-team-apply", (event) => setTeamDot(Boolean(event.detail)));
+            api.addEventListener("synvow_refresh_balance", () => {
             window.synvowRefreshAccount?.();
         });
 

@@ -1,7 +1,7 @@
 /**
  * SynVow 个人中心对话框
  */
-import { $el, getToken, injectStyle, API_BASE } from "./dom.js";
+import { $el, getToken, injectStyle, API_BASE, authedGet, postJson } from "./dom.js";
 import { showLoginDialog, clearAuthFile } from "./synvow_login.js";
 
 const SUPPORT_WECHAT_ID = "manhualvren";
@@ -24,7 +24,19 @@ export function showProfileDialog() {
 
     injectStyle("sv-profile-style", `
         .sv-profile-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:10001; }
-        .sv-profile-dialog { background:linear-gradient(180deg,#1a2a3a,#0d1a24); border-radius:12px; padding:30px; width:760px; max-width:94vw; position:relative; }
+        .sv-profile-dialog { background:linear-gradient(180deg,#1a2a3a,#0d1a24); border-radius:12px; padding:30px; width:920px; max-width:94vw; max-height:86vh; overflow:auto; position:relative; }
+        .sv-team { margin-top:8px; padding-top:14px; border-top:1px solid #334455; }
+        .sv-team-head { color:#8899aa; font-size:14px; margin-bottom:10px; }
+        .sv-team-line { display:flex; gap:8px; margin-bottom:10px; }
+        .sv-team-input { width:160px; background:#0d1a24; border:1px solid #334455; border-radius:4px; padding:6px 10px; color:white; }
+        .sv-team-table { width:100%; border-collapse:collapse; font-size:13px; }
+        .sv-team-table th, .sv-team-table td { padding:8px 6px; border-bottom:1px solid #334455; text-align:left; white-space:nowrap; color:white; }
+        .sv-team-table th { color:#8899aa; font-weight:normal; }
+        .sv-team-ops { display:flex; flex-wrap:wrap; gap:6px; }
+        .sv-team-note { margin-top:10px; color:#8899aa; font-size:12px; line-height:1.6; }
+        .sv-team-yes { color:#22c55e; border-color:#22c55e; }
+        .sv-team-no { color:#ef4444; border-color:#ef4444; }
+        .sv-team-id { color:#2dd4bf; font-weight:700; }
         .sv-profile-title { color:#2dd4bf; font-size:18px; font-weight:bold; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
         .sv-profile-close { position:absolute; top:16px; right:16px; background:none; border:none; color:#667788; font-size:24px; cursor:pointer; }
         .sv-profile-close:hover { color:white; }
@@ -178,6 +190,7 @@ export function showProfileDialog() {
                             }
                         </div>
                     </div>
+                    <div id="sv-team-root"></div>
                 `;
 
                 document.getElementById('sv-edit-nickname-btn').onclick = () => showEditNicknameDialog(user.nickname || '');
@@ -200,6 +213,7 @@ export function showProfileDialog() {
                 const upgradeBtn = document.getElementById('sv-upgrade-btn');
                 if (upgradeBtn) upgradeBtn.onclick = showUpgradeDialog;
                 const logoutBtn = document.getElementById('sv-logout-btn');
+                renderTeam(token);
                 if (logoutBtn) logoutBtn.onclick = () => {
                     if (confirm('确定要退出登录吗？')) {
                         localStorage.removeItem('sv_token');
@@ -218,6 +232,181 @@ export function showProfileDialog() {
         }
     }
 
+}
+
+const TEAM_NOTE = "说明：按用户 ID 邀请。对方同意后默认成员自己扣费，主账号可以改成主账号扣费。主账号扣费只扣主账号余额，这时才显示总消耗。成员退出需要申请，主账号同意后才解除。同一人再次加入仍是原来的关系，已用额度保留。";
+
+export function teamHasApply(data) {
+    return data?.mine?.status === 1 || (data?.owned || []).some((row) => row.exit_requested);
+}
+
+function teamToast(msg, error) {
+    const toast = document.createElement("div");
+    toast.className = "sv-toast" + (error ? " error" : " success");
+    toast.textContent = msg;
+    document.body.appendChild(toast);
+    setTimeout(() => toast.remove(), 3000);
+}
+
+function askTeam(title, id, before, after, run) {
+    const overlay = document.createElement("div");
+    overlay.className = "sv-profile-overlay";
+    overlay.style.zIndex = "10005";
+    overlay.innerHTML = `
+        <div class="sv-profile-dialog" style="width:420px;">
+            <div class="sv-profile-title">${escapeHtml(title)}</div>
+            <div style="color:white;font-size:14px;line-height:1.6;margin-bottom:20px;">${escapeHtml(before)}<span class="sv-team-id">${escapeHtml(String(id))}</span>${escapeHtml(after)}</div>
+            <div style="display:flex;justify-content:flex-end;gap:8px;">
+                <button class="sv-profile-btn" id="sv-team-cancel">取消</button>
+                <button class="sv-profile-btn" id="sv-team-ok" style="background:#2dd4bf;border-color:#2dd4bf;">确定</button>
+            </div>
+        </div>`;
+    document.body.appendChild(overlay);
+    overlay.querySelector("#sv-team-cancel").onclick = () => overlay.remove();
+    overlay.querySelector("#sv-team-ok").onclick = async () => {
+        overlay.remove();
+        await run();
+    };
+}
+
+async function renderTeam(token) {
+    const root = document.getElementById("sv-team-root");
+    if (!root) return;
+    let data = {};
+    try {
+        const res = await authedGet("/account/team", token);
+        if (res.code !== 200) {
+            root.innerHTML = `<div class="sv-team"><div class="sv-team-head">团队</div><div class="sv-team-note">${escapeHtml(res.message || "加载失败")}</div></div>`;
+            return;
+        }
+        data = res.data || {};
+        window.dispatchEvent(new CustomEvent("sv-team-apply", { detail: teamHasApply(data) }));
+    } catch {
+        root.innerHTML = `<div class="sv-team"><div class="sv-team-head">团队</div><div class="sv-team-note">加载失败</div></div>`;
+        return;
+    }
+    const role = data.role || "independent";
+    const mine = data.mine;
+    const owned = data.owned || [];
+    let body = `<div class="sv-team"><div class="sv-team-head">团队</div>`;
+    if (role === "pending" && mine) {
+        body += teamTable(["主账号", "状态", "操作"], [[
+            mine.owner_id, "待同意",
+            `<button class="sv-profile-btn sv-team-yes" data-act="accept">同意</button><button class="sv-profile-btn sv-team-no" data-act="reject">拒绝</button>`,
+        ]], mine.id, mine.owner_id);
+    } else if (role === "member" && mine) {
+        body += teamTable(["主账号", "扣费方式", "已用额度", "操作"], [[
+            mine.owner_id,
+            mine.billing_mode === 2 ? "主账号" : "成员自己",
+            mine.billing_mode === 2 ? mine.used_amount : "-",
+            mine.exit_requested
+                ? `<button class="sv-profile-btn" data-act="exit-cancel">取消退出申请</button>`
+                : `<button class="sv-profile-btn sv-team-no" data-act="exit">申请退出</button>`,
+        ]], mine.id, mine.owner_id);
+    } else {
+        body += `<div class="sv-team-line"><input class="sv-team-input" id="sv-team-invite" placeholder="用户 ID"><button class="sv-profile-btn" id="sv-team-invite-btn">邀请</button></div>`;
+        if (owned.length) {
+            body += `<table class="sv-team-table"><thead><tr><th>成员</th><th>状态</th><th>扣费方式</th><th>总消耗/本月/上个月</th><th>操作</th></tr></thead><tbody>`;
+            for (const row of owned) {
+                const joined = row.status === 2;
+                const ownerPay = row.billing_mode === 2;
+                const ops = joined
+                    ? `<button class="sv-profile-btn" data-act="detail" data-member="${row.member_id}">详情</button>
+                       <button class="sv-profile-btn" data-act="billing" data-mode="${ownerPay ? 1 : 2}">${ownerPay ? "改为成员扣费" : "改为主账号扣费"}</button>
+                       ${row.exit_requested ? `<button class="sv-profile-btn sv-team-yes" data-act="exit-approve">同意退出</button><button class="sv-profile-btn sv-team-no" data-act="exit-reject">拒绝退出</button>` : ""}
+                       <button class="sv-profile-btn sv-team-no" data-act="delete">删除</button>`
+                    : `<button class="sv-profile-btn" data-act="cancel">取消邀请</button>`;
+                body += `<tr data-id="${row.id}" data-user="${row.member_id}">
+                    <td>${row.member_id}</td>
+                    <td>${joined ? "已加入" : "待同意"}</td>
+                    <td>${joined ? (ownerPay ? "主账号" : "成员自己") : "-"}</td>
+                    <td>${joined && ownerPay ? `${row.used_amount}/${row.month_amount}/${row.last_month_amount}` : "-"}</td>
+                    <td class="sv-team-ops">${ops}</td>
+                </tr>`;
+            }
+            body += `</tbody></table>`;
+        }
+    }
+    body += `<div class="sv-team-note">${TEAM_NOTE}</div></div>`;
+    root.innerHTML = body;
+    root.querySelector("#sv-team-invite-btn")?.addEventListener("click", async () => {
+        const id = Number(root.querySelector("#sv-team-invite").value);
+        if (!id) { teamToast("未查到该用户", true); return; }
+        const res = await postJson("/account/team/invite", { user_id: id }, token);
+        if (res.code !== 200) teamToast(res.message || "邀请失败", true);
+        else renderTeam(token);
+    });
+    root.querySelectorAll("[data-act]").forEach((btn) => {
+        btn.onclick = () => {
+            const tr = btn.closest("tr");
+            const id = Number(tr?.dataset.id || mine?.id);
+            const user = Number(tr?.dataset.user || mine?.owner_id);
+            const act = btn.dataset.act;
+            if (act === "detail") { openTeamCharges(token, Number(btn.dataset.member)); return; }
+            const text = {
+                accept: ["同意邀请", "确定同意主账号 ", " 的邀请吗？"],
+                reject: ["拒绝邀请", "确定拒绝主账号 ", " 的邀请吗？"],
+                exit: ["申请退出", "确定向主账号 ", " 申请退出吗？"],
+                "exit-cancel": ["取消退出申请", "确定取消向主账号 ", " 的退出申请吗？"],
+                billing: ["修改扣费", "确定将用户 ", btn.dataset.mode === "2" ? " 改为主账号扣费吗？" : " 改为成员自己扣费吗？"],
+                "exit-approve": ["同意退出", "确定同意用户 ", " 退出吗？"],
+                "exit-reject": ["拒绝退出", "确定拒绝用户 ", " 的退出申请吗？"],
+                delete: ["删除成员", "确定删除用户 ", " 吗？"],
+                cancel: ["取消邀请", "确定取消对用户 ", " 的邀请吗？"],
+            }[act];
+            askTeam(text[0], user, text[1], text[2], async () => {
+                const body = act === "billing" ? { mode: Number(btn.dataset.mode) } : {};
+                const res = await postJson(`/account/team/${id}/${act}`, body, token);
+                if (res.code !== 200) teamToast(res.message || "操作失败", true);
+                else renderTeam(token);
+            });
+        };
+    });
+}
+
+function teamTable(heads, rows, id, user) {
+    const head = heads.map((item) => `<th>${item}</th>`).join("");
+    const body = rows.map((cols) => `<tr data-id="${id}" data-user="${user}">${cols.map((col, i) => `<td${i === cols.length - 1 ? ' class="sv-team-ops"' : ""}>${col}</td>`).join("")}</tr>`).join("");
+    return `<table class="sv-team-table"><thead><tr>${head}</tr></thead><tbody>${body}</tbody></table>`;
+}
+
+async function openTeamCharges(token, memberId, page = 1) {
+    let box = document.getElementById("sv-team-charges");
+    if (!box) {
+        box = document.createElement("div");
+        box.id = "sv-team-charges";
+        box.className = "sv-profile-overlay";
+        box.style.zIndex = "10005";
+        document.body.appendChild(box);
+        box.onclick = (e) => { if (e.target === box) box.remove(); };
+    }
+    const res = await authedGet(`/account/consumption-records?page=${page}&page_size=10&member_id=${memberId}`, token);
+    const failed = !res || res.code !== 200;
+    const list = failed ? [] : (res.data?.list || []);
+    const total = failed ? 0 : Number(res.data?.total || 0);
+    const pages = failed ? 1 : Number(res.data?.total_pages ?? (Math.ceil(total / 10) || 1));
+    const rows = list.map((row) => {
+        const amount = parseFloat(row.amount || 0);
+        const shown = Number.isFinite(amount) && amount !== 0 ? `-¥${amount.toFixed(6)}` : "-";
+        const time = new Date(row.created_at);
+        const when = Number.isNaN(time.getTime()) ? String(row.created_at || "") : time.toLocaleString("zh-CN");
+        return `<tr><td>${escapeHtml(when)}</td><td>${escapeHtml(row.custom_name || row.model_name || "-")}</td><td>${shown}</td></tr>`;
+    }).join("");
+    const body = failed
+        ? `<div class="sv-team-note">${escapeHtml(res?.message || "加载失败")}</div>`
+        : total === 0
+            ? `<div class="sv-team-note">没有主账号支付的记录</div>`
+            : `<table class="sv-team-table"><thead><tr><th>时间</th><th>模型</th><th>金额</th></tr></thead><tbody>${rows}</tbody></table>`;
+    box.innerHTML = `
+        <div class="sv-profile-dialog" style="width:640px;">
+            <button class="sv-profile-close" type="button">×</button>
+            <div class="sv-profile-title">成员 ${memberId} 的明细</div>
+            ${body}
+            ${pages > 1 ? `<div style="display:flex;justify-content:center;gap:12px;margin-top:12px;"><button class="sv-profile-btn" id="sv-charge-prev" ${page <= 1 ? "disabled" : ""}>上一页</button><span class="sv-profile-label">第 ${page}/${pages} 页，共 ${total} 条</span><button class="sv-profile-btn" id="sv-charge-next" ${page >= pages ? "disabled" : ""}>下一页</button></div>` : ""}
+        </div>`;
+    box.querySelector(".sv-profile-close").onclick = () => box.remove();
+    box.querySelector("#sv-charge-prev")?.addEventListener("click", () => openTeamCharges(token, memberId, page - 1));
+    box.querySelector("#sv-charge-next")?.addEventListener("click", () => openTeamCharges(token, memberId, page + 1));
 }
 
 export function hideProfileDialog() {
