@@ -10,16 +10,16 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 
 ### 2026-11-23
 
-1、`SynVow Seedance 2.5` 新增 `seedance-2-5-flash`，画质 `480p`、`720p`。`sd2.5-特惠版` 画质改为 `480p`、`720p`、`1080p`、`4k`支持。
-2、`SynVow Muse Video` 时长改为 2～10 秒，默认 5 秒。
-3、`PT2.6` 去掉 GIF模式。
-4、Gemini 去掉三个 2606模型，新增 `GM4-hydrogen-稳定`、`GM4-hydrogen-低价`、`GM3.8-flash-低价`、`GM3.5-flash-低价`。
-5、NanoBanana：`全能N2.1-特惠` 改为 `全能N2.1-低价`，2605 显示为低价，去掉 `全能N2-lite-2607`，新增 `全能N2-超惠`模型。
-6、`SynVow MAI-image` 新增 `MAI-image-2.7-稳定`、`MAI-image-2.7-flash-稳定`。
-7、消费记录弹窗更新。
-8、充值记录弹窗更新。
-9、新增 `主页解析`节点。
-10、`SynVow 视频预览` 支持多条路径预览，可上一条、下一条切换。
+1、`SynVow Seedance 2.5` 新增 `seedance-2-5-flash`，画质 `480p`、`720p`。`sd2.5-特惠版` 画质改为 `480p`、`720p`、`1080p`、`4k`支持。  
+2、`SynVow Muse Video` 时长改为 2～10 秒，默认 5 秒。  
+3、`PT2.6` 去掉 GIF模式。  
+4、Gemini 去掉三个 2606模型，新增 `GM4-hydrogen-稳定`、`GM4-hydrogen-低价`、`GM3.8-flash-低价`、`GM3.5-flash-低价`。  
+5、NanoBanana：`全能N2.1-特惠` 改为 `全能N2.1-低价`，2605 显示为低价，去掉 `全能N2-lite-2607`，新增 `全能N2-超惠`模型。  
+6、`SynVow MAI-image` 新增 `MAI-image-2.7-稳定`、`MAI-image-2.7-flash-稳定`。  
+7、消费记录弹窗更新。  
+8、充值记录弹窗更新。  
+9、新增 `主页解析`节点。  
+10、`SynVow 视频预览` 支持多条路径预览，可上一条、下一条切换。  
 
 ### 2026-11-10
 
