@@ -3,10 +3,16 @@ import shutil
 import folder_paths
 
 
+def _paths(video_path):
+    raw = video_path if isinstance(video_path, list) else [video_path]
+    return [str(item).strip() for item in raw if str(item or "").strip()]
+
+
 class SynVowVideoPreview:
     FUNCTION = "preview"
     CATEGORY = "💫SynVow_api/Utils"
     OUTPUT_NODE = True
+    INPUT_IS_LIST = True
     RETURN_TYPES = ()
 
     @classmethod
@@ -18,16 +24,13 @@ class SynVowVideoPreview:
         }
 
     def preview(self, video_path=None):
-        if not video_path:
+        paths = _paths(video_path)
+        if not paths:
             print("[VideoPreview] video_path 为空")
             return {"ui": {"gifs": []}}
         gifs = []
-        paths = [video_path] if isinstance(video_path, str) else list(video_path)
         out_dir = folder_paths.get_output_directory()
         for p in paths:
-            p = p.strip() if isinstance(p, str) else p
-            if not p:
-                continue
             if not os.path.isfile(p):
                 print(f"[VideoPreview] 文件不存在: {p!r}")
                 continue

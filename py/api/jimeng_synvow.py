@@ -30,7 +30,7 @@ _DEFAULT_RESOLUTION = "1.5K"
 _DEFAULT_FORMAT = "png"
 _BACKGROUNDS = ["auto", "transparent", "opaque"]
 _DEFAULT_BACKGROUND = "auto"
-_MAX_IMAGES = 9
+_MAX_IMAGES = 6
 _TAG = "Jimeng"
 _POLL_TIMEOUT = 900
 
@@ -134,7 +134,6 @@ class SynVowJimeng:
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
                 "image1": ("IMAGE",), "image2": ("IMAGE",), "image3": ("IMAGE",),
                 "image4": ("IMAGE",), "image5": ("IMAGE",), "image6": ("IMAGE",),
-                "image7": ("IMAGE",), "image8": ("IMAGE",), "image9": ("IMAGE",),
             },
         }
 
@@ -144,7 +143,7 @@ class SynVowJimeng:
 
     def generate(self, model_type=None, aspect_ratio=None, resolution=None, output_format=None, background=None, seed=None,
                  prompt=None, image1=None, image2=None, image3=None, image4=None,
-                 image5=None, image6=None, image7=None, image8=None, image9=None):
+                 image5=None, image6=None):
         del seed
         model = _unpack(model_type) or _DEFAULT_MODEL
         aspect_ratio = _unpack(aspect_ratio) or _DEFAULT_RATIO
@@ -153,7 +152,7 @@ class SynVowJimeng:
         background = _unpack(background) or _DEFAULT_BACKGROUND
         prompt = _unpack(prompt)
         imgs = [
-            _unpack(t) for t in [image1, image2, image3, image4, image5, image6, image7, image8, image9]
+            _unpack(t) for t in [image1, image2, image3, image4, image5, image6]
             if _unpack(t) is not None
         ]
         api_key = synvow_auth.read_api_key()
@@ -191,7 +190,6 @@ class SynVowJimeng_TBatch:
                 "prompts_list": ("STRING", {"forceInput": True}),
                 "image1": ("IMAGE",), "image2": ("IMAGE",), "image3": ("IMAGE",),
                 "image4": ("IMAGE",), "image5": ("IMAGE",), "image6": ("IMAGE",),
-                "image7": ("IMAGE",), "image8": ("IMAGE",), "image9": ("IMAGE",),
             },
         }
 
@@ -201,7 +199,7 @@ class SynVowJimeng_TBatch:
 
     def process_batch(self, model_type=None, aspect_ratio=None, resolution=None, output_format=None, background=None, seed=None,
                       prompts_list=None, image1=None, image2=None, image3=None, image4=None,
-                      image5=None, image6=None, image7=None, image8=None, image9=None):
+                      image5=None, image6=None):
         del seed
         model = _unpack(model_type) or _DEFAULT_MODEL
         aspect_ratio = _unpack(aspect_ratio) or _DEFAULT_RATIO
@@ -209,7 +207,7 @@ class SynVowJimeng_TBatch:
         output_format = _unpack(output_format) or _DEFAULT_FORMAT
         background = _unpack(background) or _DEFAULT_BACKGROUND
         imgs = [
-            _unpack(t) for t in [image1, image2, image3, image4, image5, image6, image7, image8, image9]
+            _unpack(t) for t in [image1, image2, image3, image4, image5, image6]
             if _unpack(t) is not None
         ]
         api_key = synvow_auth.read_api_key()

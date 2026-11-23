@@ -17,9 +17,14 @@ from .media_common import (
     unpack_list_input as _unpack,
     upload_image as _upload_image,
 )
-from .model_display import combo_models, display_name, resolve_model
+from .model_display import combo_models, display_name, pick_model
 
-_API_MODELS = ["mai-image-2.6-wd", "mai-image-2.6-flash-wd"]
+_API_MODELS = [
+    "mai-image-2.6-wd",
+    "mai-image-2.6-flash-wd",
+    "mai-image-2.7-wd",
+    "mai-image-2.7-flash-wd",
+]
 _MODEL_OPTIONS = combo_models(_API_MODELS)
 _DEFAULT_MODEL = "mai-image-2.6-wd"
 _DEFAULT_COMBO = display_name(_DEFAULT_MODEL)
@@ -155,7 +160,7 @@ class SynVowMaiImage:
 
     def generate(self, model_type=None, aspect_ratio=None, image_size=None, seed=None,
                  prompt=None, image1=None, image2=None, image3=None, image4=None, image5=None):
-        model = resolve_model(_unpack(model_type), _DEFAULT_MODEL)
+        model = pick_model(_unpack(model_type), _API_MODELS, _DEFAULT_MODEL)
         image_size = _unpack(image_size) or "2K"
         prompt = str(_unpack(prompt) or "").strip()
         imgs = _images_from_slots(image1, image2, image3, image4, image5)
@@ -198,7 +203,7 @@ class SynVowMaiImage_TBatch:
 
     def process_batch(self, model_type=None, aspect_ratio=None, image_size=None, seed=None,
                       prompts_list=None, image1=None, image2=None, image3=None, image4=None, image5=None):
-        model = resolve_model(_unpack(model_type), _DEFAULT_MODEL)
+        model = pick_model(_unpack(model_type), _API_MODELS, _DEFAULT_MODEL)
         image_size = _unpack(image_size) or "2K"
         imgs = _images_from_slots(image1, image2, image3, image4, image5)
         aspect = _resolve_aspect(_unpack(aspect_ratio))
@@ -244,7 +249,7 @@ class SynVowMaiImage_IBatch:
     def process_batch(self, images_list1, model_type=None, aspect_ratio=None, image_size=None,
                       prompt=None, seed=None,
                       images_list2=None, images_list3=None, images_list4=None, images_list5=None):
-        model = resolve_model(_unpack(model_type), _DEFAULT_MODEL)
+        model = pick_model(_unpack(model_type), _API_MODELS, _DEFAULT_MODEL)
         image_size = _unpack(image_size) or "2K"
         prompt = str(_unpack(prompt) or "").strip()
         lists = [images_list1, images_list2 or [], images_list3 or [], images_list4 or [], images_list5 or []]
@@ -291,7 +296,7 @@ class SynVowMaiImage_TIBatch:
     def process_batch(self, images_list1, model_type=None, aspect_ratio=None, image_size=None,
                       prompt_order=None, seed=None, prompts_list=None,
                       images_list2=None, images_list3=None, images_list4=None, images_list5=None):
-        model = resolve_model(_unpack(model_type), _DEFAULT_MODEL)
+        model = pick_model(_unpack(model_type), _API_MODELS, _DEFAULT_MODEL)
         image_size = _unpack(image_size) or "2K"
         order = _unpack(prompt_order) or "sequential"
         lists = [images_list1, images_list2 or [], images_list3 or [], images_list4 or [], images_list5 or []]

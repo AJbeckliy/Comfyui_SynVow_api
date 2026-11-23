@@ -8,6 +8,19 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 
 ## Changelog
 
+### 2026-11-23
+
+1. `SynVow Seedance 2.5` adds `seedance-2-5-flash`, with resolutions `480p` and `720p`. `sd2.5-特惠版` resolutions are `480p`, `720p`, `1080p`, and `4k`.
+2. `SynVow Muse Video` duration is 2–10 seconds, default 5.
+3. `PT2.6` drops GIF mode.
+4. Gemini drops the three 2606 models and adds `GM4-hydrogen-稳定`, `GM4-hydrogen-低价`, `GM3.8-flash-低价`, and `GM3.5-flash-低价`.
+5. NanoBanana: `全能N2.1-特惠` is now `全能N2.1-低价`, the 2605 models display as 低价, `全能N2-lite-2607` is removed, and the `全能N2-超惠` model is added.
+6. `SynVow MAI-image` adds `MAI-image-2.7-稳定` and `MAI-image-2.7-flash-稳定`.
+7. Consumption records dialog updated.
+8. Recharge records dialog updated.
+9. Adds the `主页解析` node.
+10. `SynVow 视频预览` previews multiple paths, with previous and next.
+
 ### 2026-11-10
 
 1. `SynVow Omni-Flash` keeps only `omni-1.2-flash` and drops the older models.
@@ -257,7 +270,7 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 | SynVow NanoBanana (T_batch) | nanobanana | Batch text-to-image |
 | SynVow NanoBanana (I_batch) | nanobanana | Batch image-to-image |
 | SynVow NanoBanana (T_I_batch) | nanobanana | Mixed text-to-image + image-to-image batch |
-| SynVow MAI-image | MAI-image-2.6 | Text-to-image / image-to-image (1K/2K, up to 5 reference images) |
+| SynVow MAI-image | MAI-image-2.6 / MAI-image-2.7 | Text-to-image / image-to-image (1K/2K, up to 5 reference images) |
 | SynVow MAI-image (T_batch) | MAI-image-2.6 | Prompt-list batch |
 | SynVow MAI-image (I_batch) | MAI-image-2.6 | Prompt × multi-image-group batch |
 | SynVow MAI-image (T_I_batch) | MAI-image-2.6 | Prompt and image-group paired batch |
@@ -289,14 +302,20 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 | Node | Model | Description |
 |------|-------|-------------|
 | SynVow wan-video | wan3.0-video-wd | Text/image/video/audio-reference video; 480P/720P/1080P, duration 2–30 seconds |
-| SynVow Seedance 2.5 | seedance-2.5 / sd2.5-特惠版 | 2.5: 480p/720p/1080p/4k; discount: 720p only, ratios 16:9, 9:16, 4:3, 3:4, 1:1, 21:9, duration 4–30 seconds |
+| SynVow Seedance 2.5 | seedance-2.5 / seedance-2-5-flash / sd2.5-特惠版 | flash: 480p/720p; discount: 480p/720p/1080p/4k, duration 4–30 seconds |
 | SynVow Seedance | seedance-2.0-* | `/image/edit`: text/image/video/audio reference; outputs path/URL/info |
 | SynVow Seedance2.0 视频生成 (720P) | seedance_2_720p | `/image/edit` + `content[]`, fixed 720P; outputs path/URL/info |
 | SynVow Grok Video | grok-1.5-video | Text/image-to-video (up to 6 reference images) |
 | SynVow Omni-Flash | omni-1.2-flash | Image/video-reference video, duration 3–15 seconds |
-| SynVow Muse Video | muse-video-稳定 | Up to 9 reference images, duration 10 seconds, 720p |
+| SynVow Muse Video | muse-video-稳定 | Up to 9 reference images, duration 2–10 seconds, 720p |
 | SynVow Veo31 | veo3.1 | Text/image-to-video (up to 2 reference images, 1080p) |
-| [荐]视频解析30+ | jiexi30+ | Watermark-free download for 30+ platforms; up to 5 links every 2 seconds |
+
+### 💫SynVow_api/api/解析
+
+| Node | Model | Description |
+|------|-------|-------------|
+| [荐]视频解析30+ | jiexi30+ | Watermark-free download for 30+ platforms; multiple links output as a list, up to 5 every 2 seconds |
+| 主页解析 | dyshow | First homepage URL plus page; `works` is the list of work links |
 
 ### 💫SynVow_api/api/音频
 
@@ -369,7 +388,7 @@ ComfyUI custom nodes for SynVow integration, including account login, image/vide
 | 文件夹扫描器 | — | Scan a folder into a path list; filter images / video / audio / TXT |
 | 加载视频（输出路径） | — | Load a video file and output its path |
 | 加载音频（输出路径） | — | Load an audio file and output its path |
-| SynVow 视频预览 | — | Preview video inside the node |
+| SynVow 视频预览 | — | Preview a list of local paths; switch when there is more than one |
 
 ---
 

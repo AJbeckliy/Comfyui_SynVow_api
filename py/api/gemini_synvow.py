@@ -11,18 +11,25 @@ from .media_common import upload_image as _upload_image, DIRECT_API_BASE
 from .model_display import combo_models, display_name, resolve_model
 
 GEMINI_API_MODELS = [
+    "gemini-4-hydrogen-wd",
     "gemini-3.8-flash-wd",
     "gemini-3.7-flash-wd",
     "gemini-3.6-flash-稳定",
     "gemini-3.5-flash-稳定",
     "gemini-3.5-flash-lite-稳定",
     "gemini-3.1-pro-稳定",
-    "gemini-3.1-pro-2606",
-    "gemini-3.1-flash-2606",
-    "gemini-3-pro-2606",
+    "gemini-4-hydrogen-dj",
+    "gemini-3.8-flash-dj",
+    "gemini-3.5-flash-dj",
 ]
 GEMINI_MODEL_OPTIONS = combo_models(GEMINI_API_MODELS)
-DEFAULT_GEMINI_MODEL = display_name("gemini-3.5-flash-稳定")
+_DEFAULT_GEMINI_API = "gemini-3.5-flash-稳定"
+DEFAULT_GEMINI_MODEL = display_name(_DEFAULT_GEMINI_API)
+
+
+def _gemini_model(raw):
+    name = resolve_model(raw, _DEFAULT_GEMINI_API)
+    return name if name in GEMINI_API_MODELS else _DEFAULT_GEMINI_API
 
 
 class SynVowGeminiAPI:
@@ -105,7 +112,7 @@ class SynVowGeminiAPI:
                  image_5=None, image_6=None, image_7=None, image_8=None,
                  image_9=None, image_10=None):
         api_key = synvow_auth.read_api_key()
-        model_name = resolve_model(模型, GEMINI_API_MODELS[0])
+        model_name = _gemini_model(模型)
 
         single_imgs = [img for img in [image_1, image_2, image_3, image_4, image_5,
                                        image_6, image_7, image_8, image_9, image_10]
@@ -164,7 +171,7 @@ class SynVowGeminiAPI_TBatch:
         def _u(v, d=None):
             return v[0] if isinstance(v, list) and v else (v if v is not None else d)
 
-        model_name = resolve_model(_u(模型), GEMINI_API_MODELS[0])
+        model_name = _gemini_model(_u(模型))
         seed_val = _u(seed, 0)
         api_key = synvow_auth.read_api_key()
 

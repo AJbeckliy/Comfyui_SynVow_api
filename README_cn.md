@@ -8,6 +8,19 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 
 ## 更新日志
 
+### 2026-11-23
+
+1、`SynVow Seedance 2.5` 新增 `seedance-2-5-flash`，画质 `480p`、`720p`。`sd2.5-特惠版` 画质改为 `480p`、`720p`、`1080p`、`4k`支持。
+2、`SynVow Muse Video` 时长改为 2～10 秒，默认 5 秒。
+3、`PT2.6` 去掉 GIF模式。
+4、Gemini 去掉三个 2606模型，新增 `GM4-hydrogen-稳定`、`GM4-hydrogen-低价`、`GM3.8-flash-低价`、`GM3.5-flash-低价`。
+5、NanoBanana：`全能N2.1-特惠` 改为 `全能N2.1-低价`，2605 显示为低价，去掉 `全能N2-lite-2607`，新增 `全能N2-超惠`模型。
+6、`SynVow MAI-image` 新增 `MAI-image-2.7-稳定`、`MAI-image-2.7-flash-稳定`。
+7、消费记录弹窗更新。
+8、充值记录弹窗更新。
+9、新增 `主页解析`节点。
+10、`SynVow 视频预览` 支持多条路径预览，可上一条、下一条切换。
+
 ### 2026-11-10
 
 1、`SynVow Omni-Flash` 只保留 `omni-1.2-flash`，去掉旧模型。
@@ -257,7 +270,7 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 | SynVow NanoBanana (T_batch) | nanobanana | 批量文生图 |
 | SynVow NanoBanana (I_batch) | nanobanana | 批量图生图 |
 | SynVow NanoBanana (T_I_batch) | nanobanana | 文生图 + 图生图混合批量 |
-| SynVow MAI-image | MAI-image-2.6 | 文生图·图生图（1K/2K，最多 5 张参考图） |
+| SynVow MAI-image | MAI-image-2.6 / MAI-image-2.7 | 文生图·图生图（1K/2K，最多 5 张参考图） |
 | SynVow MAI-image (T_batch) | MAI-image-2.6 | 提示词列表批量 |
 | SynVow MAI-image (I_batch) | MAI-image-2.6 | 提示词 × 多组图批量 |
 | SynVow MAI-image (T_I_batch) | MAI-image-2.6 | 提示词与图像组配对批量 |
@@ -289,14 +302,20 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 | 节点名称 | 模型 | 描述 |
 |----------|------|------|
 | SynVow wan-video | wan3.0-video-wd | 文/图/视频/音频参考生视频；480P/720P/1080P，时长 2～30 秒 |
-| SynVow Seedance 2.5 | seedance-2.5 / sd2.5-特惠版 | 2.5：480p/720p/1080p/4k；特惠版仅 720p，比例 16:9、9:16、4:3、3:4、1:1、21:9，时长 4～30 秒 |
+| SynVow Seedance 2.5 | seedance-2.5 / seedance-2-5-flash / sd2.5-特惠版 | flash 仅 480p/720p；特惠版 480p/720p/1080p/4k，时长 4～30 秒 |
 | SynVow Seedance | seedance-2.0-* | `/image/edit`：文/图/视频/音频参考；输出路径/URL/信息 |
 | SynVow Seedance2.0 视频生成 (720P) | seedance_2_720p | `/image/edit` + `content[]`，固定 720P；输出路径/URL/信息 |
 | SynVow Grok Video | grok-1.5-video | 文/图生视频（最多 6 张参考图） |
 | SynVow Omni-Flash | omni-1.2-flash | 图/视频参考生视频，时长 3～15 秒 |
-| SynVow Muse Video | muse-video-稳定 | 最多 9 张参考图，时长 10 秒，720p |
+| SynVow Muse Video | muse-video-稳定 | 最多 9 张参考图，时长 2～10 秒，720p |
 | SynVow Veo31 | veo3.1 | 文/图生视频（最多 2 张参考图，1080p） |
-| [荐]视频解析30+ | jiexi30+ | 30+ 平台无水印下载，多条链接每 2 秒最多 5 个 |
+
+### 💫SynVow_api/api/解析
+
+| 节点名称 | 模型 | 描述 |
+|----------|------|------|
+| [荐]视频解析30+ | jiexi30+ | 30+ 平台无水印下载，多条链接输出列表，每 2 秒最多 5 个 |
+| 主页解析 | dyshow | 第一条主页链接加页码，`works` 为作品链接列表 |
 
 ### 💫SynVow_api/api/音频
 
@@ -369,7 +388,7 @@ ComfyUI 用于 SynVow 集成的自定义节点，支持账号登录、图像/视
 | 文件夹扫描器 | — | 扫描文件夹输出路径列表，支持图片/视频/音频/TXT 过滤 |
 | 加载视频（输出路径） | — | 加载视频文件并输出路径 |
 | 加载音频（输出路径） | — | 加载音频文件并输出路径 |
-| SynVow 视频预览 | — | 在节点内直接预览视频 |
+| SynVow 视频预览 | — | 预览本地路径列表，多条可切换 |
 
 ---
 

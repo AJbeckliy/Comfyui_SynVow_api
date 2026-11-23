@@ -13,13 +13,15 @@ from .media_common import (
     upload_media_file,
 )
 
-_API_MODELS = ["doubao-seedance-2.5", "sd2.5-dj"]
+_API_MODELS = ["doubao-seedance-2.5", "seedance-2-5-flash", "sd2.5-dj"]
 _DEFAULT_MODEL = "doubao-seedance-2.5"
 _MODELS = combo_models(_API_MODELS)
 _RATIOS = ["adaptive", "16:9", "9:16", "4:3", "3:4", "1:1", "21:9"]
 _DJ_RATIOS = _RATIOS[1:]
 _RESOLUTIONS = ["480p", "720p", "1080p", "4k"]
+_FLASH_RESOLUTIONS = _RESOLUTIONS[:2]
 _DJ_MODEL = "sd2.5-dj"
+_FLASH_MODEL = "seedance-2-5-flash"
 _DURATIONS = [str(i) for i in range(4, 31)]
 _IMAGE_SLOTS = 21
 _TAG = "Seedance25"
@@ -39,7 +41,9 @@ def _build_body(model, prompt, ratio, duration, resolution, image_urls, video_ur
     body = {
         "model": model,
         "prompt": prompt or "",
-        "resolution": "720p" if dj else (resolution if resolution in _RESOLUTIONS else "720p"),
+        "resolution": (
+            resolution if resolution in (_FLASH_RESOLUTIONS if model == _FLASH_MODEL else _RESOLUTIONS) else "720p"
+        ),
         "duration": _clamp_duration(duration),
     }
     if dj:

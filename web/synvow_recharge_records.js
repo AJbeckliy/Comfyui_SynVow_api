@@ -32,13 +32,13 @@ export function showRechargeRecordsDialog() {
 
     injectStyle("sv-records-style", `
         .sv-records-overlay { position:fixed; inset:0; background:rgba(0,0,0,0.7); display:flex; justify-content:center; align-items:center; z-index:10001; }
-        .sv-records-dialog { background:linear-gradient(180deg,#1a2a3a,#0d1a24); border-radius:12px; padding:30px; width:600px; max-height:80vh; position:relative; display:flex; flex-direction:column; }
+        .sv-records-dialog { background:linear-gradient(180deg,#1a2a3a,#0d1a24); border-radius:12px; padding:30px; width:860px; max-width:92vw; max-height:80vh; position:relative; display:flex; flex-direction:column; }
         .sv-records-title { color:#2dd4bf; font-size:18px; font-weight:bold; margin-bottom:20px; display:flex; align-items:center; gap:8px; }
         .sv-records-close { position:absolute; top:16px; right:16px; background:none; border:none; color:#667788; font-size:24px; cursor:pointer; }
         .sv-records-close:hover { color:white; }
         .sv-records-table { width:100%; border-collapse:collapse; }
-        .sv-records-table th { background:#1e3a4a; color:#8899aa; font-size:12px; font-weight:normal; padding:12px 8px; text-align:left; }
-        .sv-records-table td { color:white; font-size:13px; padding:12px 8px; border-bottom:1px solid #334455; }
+        .sv-records-table th { background:#1e3a4a; color:#8899aa; font-size:12px; font-weight:normal; padding:12px 8px; text-align:left; white-space:nowrap; }
+        .sv-records-table td { color:white; font-size:13px; padding:12px 8px; border-bottom:1px solid #334455; white-space:nowrap; }
         .sv-records-table tr:hover td { background:#1e3a4a; }
         .sv-records-status { padding:4px 8px; border-radius:4px; font-size:12px; }
         .sv-records-empty { text-align:center; color:#667788; padding:40px; }
@@ -98,11 +98,12 @@ export function showRechargeRecordsDialog() {
                         <table class="sv-records-table">
                             <thead>
                                 <tr>
-                                    <th>订单号</th>
+                                    <th>时间</th>
                                     <th>金额</th>
+                                    <th>赠送</th>
                                     <th>支付方式</th>
                                     <th>状态</th>
-                                    <th>时间</th>
+                                    <th>订单号</th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -110,13 +111,15 @@ export function showRechargeRecordsDialog() {
                                     const status = STATUS_MAP[item.status] || { text: "未知", color: "#6b7280" };
                                     const payment = PAYMENT_MAP[item.payment_type] || item.payment_type;
                                     const time = fmtTime(item.created_at);
+                                    const gift = parseFloat(item.gift || 0);
                                     return `
                                         <tr>
-                                            <td>${item.order_no}</td>
+                                            <td>${time}</td>
                                             <td>¥${parseFloat(item.amount).toFixed(2)}</td>
+                                            <td>${gift > 0 ? `¥${gift.toFixed(2)}` : "-"}</td>
                                             <td>${payment}</td>
                                             <td><span class="sv-records-status" style="background:${status.color}20;color:${status.color}">${status.text}</span></td>
-                                            <td>${time}</td>
+                                            <td>${item.order_no}</td>
                                         </tr>
                                     `;
                                 }).join('')}

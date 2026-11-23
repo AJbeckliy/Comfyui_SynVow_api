@@ -15,18 +15,27 @@ from .media_common import (
 _MODEL = "muse-video-wd"
 _MODELS = combo_models([_MODEL])
 _RATIOS = ["16:9", "9:16", "1:1", "4:3", "3:4", "3:2", "2:3"]
-_DURATION = 10
+_DURATIONS = [str(i) for i in range(2, 11)]
+_DEFAULT_DURATION = "5"
 _RESOLUTION = "720p"
 _MAX_IMAGES = 9
 _TAG = "MuseVideo"
 
 
-def _build_body(prompt, ratio, image_urls):
+def _duration(raw):
+    try:
+        n = int(float(raw))
+    except (TypeError, ValueError):
+        return int(_DEFAULT_DURATION)
+    return max(2, min(10, n))
+
+
+def _build_body(prompt, ratio, duration, image_urls):
     body = {
         "model": _MODEL,
         "prompt": prompt or "",
         "aspect_ratio": ratio if ratio in _RATIOS else _RATIOS[0],
-        "duration": _DURATION,
+        "duration": _duration(duration),
         "resolution": _RESOLUTION,
     }
     urls = [u for u in (image_urls or []) if u][:_MAX_IMAGES]
@@ -47,7 +56,7 @@ class SynVowMuseVideo:
                 "prompt": ("STRING", {"multiline": True, "default": ""}),
                 "model": (_MODELS, {"default": display_name(_MODEL)}),
                 "aspect_ratio": (_RATIOS, {"default": "16:9"}),
-                "duration": ([str(_DURATION)], {"default": str(_DURATION)}),
+                "duration": (_DURATIONS, {"default": _DEFAULT_DURATION}),
                 "resolution": ([_RESOLUTION], {"default": _RESOLUTION}),
                 "seed": ("INT", {"default": 0, "min": 0, "max": 2147483647}),
             },
@@ -63,12 +72,12 @@ class SynVowMuseVideo:
     IS_CHANGED = staticmethod(is_changed_by_inputs)
 
     def generate_video(self, prompt, model, aspect_ratio, duration, resolution, seed=0, **kwargs):
-        del model, duration, resolution
+        del model, resolution
         api_key = synvow_auth.read_api_key()
         try:
             tensors = [kwargs.get(f"image_{i}") for i in range(1, _MAX_IMAGES + 1)]
             urls = [upload_image(api_key, t) for t in tensors if t is not None]
-            body = _build_body(prompt, aspect_ratio, urls)
+            body = _build_body(prompt, aspect_ratio, duration, urls)
             task_id, consumption_id = submit_edit_async(api_key, body, _TAG)
             url = poll_edit_task(api_key, task_id, _MODEL, _TAG, consumption_id=consumption_id)
             path = download_video(

@@ -19,24 +19,27 @@ from .media_common import (
     upload_image as _upload_image,
 )
 
-from .model_display import combo_models, display_name, resolve_model
+from .gpt_image_2_synvow import _RATIO_MAPS
+from .model_display import combo_models, display_name, pick_model
 
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
+_CH_MODEL = "gemini-3.1-flash-image-preview-ch"
+_CH_T2I = "gemini-3.1-flash-image-preview-ch-t2i"
 _API_MODELS = [
-    "nanobanana2.1-qy",
     "nanobanana2.1-dj",
     "nanobanana2.1-wd",
+    "nanobanana2.1-qy",
     "nanobanana2.1-gf",
+    _CH_MODEL,
+    "nano-banana-2-2605",
     "nano-banana-2-稳定",
     "nanobanana2-qy",
     "nano-banana-2-官方",
-    "nano-banana-2-2605",
+    "nano-banana-pro-2605",
     "nano-banana-pro-稳定",
     "nanobananapro-qy",
     "nano-banana-pro-官方",
-    "nano-banana-pro-2605",
-    "nano-banana-2-lite-2607",
 ]
 _MODEL_OPTIONS = combo_models(_API_MODELS)
 _DEFAULT_NANO_BANANA_MODEL = "nanobanana2.1-qy"
@@ -54,12 +57,17 @@ _NPRO_ASPECTS = [
 _ASPECT_RATIOS = _N2_ASPECTS
 
 
+def _is_ch(model):
+    return model in (_CH_MODEL, _CH_T2I)
+
+
 def _aspects_of(model):
     m = str(model or "")
-    if "pro" in m.lower():
+    if _is_ch(m):
+        allowed = _RATIO_MAPS["2K"]
+        return [r for r in _N2_ASPECTS if r in allowed]
+    if "pro" in m.lower() and "preview" not in m.lower():
         return _NPRO_ASPECTS
-    if "lite-2607" in m:
-        return [r for r in _N2_ASPECTS if r not in _N2_ULTRA]
     return _N2_ASPECTS
 
 
@@ -102,6 +110,20 @@ def _build_payload(model, prompt, aspect_ratio, image_size, is_img2img, img_tens
             "contents": [{"role": "user", "parts": parts}],
             "generationConfig": generation_config,
         }
+
+    if _is_ch(model):
+        size_map = _RATIO_MAPS.get(image_size) or _RATIO_MAPS["2K"]
+        payload = {
+            "model": _CH_MODEL if image_urls else _CH_T2I,
+            "prompt": prompt,
+            "size": size_map.get(aspect_ratio) or size_map["1:1"],
+            "quality": "auto",
+            "async": True,
+            "response_format": "url",
+        }
+        if image_urls:
+            payload["images"] = [{"image_url": url} for url in image_urls]
+        return payload
 
     if model in _MODERN_MODELS:
         payload = {"model": model, "prompt": prompt}
@@ -148,7 +170,7 @@ def _run_tasks(tasks, model, aspect_ratio, image_size, is_img2img, api_key):
         payload = _build_payload(model, p, aspect_ratio, image_size, is_img2img, imgs, api_key=api_key)
         try:
             task_id, consumption_id = submit_edit_async(api_key, payload, "NanoBanana")
-            submitted.append((task_id, consumption_id))
+            submitted.append((task_id, consumption_id, payload.get("model") or model))
             print(f"[NanoBanana] [{i+1}/{total}] 提交成功 task_id=...{task_id[-8:]}")
         except Exception as e:
             print(f"[NanoBanana] [{i+1}/{total}] 提交失败: {e}")
@@ -160,8 +182,8 @@ def _run_tasks(tasks, model, aspect_ratio, image_size, is_img2img, api_key):
         if item is None:
             pbar.update(1)
             return None
-        task_id, consumption_id = item
-        urls = _poll_urls(api_key, task_id, model, consumption_id)
+        task_id, consumption_id, request_model = item
+        urls = _poll_urls(api_key, task_id, request_model, consumption_id)
         pbar.update(1)
         return urls
 
@@ -208,7 +230,7 @@ class SynVowNanoBanana:
     def generate(self, model_type=None, aspect_ratio=None, image_size=None, seed=None,
                  prompt=None, image1=None, image2=None, image3=None, image4=None,
                  image5=None, image6=None, image7=None, image8=None, image9=None):
-        model_type   = resolve_model(_unpack(model_type), _DEFAULT_NANO_BANANA_MODEL)
+        model_type   = pick_model(_unpack(model_type), _API_MODELS, _DEFAULT_NANO_BANANA_MODEL)
         aspect_ratio = _unpack(aspect_ratio) or "1:1"
         image_size   = _unpack(image_size) or "2K"
         prompt       = _unpack(prompt)
@@ -271,7 +293,7 @@ class SynVowNanoBanana_TBatch:
     def process_batch(self, model_type=None, aspect_ratio=None, image_size=None, seed=None,
                       prompts_list=None, image1=None, image2=None, image3=None, image4=None,
                       image5=None, image6=None, image7=None, image8=None, image9=None):
-        model_type   = resolve_model(_unpack(model_type), _DEFAULT_NANO_BANANA_MODEL)
+        model_type   = pick_model(_unpack(model_type), _API_MODELS, _DEFAULT_NANO_BANANA_MODEL)
         aspect_ratio = _unpack(aspect_ratio) or "1:1"
         image_size   = _unpack(image_size) or "2K"
         image1 = _unpack(image1); image2 = _unpack(image2)
@@ -336,7 +358,7 @@ class SynVowNanoBanana_IBatch:
     def process_batch(self, images_list1, model_type=None, aspect_ratio=None, image_size=None,
                       prompt=None, seed=None,
                       images_list2=None, images_list3=None, images_list4=None, images_list5=None):
-        model_type   = resolve_model(_unpack(model_type), _DEFAULT_NANO_BANANA_MODEL)
+        model_type   = pick_model(_unpack(model_type), _API_MODELS, _DEFAULT_NANO_BANANA_MODEL)
         aspect_ratio = _unpack(aspect_ratio) or "1:1"
         image_size   = _unpack(image_size) or "2K"
         prompt       = _unpack(prompt)
@@ -415,7 +437,7 @@ class SynVowNanoBanana_TIBatch:
                       prompt_order=None, seed=None,
                       prompts_list=None, images_list2=None, images_list3=None,
                       images_list4=None, images_list5=None):
-        model_type   = resolve_model(_unpack(model_type), _DEFAULT_NANO_BANANA_MODEL)
+        model_type   = pick_model(_unpack(model_type), _API_MODELS, _DEFAULT_NANO_BANANA_MODEL)
         aspect_ratio = _unpack(aspect_ratio) or "1:1"
         image_size   = _unpack(image_size) or "2K"
         prompt_order = _unpack(prompt_order) or "sequential"

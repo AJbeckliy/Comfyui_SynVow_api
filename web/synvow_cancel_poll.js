@@ -138,7 +138,8 @@ function bindWidgetOptions(node) {
     if (t === "SynVowSeedance25") {
         bindByModel(node, "model", v => {
             const dj = v === "sd2.5-dj" || v === "sd2.5-特惠版";
-            setCombo(widget(node, "resolution"), dj ? ["720p"] : SEEDANCE_RES_4K, "720p");
+            const flash = v === "seedance-2-5-flash";
+            setCombo(widget(node, "resolution"), flash ? SEEDANCE_RES_720 : SEEDANCE_RES_4K, "720p");
             setCombo(widget(node, "ratio"), dj ? SEEDANCE_DJ_RATIOS : SEEDANCE_RATIOS, dj ? "16:9" : "adaptive");
             setHidden(widget(node, "generate_audio"), dj);
         });
@@ -165,8 +166,7 @@ function bindWidgetOptions(node) {
         return;
     }
     if (t.startsWith("SynVowGptImage2")) {
-        bindByWidgets(node, ["model_type", "output_mode"], () => {
-            const v = String(widget(node, "model_type")?.value || "");
+        bindByModel(node, "model_type", v => {
             const lock1k = v.includes("1k-");
             const wd = v === "gpt-image-2.5-wd" || v.includes("PT2.5-稳定");
             const pt26 = v === "gpt-image-2.6-wd" || v.includes("PT2.6-稳定");
@@ -178,7 +178,6 @@ function bindWidgetOptions(node) {
             const g2stable = v === "gpt-image-2-稳定" || v.includes("全能G2-稳定");
             const showStyle = pt26 || pt26qy || pt26ch || (pt25 && !is1k2609);
             const showQuality = !g2stable && !is1k2609 && !wd && !pt26dj;
-            const gif = (pt26 || pt26qy) && widget(node, "output_mode")?.value === "gif";
             const qW = widget(node, "quality");
             const aW = widget(node, "aspect_ratio");
             setCombo(widget(node, "resolution"), lock1k ? ["1K"] : GPT_IMAGE_RESOLUTIONS, "1K");
@@ -187,19 +186,15 @@ function bindWidgetOptions(node) {
             setHidden(widget(node, "gpt_style"), !showStyle);
             setHidden(qW, !showQuality);
             setHidden(widget(node, "transparent"), !(showStyle && !wd && !pt26 && !pt26qy && !pt26ch));
-            setHidden(widget(node, "output_mode"), !(pt26 || pt26qy));
-            setHidden(aW, pt26 && gif);
-            setHidden(widget(node, "resolution"), (pt26 && gif) || pt26dj);
-            setHidden(widget(node, "frame_count"), !(pt26qy && gif));
-            setHidden(widget(node, "frame_duration_ms"), !(pt26qy && gif));
+            setHidden(widget(node, "resolution"), pt26dj);
         });
         return;
     }
     if (t.startsWith("SynVowNanoBanana")) {
         bindByModel(node, "model_type", v => {
-            const pro = /pro/i.test(v);
-            const noUltra = v.includes("lite-2607");
-            const opts = pro ? NPRO_ASPECTS : noUltra ? N2_ASPECTS.filter(r => !N2_ULTRA.includes(r)) : N2_ASPECTS;
+            const ch = v.includes("全能N2-超惠") || v.includes("flash-image-preview-ch");
+            const pro = !ch && /pro/i.test(v);
+            const opts = ch ? N2_ASPECTS.filter(r => !N2_ULTRA.includes(r)) : pro ? NPRO_ASPECTS : N2_ASPECTS;
             setCombo(widget(node, "aspect_ratio"), opts, "1:1");
         });
         return;
