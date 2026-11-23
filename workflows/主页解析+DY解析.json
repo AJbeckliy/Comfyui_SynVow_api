@@ -1,0 +1,315 @@
+{
+  "id": "a2665397-f676-4d41-8ae5-eb3b81269bc2",
+  "revision": 0,
+  "last_node_id": 21,
+  "last_link_id": 8,
+  "nodes": [
+    {
+      "id": 8,
+      "type": "SynVowDyHome",
+      "pos": [
+        11582.969166461997,
+        3664.06270797365
+      ],
+      "size": [
+        270,
+        132
+      ],
+      "flags": {},
+      "order": 0,
+      "mode": 0,
+      "inputs": [],
+      "outputs": [
+        {
+          "name": "works",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            4
+          ]
+        },
+        {
+          "name": "status",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "8a2b7d8ea36e855ee4b65a07d207ac1c32e81fd9",
+        "Node name for S&R": "SynVowDyHome"
+      },
+      "widgets_values": [
+        "",
+        1
+      ],
+      "widgets_values_named": {
+        "url_text": "",
+        "page": 1
+      }
+    },
+    {
+      "id": 11,
+      "type": "SynVowVideoParse30",
+      "pos": [
+        12240.006553665935,
+        3652.94970451213
+      ],
+      "size": [
+        400,
+        200
+      ],
+      "flags": {},
+      "order": 2,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "url_text",
+          "type": "STRING",
+          "widget": {
+            "name": "url_text"
+          },
+          "link": 5
+        }
+      ],
+      "outputs": [
+        {
+          "name": "video_url",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            8
+          ]
+        },
+        {
+          "name": "video_path",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            7
+          ]
+        },
+        {
+          "name": "status",
+          "type": "STRING",
+          "links": null
+        }
+      ],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "8a2b7d8ea36e855ee4b65a07d207ac1c32e81fd9",
+        "Node name for S&R": "SynVowVideoParse30"
+      },
+      "widgets_values": [
+        "",
+        ""
+      ],
+      "widgets_values_named": {
+        "url_text": "",
+        "save_path": ""
+      }
+    },
+    {
+      "id": 13,
+      "type": "ShowText|pysssss",
+      "pos": [
+        11878.090501498791,
+        3662.9495740170055
+      ],
+      "size": [
+        316.0253690801146,
+        526
+      ],
+      "flags": {},
+      "order": 1,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 4
+        }
+      ],
+      "outputs": [
+        {
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": [
+            5
+          ]
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": [
+        "https://www.douyin.com/video/7612954772148145443",
+        "https://www.douyin.com/video/7614020707889990948",
+        "https://www.douyin.com/video/7584740611316616488",
+        "https://www.douyin.com/video/7708658535239814434",
+        "https://www.douyin.com/video/7708647249529589011",
+        "https://www.douyin.com/video/7707601323826482458",
+        "https://www.douyin.com/video/7707600727757114675",
+        "https://www.douyin.com/video/7707600173207145743",
+        "https://www.douyin.com/video/7707585042784079147",
+        "https://www.douyin.com/video/7707208008736017698"
+      ],
+      "widgets_values_named": {
+        "text_0": "https://www.douyin.com/video/7612954772148145443",
+        "text_1": "https://www.douyin.com/video/7614020707889990948",
+        "text_2": "https://www.douyin.com/video/7584740611316616488",
+        "text_3": "https://www.douyin.com/video/7708658535239814434",
+        "text_4": "https://www.douyin.com/video/7708647249529589011",
+        "text_5": "https://www.douyin.com/video/7707601323826482458",
+        "text_6": "https://www.douyin.com/video/7707600727757114675",
+        "text_7": "https://www.douyin.com/video/7707600173207145743",
+        "text_8": "https://www.douyin.com/video/7707585042784079147",
+        "text_9": "https://www.douyin.com/video/7707208008736017698"
+      }
+    },
+    {
+      "id": 14,
+      "type": "SynVowApiVideoPreview",
+      "pos": [
+        12711.397694392057,
+        3622.966495250772
+      ],
+      "size": [
+        379.2540471531578,
+        703.2205770521177
+      ],
+      "flags": {},
+      "order": 4,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "video_path",
+          "type": "STRING",
+          "link": 7
+        }
+      ],
+      "outputs": [],
+      "properties": {
+        "aux_id": "AJbeckliy/Comfyui_SynVow_api",
+        "ver": "8a2b7d8ea36e855ee4b65a07d207ac1c32e81fd9",
+        "Node name for S&R": "SynVowApiVideoPreview"
+      },
+      "widgets_values": [],
+      "widgets_values_named": {}
+    },
+    {
+      "id": 15,
+      "type": "ShowText|pysssss",
+      "pos": [
+        13137.454897104075,
+        3638.9037950260968
+      ],
+      "size": [
+        316.0253690801146,
+        526
+      ],
+      "flags": {},
+      "order": 3,
+      "mode": 0,
+      "inputs": [
+        {
+          "name": "text",
+          "type": "STRING",
+          "link": 8
+        }
+      ],
+      "outputs": [
+        {
+          "name": "STRING",
+          "shape": 6,
+          "type": "STRING",
+          "links": []
+        }
+      ],
+      "properties": {
+        "cnr_id": "comfyui-custom-scripts",
+        "ver": "609f3afaa74b2f88ef9ce8d939626065e3247469",
+        "Node name for S&R": "ShowText|pysssss"
+      },
+      "widgets_values": [
+        "https://oss.synvow.com/result/29004452004/20261123/9cabfcdb",
+        "https://oss.synvow.com/result/29004452004/20261123/0c387fc7",
+        "https://oss.synvow.com/result/29004452004/20261123/63ecd6a0",
+        "https://oss.synvow.com/result/29004452004/20261123/c1d97158",
+        "https://oss.synvow.com/result/29004452004/20261123/0234535b",
+        "https://oss.synvow.com/result/29004452004/20261123/eef06809",
+        "https://oss.synvow.com/result/29004452004/20261123/fbe3c6e5",
+        "https://oss.synvow.com/result/29004452004/20261123/c85a5696",
+        "https://oss.synvow.com/result/29004452004/20261123/d8ac6034",
+        "https://oss.synvow.com/result/29004452004/20261123/0f20f406"
+      ],
+      "widgets_values_named": {
+        "text_0": "https://oss.synvow.com/result/29004452004/20261123/9cabfcdb",
+        "text_1": "https://oss.synvow.com/result/29004452004/20261123/0c387fc7",
+        "text_2": "https://oss.synvow.com/result/29004452004/20261123/63ecd6a0",
+        "text_3": "https://oss.synvow.com/result/29004452004/20261123/c1d97158",
+        "text_4": "https://oss.synvow.com/result/29004452004/20261123/0234535b",
+        "text_5": "https://oss.synvow.com/result/29004452004/20261123/eef06809",
+        "text_6": "https://oss.synvow.com/result/29004452004/20261123/fbe3c6e5",
+        "text_7": "https://oss.synvow.com/result/29004452004/20261123/c85a5696",
+        "text_8": "https://oss.synvow.com/result/29004452004/20261123/d8ac6034",
+        "text_9": "https://oss.synvow.com/result/29004452004/20261123/0f20f406"
+      }
+    }
+  ],
+  "links": [
+    [
+      4,
+      8,
+      0,
+      13,
+      0,
+      "STRING"
+    ],
+    [
+      5,
+      13,
+      0,
+      11,
+      0,
+      "STRING"
+    ],
+    [
+      7,
+      11,
+      1,
+      14,
+      0,
+      "STRING"
+    ],
+    [
+      8,
+      11,
+      0,
+      15,
+      0,
+      "STRING"
+    ]
+  ],
+  "groups": [],
+  "config": {},
+  "extra": {
+    "ds": {
+      "scale": 1.399122143714667,
+      "offset": [
+        -11635.642266660358,
+        -3389.490527574556
+      ]
+    },
+    "frontendVersion": "1.59.11",
+    "VHS_latentpreview": false,
+    "VHS_latentpreviewrate": 0,
+    "VHS_MetadataImage": true,
+    "VHS_KeepIntermediate": true
+  },
+  "version": 0.4,
+  "seed_widgets": {}
+}
